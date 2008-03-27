@@ -1,0 +1,15 @@
+This is an effort to produce a smooth particle code in python.
+
+Andrew Charles
+ac1201@gmail.com
+
+Why?
+
+1. More scripted approach to execution
+2. Visualisation in real time
+3. Fast prototyping of new algoritms
+4. Integration with the fortran code
+
+The octave code is OK, but is quite limited, especially when it comes to animated visualisation. Also, I'd rather use a language that was open from the start (even if it has borrowed from Matlab in places) than one that sets out explicitly to be a matlab clone. My Java and C experience will come in handy with python, and I really think it will open up the possibilities.
+
+Pyticles uses Pyglet by Alex Holkner, which is subject to its own license and so forth. I encourage you to check out the Pyglet web site.
