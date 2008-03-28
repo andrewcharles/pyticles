@@ -6,8 +6,8 @@ import numpy
 
 CUTOFF_RADIUS = 100
 DIM = 2
-XMAX = 20 #64
-YMAX = 20 #48
+XMAX = 64
+YMAX = 48
 
 class NeighbourList:
     """ A neighbour list that works with the Particle and Force class """
@@ -67,7 +67,7 @@ class NeighbourList:
             for j in range(i+1,self.particle.n):
                 self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
                 self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
-		self.minimum_image(self.drij[k,:],XMAX,YMAX)
+		self.minimum_image(self.drij[k,:],XMAX/2,YMAX/2)
                 rsquared = self.drij[k,0]**2 + self.drij[k,1]**2
                 if (rsquared < cutsq):
                     self.iap[k,0] = i
