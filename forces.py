@@ -12,16 +12,18 @@ import neighbour_list
 # CONSTANTS
 CUTOFF_RADIUS = 100
 DIM = 2
-COLLISION_RADIUS_SQ = 1
+COLLISION_RADIUS_SQ = 0.1
 VACUUM_VISCOSITY = 0.1
-spring_k = 1.1
-rest_distance = 1 
+spring_k = 10.1
+rest_distance =  0.2
 
 class Force:
     """ A generic pairwise particle force """ 
-    def __init__(self,particles):
+
+    # todo: add overloaded initialisation
+    def __init__(self,particles,nl):
         self.p = particles
-        self.nl = neighbour_list.NeighbourList(self.p)
+        self.nl = nl
     
     def apply(self):
         """ Apply the force to all particles in the nlist """
@@ -31,10 +33,11 @@ class Force:
             self.apply_force(k)
 
 class HookesForce(Force):
-    def __init__(self,particles):
+    def __init__(self,particles,nl):
         self.p = particles
-        self.nl = neighbour_list.NeighbourList(self.p)
+        self.nl = nl
         self.nl.cutoff_radius_sq = CUTOFF_RADIUS**2 
+
     def apply_force(self,k):
         """ Takes a particle p and two references i and j
         """
@@ -49,10 +52,9 @@ class HookesForce(Force):
         p = self.p
         drx =  self.nl.drij[k,0] 
         dry =  self.nl.drij[k,1]
-        rsquared = drx**2 + dry**2 
-         #       + p.r[i,1]**2 + p.r[j,1]**2
-        rdist = math.sqrt(rsquared)
-        fmag = -abs (spring_k * ( rdist - rest_distance ) )
+        rdist = self.nl.rij[k]
+        rsquared = rdist**2 
+        fmag = abs (spring_k * ( rdist - rest_distance ) )
             
         #resolve into components
         dvx = fmag * ( drx ) / rdist
@@ -65,9 +67,9 @@ class HookesForce(Force):
 
 class CollisionForce(Force):
     
-    def __init__(self,particles):
+    def __init__(self,particles,nl):
         self.p = particles
-        self.nl = neighbour_list.NeighbourList(self.p)
+        self.nl = nl
         self.nl.build_nl_brute_force()
         self.nl.cutoff_radius_sq = COLLISION_RADIUS_SQ 
 
