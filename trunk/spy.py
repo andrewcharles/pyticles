@@ -3,6 +3,8 @@
 # This is the main file for the python sph code
 # Write for 3 dimensions as much as possible
 
+# We have a major memory leak!
+
 import sys
 #sys.path.append("/home/ac/pyglet-1.0")
 import time
@@ -15,12 +17,24 @@ import spyview
 # Global variables
 
 p = particles.Particles()
-p.add_force(particles.forces.HookesForce(p))
-p.add_force(particles.forces.CollisionForce(p))
-nl = particles.neighbour_list.NeighbourList(p)
-nl.build_nl_brute_force()
-p.add_force(particles.forces.SpamForce(p,nl))
+
+# a long and a short neighbour list
+nl_1 = particles.neighbour_list.NeighbourList(p,3.0)
+nl_2 = particles.neighbour_list.NeighbourList(p,10.0)
+
+p.nlists.append(nl_1)
+p.nlists.append(nl_2)
+p.nl_default = nl_2
+
+for nl in p.nlists:
+    nl.build_nl_brute_force()
+
+p.add_force(particles.forces.CollisionForce(p,p.nlists[0]))
+p.add_force(particles.forces.HookesForce(p,p.nlists[1]))
+p.add_force(particles.forces.SpamForce(p,p.nlists[1]))
+
 s = spyview.ParticleView(p)
+
 cnt = 0
 fps = 0
 tstart = time.time()
@@ -37,12 +51,7 @@ def update():
     dt = clock.tick()
     fps = clock.get_fps()
     cnt += 1
-    rebuild_nl = 1
-    if rebuild_nl:
-        m=1
-        nl.build_nl_brute_force()
-        nl.build_nl_verlet()
-    p.update(nl)
+    p.update()
     s.redraw(p,str(fps))    
     return True
 

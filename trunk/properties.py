@@ -41,6 +41,9 @@ def spam_properties(p,nl):
         and smoothed particle
         summation densities for the particle data
         structure
+    
+        todo: move the spam stuff to sp_neighbour list
+    
     """
     # self contribution to rho
     zerokern = spkernel.lucy_kernel(0.0,(0.0,0.0),H)[0]

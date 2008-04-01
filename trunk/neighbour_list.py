@@ -4,7 +4,6 @@
 import numpy
 
 
-CUTOFF_RADIUS = 100
 DIM = 2
 XMAX = 64
 YMAX = 48
@@ -19,11 +18,11 @@ class NeighbourList:
         wij: interpolation kernel between pairs
         dwij: interpolation kernel gradient between pairs
     """
-    def __init__(self,particle):
+    def __init__(self,particle,cutoff):
         self.nip = 0
         self.particle = particle
-        self.cutoff_radius = CUTOFF_RADIUS
-        self.cutoff_radius_sq = CUTOFF_RADIUS**2
+        self.cutoff_radius = cutoff 
+        self.cutoff_radius_sq = cutoff**2
         self.max_interactions = (particle.n * particle.n) / 2 - 1   
         self.iap = numpy.zeros((self.max_interactions,2),dtype=int)
         self.rij = numpy.zeros(self.max_interactions)
@@ -36,11 +35,17 @@ class NeighbourList:
         i=0
         j=0
         self.nip = 0
+        k = 0
         for i in range(self.particle.n):
             for j in range(i+1,self.particle.n):
-               self.iap[self.nip,0] = i
-               self.iap[self.nip,1] = j
-               self.nip=self.nip+1
+                self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
+                self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
+                rsquared = self.drij[k,0]**2 + self.drij[k,1]**2
+                self.rij[k] = numpy.sqrt(rsquared)
+                self.iap[self.nip,0] = i
+                self.iap[self.nip,1] = j
+                self.nip=self.nip+1
+                k = self.nip
 
     def minimum_image(self,dr,xmax,ymax):
         """ applies the minimum image convention to the distance
@@ -72,6 +77,7 @@ class NeighbourList:
                 if (rsquared < cutsq):
                     self.iap[k,0] = i
                     self.iap[k,1] = j
+                    self.rij[k] = numpy.sqrt(rsquared)
                     #self.nip=self.nip+1
                     k += 1
         self.nip = k     
