@@ -10,7 +10,7 @@ import scipy
 import neighbour_list
 
 # CONSTANTS
-CUTOFF_RADIUS = 100
+CUTOFF_RADIUS = 10
 DIM = 2
 COLLISION_RADIUS_SQ = 0.1
 VACUUM_VISCOSITY = 0.1
@@ -39,7 +39,7 @@ class HookesForce(Force):
         self.nl.cutoff_radius_sq = CUTOFF_RADIUS**2 
 
     def apply_force(self,k):
-        """ Takes a particle p and two references i and j
+        """ Takes a particle p and an nlist pair reference k
         """
         # magnitude of force is k(|r-ro|)
         # should calculate this in nlist allocation
