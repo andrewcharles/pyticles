@@ -9,7 +9,7 @@ import spdensity
 import spkernel
 import math
 
-H = 10.0
+H = 5.0
 ADASH = 2.0
 BDASH = 0.5
 KBDASH = 1.0
@@ -47,8 +47,8 @@ def spam_properties(p,nl):
     """
     # self contribution to rho
     zerokern = spkernel.lucy_kernel(0.0,(0.0,0.0),H)[0]
-    for i in range(p.n):
-        p.rho[i] = zerokern
+    #for i in range(p.n):
+    p.rho[0:p.n] = zerokern
 
     # calc the distances, kernels, densities
     for k in range(nl.nip):

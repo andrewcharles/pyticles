@@ -23,12 +23,13 @@ class NeighbourList:
         self.particle = particle
         self.cutoff_radius = cutoff 
         self.cutoff_radius_sq = cutoff**2
-        self.max_interactions = (particle.n * particle.n) / 2 - 1   
+        self.max_interactions = (particle.maxn * particle.maxn) / 2 - 1   
         self.iap = numpy.zeros((self.max_interactions,2),dtype=int)
         self.rij = numpy.zeros(self.max_interactions)
         self.drij = numpy.zeros((self.max_interactions,DIM))
         self.wij = numpy.zeros(self.max_interactions)
         self.dwij = numpy.zeros((self.max_interactions,DIM))
+        self.rebuild_list = False
 
     def build_nl_brute_force(self):
         """ When in doubt, use brute force """
@@ -36,6 +37,7 @@ class NeighbourList:
         j=0
         self.nip = 0
         k = 0
+        self.rebuild_list = False
         for i in range(self.particle.n):
             for j in range(i+1,self.particle.n):
                 self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
@@ -67,12 +69,13 @@ class NeighbourList:
             distance calculation code.
         """
         cutsq = self.cutoff_radius_sq
+        self.rebuild_list = True 
         k = 0
         for i in range(self.particle.n):
             for j in range(i+1,self.particle.n):
                 self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
                 self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
-		self.minimum_image(self.drij[k,:],XMAX/2,YMAX/2)
+		#self.minimum_image(self.drij[k,:],XMAX/2,YMAX/2)
                 rsquared = self.drij[k,0]**2 + self.drij[k,1]**2
                 if (rsquared < cutsq):
                     self.iap[k,0] = i
