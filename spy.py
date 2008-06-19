@@ -53,7 +53,6 @@ def initialise():
 
 def update(dt):
     global cnt,fps,rebuild_nl 
-    s.fps = clock.get_fps()
     cnt += 1
     p.update()
     if cnt >= max_steps:
@@ -62,6 +61,7 @@ def update(dt):
 
 @s.win.event
 def on_draw():
+    s.fps = clock.get_fps()
     s.redraw(p)    
 
 @s.win.event
@@ -71,7 +71,7 @@ def on_key_press(symbol,modifiers):
 
 def main():
     initialise()
-    clock.schedule_interval(update,1/60.0)
+    clock.schedule_interval(update,1/20.0)
     app.run()
     #loop()
 

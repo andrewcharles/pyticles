@@ -20,11 +20,12 @@ import renderspam
 import scipy
 import scipy.ndimage
 import pylab
-#from PIL import Image as pilmage
+from PIL import Image as pilmage
+import scipy.misc.pilutil
 # \todo install python image library
 WINDOW_WIDTH = 640 #640
 WINDOW_HEIGHT = 480 #480
-RES =1
+RES = 1 
 # res greater than 1 is still not registering in the right spot! 
 
 class ParticleView:
@@ -48,61 +49,37 @@ class ParticleView:
         self.ymap = WINDOW_HEIGHT / float(particles.YMAX)
         #self.img = image.load('p.png')
         self.fps = 0
-        self.gridx,self.gridy = renderspam.get_grid_map(0.0,particles.XMAX,0.0,particles.YMAX,RES)  
+        self.gridx,self.gridy = renderspam.get_grid_map(0.0,particles.XMAX,0.0,particles.YMAX,RES)
+        rx,ry = scipy.mgrid[0:WINDOW_WIDTH:1,0:WINDOW_HEIGHT:1]
+        dx = RES*WINDOW_WIDTH/float(particles.XMAX)
+        dy = RES*WINDOW_HEIGHT/float(particles.YMAX)
+        xvals = (rx-dx/RES)/dx #(rx-RES?)
+        yvals = (ry-dy/RES)/dy
+        self.G = numpy.array([xvals,yvals])
+          
 
     def render_density(self,p):
-        """ create an image, and color the pixels,
-            using the vasp module            
+        """ Generates a splashmap, then creates an image the
+            size of the viewing window and interpolates the splashmap
+            onto it.
+            Currently dependent on vasp modules. 
         """ 
-        cutoff=5.0
+        cutoff=p.nl_default.cutoff_radius
         bounds = 0,particles.XMAX,0,particles.YMAX
         Z = interpolate.splash_map(self.gridx,self.gridy,p.r[0:p.n,:],p.m[0:p.n],p.rho[0:p.n],p.rho[0:p.n],p.h[0:p.n],bounds,cutoff)
-        #Z=Z.transpose()
-        #print rx
-        #print ry
-        #print Z.shape 
-        # need to normalise wrt to whatever the color range is
-        # and then figure out where the nan's are coming from
-        #x,y = scipy.ogrid[0:particles.XMAX:RES,0:particles.YMAX:RES]
-        rx,ry = scipy.mgrid[0:WINDOW_WIDTH:1,0:WINDOW_HEIGHT:1]
-        #print x
-        #print y
-        #dx = x[1,0] - x[0,0]
-        #dy = y[0,1] - y[0,0]
-        #xvals = (rx - x[0,0])/dx
-        #yvals = (ry - y[0,0])/dy
-        #dx = self.gridx[1]-self.gridx[0]
-        #dy = self.gridy[1]-self.gridy[0]
-        #dx = WINDOW_WIDTH/self.gridx.shape[0]
-        #dy = WINDOW_HEIGHT/self.gridy.shape[0]
-        dx = float(RES*WINDOW_WIDTH/float(particles.XMAX))
-        dy =float( RES*WINDOW_HEIGHT/float(particles.YMAX))
-        xvals = (rx)/dx #(rx-RES?)
-        yvals = (ry)/dy
-        #yvals = yvals.transpose()
-        G = numpy.array([xvals,yvals])
-        #print "G"
-        # map_coordinates seems to be creating some pixels
-        # with values less than zero, which is fudging up
-        # the rendering, if order >2 is used
-        D = scipy.ndimage.map_coordinates(Z,G,order=1) 
-        #print D.shape
+        D = scipy.ndimage.map_coordinates(Z,self.G,order=1,mode='nearest',prefilter=False)
+        #D = numpy.random.random([640,480])
         # need to create an image the size of the screen
         # and then interpolate based on our splashmap
-        D = 255.*(D/amax(D))
-        #D = D.transpose()
+        D = numpy.rot90(D)
+        D = 255*(D/amax(D))
         D = numpy.flipud(D)
-        #pylab.imshow(D)
-        #pylab.colorbar()
-        #pylab.show()
         D = numpy.cast['uint8'](D)
-        #D = D.astype('uint8')
-        D = scipy.ndimage.rotate(D,270,axes=(0,1))
         A = ArrayInterfaceImage(D)
-        #img = A.texture
-        img = A 
-        img.blit(0,0,0)
-
+        #A = pilmage.fromarray(D,'L')
+        img = A.image_data 
+        #img = pyglet.image.load('wtf.png',A)
+        img.blit(0,0)
 
     def draw_particles(self,p):
         """ issues the opengl commands to draw the 
@@ -119,8 +96,10 @@ class ParticleView:
                 glVertex2f(r[0]+sin(a)*radius,r[1]+cos(a)*radius)
             glEnd()
         
+    def draw_neighbours(self,p):
+        """ issues the opengl commands to draw the 
+            draw lines connecting neighbours """
         for i in range (p.nl_default.nip):
-            """ draw lines connecting neighbours """
             glBegin(GL_LINES)
             glColor3f(1.0,1.0,1.0)
             a = p.nl_default.iap[i,0]
@@ -147,7 +126,9 @@ class ParticleView:
     def redraw(self,p):
         self.win.dispatch_events()
         glClear(GL_COLOR_BUFFER_BIT)
+        glLoadIdentity()
         self.win.clear()
-        #self.render_density(p)
+        self.render_density(p)
         self.hud(p)
-        self.draw_particles(p)
+        #self.draw_particles(p)
+        #self.draw_neighbours(p)
