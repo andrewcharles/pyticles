@@ -1,12 +1,12 @@
 """
     Neighbour list class that works with particle and force
+    Copyright Andrew Charles 2008
+    All rights reserved.
 """
 import numpy
 
 
 DIM = 2
-XMAX = 64
-YMAX = 48
 
 class NeighbourList:
     """ A neighbour list that works with the Particle and Force class """

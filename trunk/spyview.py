@@ -25,7 +25,7 @@ import scipy.misc.pilutil
 # \todo install python image library
 WINDOW_WIDTH = 640 #640
 WINDOW_HEIGHT = 480 #480
-RES = 1 
+RES =  2
 # res greater than 1 is still not registering in the right spot! 
 
 class ParticleView:
@@ -64,7 +64,9 @@ class ParticleView:
             onto it.
             Currently dependent on vasp modules. 
         """ 
-        cutoff=p.nl_default.cutoff_radius
+        glColor3f(1.0,0.0,0.0)
+        #cutoff=p.nl_default.cutoff_radius
+        cutoff=3
         bounds = 0,particles.XMAX,0,particles.YMAX
         Z = interpolate.splash_map(self.gridx,self.gridy,p.r[0:p.n,:],p.m[0:p.n],p.rho[0:p.n],p.rho[0:p.n],p.h[0:p.n],bounds,cutoff)
         D = scipy.ndimage.map_coordinates(Z,self.G,order=1,mode='nearest',prefilter=False)
@@ -101,7 +103,7 @@ class ParticleView:
             draw lines connecting neighbours """
         for i in range (p.nl_default.nip):
             glBegin(GL_LINES)
-            glColor3f(1.0,1.0,1.0)
+            glColor3f(0.3,0.3,0.0)
             a = p.nl_default.iap[i,0]
             b = p.nl_default.iap[i,1]
             glVertex2f(p.r[a,0]*self.xmap,p.r[a,1]*self.ymap)
@@ -130,5 +132,5 @@ class ParticleView:
         self.win.clear()
         self.render_density(p)
         self.hud(p)
-        #self.draw_particles(p)
         #self.draw_neighbours(p)
+        #self.draw_particles(p)
