@@ -15,7 +15,7 @@ BDASH = 0.5
 KBDASH = 1.0
 RHONAUGHT = 1.0
 
-def ideal_isothermal(rho):
+def ideal_isothermal(rho,t):
     """ Calculates the pressure from the kinetic
         equation of state. 
         Isothermal equation of state
@@ -23,17 +23,23 @@ def ideal_isothermal(rho):
     return (rho * KBDASH)
 
 
-def art_water(rho):
+def art_water(rho,t):
     """ Equation of state. Isothermal, with a reference density.
         Models a compressible liquid.
     """
     return ((rho - RHONAUGHT)*KBDASH)
 
+def vdw(rho,t):
+    """ Van der Waals repulsive pressure.
+    """
+    return (rho*KBDASH*t)/(1-rho*BDASH), - ADASH*rho*rho
+    
+
 
 #calc_pressure = art_water
-calc_pressure = ideal_isothermal
+calc_pressure = vdw
 
-def spam_properties(p,nl):
+def spam_properties(p,nl,h):
     """ Calculates and assigns:
         interparticle distances and displacements
         kernel values
@@ -46,7 +52,7 @@ def spam_properties(p,nl):
     
     """
     # self contribution to rho
-    zerokern = spkernel.lucy_kernel(0.0,(0.0,0.0),H)[0]
+    zerokern = spkernel.lucy_kernel(0.0,(0.0,0.0),h)[0]
     #for i in range(p.n):
     p.rho[0:p.n] = zerokern
 
@@ -60,13 +66,19 @@ def spam_properties(p,nl):
         rsquared = nl.drij[k,0]**2 + nl.drij[k,1]**2 
         nl.rij[k] = math.sqrt(rsquared)
 
-        nl.wij[k], nl.dwij[k] = spkernel.lucy_kernel(nl.rij[k],nl.drij[k,:],H)
+        nl.wij[k], nl.dwij[k] = spkernel.lucy_kernel(nl.rij[k],nl.drij[k,:],h)
 
         p.rho[i] += nl.wij[k] * p.m[j]
         p.rho[j] += nl.wij[k] * p.m[i]
 
+        p.rho[i] += nl.wij[k] * p.m[j]
+        p.rho[j] += nl.wij[k] * p.m[i]
+
+
     for i in range(p.n):
-        p.p[i] = calc_pressure(p.rho[i])
+        # todo add some logic to determine whether we have a one or two part
+        # pressure
+        p.p[i,:] = calc_pressure(p.rho[i],p.t[i])
 
         
 

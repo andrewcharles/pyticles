@@ -3,6 +3,8 @@
     for a particle system and associated neighbour list.
     Might be worth going back and abstracting some of the higher level stuff
     out, applying some good OO principles.
+    Copyright Andrew Charles 2008
+    All rights reserved.
 """
 
 import random
@@ -13,19 +15,21 @@ import neighbour_list
 import properties
 import scipy
 import integrator
+import configuration
+import box
 #from Numeric import *
 #import pdb
 
-dt = 0.001
+dt = 0.05
 XMAX = 64 #64
-YMAX = 48 #48
-N = 20 
+YMAX = 32 #48
+N = 25 
 MAXN =100 
 DIM = 2
-VMAX = 300.1
-CUTOFF_RADIUS = 3
+VMAX = 0.1
+CUTOFF_RADIUS =6 
 VACUUM_VISCOSITY = 0.1
-NVARS = 7
+NVARS = 8 # this is now 8 with pco
 RAMAL = 0.0 
 VSPLIT = 20.0 
 rhosplit = 0.0
@@ -34,42 +38,6 @@ rhosplit = 0.0
 # variables for the integrator - put these somewhere cleaver
 verbose = False
 
-class Box:
-    
-    def __init__(self,p):
-        self.p = p
-
-    def min_image(r):
-        print "does not exist yet"
-
-    def apply_periodic_bounds(self,p):
-         """ applies periodic boundaries """
-         for i in range(p.n):
-            if p.r[i,0] > XMAX:
-                p.r[i,0] = 0
-            if p.r[i,0] < 0:
-                p.r[i,0] = XMAX
-            if p.r[i,1] > YMAX:
-                p.r[i,1] = 0
-            if p.r[i,1] < 0:
-                p.r[i,1] = YMAX
-
-    def apply_mirror_bounds(self,p):
-         """ applies periodic boundaries """
-         for i in range(p.n):
-            if p.r[i,0] > XMAX:
-                p.r[i,0] = XMAX
-                p.v[i,0] = -p.v[i,0]
-            if p.r[i,0] < 0:
-                p.r[i,0] = 0
-                p.v[i,0] = -p.v[i,0]
-            if p.r[i,1] > YMAX:
-                p.r[i,1] = YMAX 
-                p.v[i,1] = -p.v[i,1]
-            if p.r[i,1] < 0:
-                p.r[i,1] = 0
-                p.v[i,1] = -p.v[i,1]
-
 
 class Particles:
     """ A group of similar particles """
@@ -77,7 +45,7 @@ class Particles:
         self.n = N
         self.maxn = MAXN
         self.dim = DIM 
-        self.box = Box(self)
+        self.box = box.Box(self)
         self.V_split = VSPLIT
         self.r_amalg = RAMAL
         
@@ -85,33 +53,47 @@ class Particles:
         self.m = numpy.zeros(self.maxn)
         self.m[:] = 1.
         self.h = numpy.zeros(self.maxn)
-        self.h[:] = 5.
+        self.h[:] = 6.
         self.v = VMAX * (numpy.random.random([self.maxn,2]) - 0.5)
-        self.r = XMAX * numpy.random.random([self.maxn,self.dim])
+        self.r = self.box.xmax * numpy.random.random([self.maxn,self.dim])
         self.rdot = numpy.zeros(self.r.shape)
         self.vdot = numpy.zeros(self.r.shape)
+       
+        #thermal properties
+        self.t = numpy.ones(self.maxn)
+        self.t[:] = 0.2
+ 
+        #def grid(n,xside,yside,origin,spacing=1.0):
+        self.r[0:self.n] = configuration.grid(self.n,5,5,(20,20),spacing=2)
         
         # sph properties
         self.rho = numpy.zeros(self.maxn)
         # pressure is just a scalar for now but this will
         # become the full pressure tensor in time.
-        self.p = numpy.zeros(self.maxn)
+
+        # I added another dimension to pressure, so that we have
+        # the cohesive pressure and the repulsive pressure
+        self.p = numpy.zeros([self.maxn,2])
         
         self.nforce = 0
         self.forces = []
         self.nlists = []
+        # the next line just creates a placeholder list
         self.nl_default = neighbour_list.NeighbourList(self,10.0)
         
         self.rebuild_lists()
-        properties.spam_properties(self,self.nl_default)
+        for nl in self.nlists: 
+            properties.spam_properties(self,nl,nl.cutoff_radius)
 
         self.x = numpy.zeros([NVARS,self.maxn])
         self.xdot = numpy.zeros([NVARS,self.maxn])
+
 
     def add_force(self,f):
         """ Adds a force to a particle system """
         self.forces.append(f)
         self.nforce += 1
+
 
     def split(self,i):
         """ Splits particle i into a ragtag collection of four
@@ -209,8 +191,10 @@ class Particles:
         self.check_refine()
         self.check_amalg(self.nl_default) 
         self.rebuild_lists()
-        properties.spam_properties(self,self.nl_default)
         self.derivatives()
+        
+        for nl in self.nlists: 
+            properties.spam_properties(self,nl,nl.cutoff_radius)
         # now integrate numerically
         integrator.rk4(self.gather_state,self.derivatives, \
                        self.gather_derivatives,self.scatter_state,dt)
@@ -234,7 +218,9 @@ class Particles:
         self.x[3,0:self.n] = self.v[0:self.n,0]
         self.x[4,0:self.n] = self.v[0:self.n,1]
         self.x[5,0:self.n] = self.rho[0:self.n]
-        self.x[6,0:self.n] = self.p[0:self.n]
+        self.x[6,0:self.n] = self.p[0:self.n,0]
+        # added second component of pressure
+        self.x[7,0:self.n] = self.p[0:self.n,1]
         return(self.x)
 
     def scatter_state(self,x):
@@ -246,7 +232,8 @@ class Particles:
         self.v[0:self.n:,0] = x[3,0:self.n]
         self.v[0:self.n:,1] = x[4,0:self.n]
         self.rho[0:self.n] = x[5,0:self.n]
-        self.p[0:self.n] = x[6,0:self.n]
+        self.p[0:self.n,0] = x[6,0:self.n]
+        self.p[0:self.n,1] = x[7,0:self.n]
 
     def gather_derivatives(self):
         """ Maps particle system's derivatives to a state vector
@@ -258,6 +245,7 @@ class Particles:
         self.xdot[4,0:self.n] = self.vdot[0:self.n,1]
         self.xdot[5,0:self.n] = 0
         self.xdot[6,0:self.n] = 0
+        self.xdot[7,0:self.n] = 0
         return self.xdot
 
     def derivatives(self):
@@ -272,7 +260,8 @@ class Particles:
     
         for force in self.forces:
             # check rebuild condition and rebuild if needed
-            force.nl.build_nl_verlet()
+            if force.nl.rebuild_list:
+                force.nl.build_nl_verlet()
             force.apply()
    #     forces.apply_forces(self,nl)
 

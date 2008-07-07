@@ -12,7 +12,7 @@ import neighbour_list
 # CONSTANTS
 CUTOFF_RADIUS = 10
 DIM = 2
-COLLISION_RADIUS_SQ = 0.1
+COLLISION_RADIUS_SQ = 1.0
 VACUUM_VISCOSITY = 0.1
 spring_k = 10.1
 rest_distance =  0.2
@@ -80,7 +80,7 @@ class CollisionForce(Force):
         """
 
         if self.nl.rij[k]**2 > self.nl.cutoff_radius_sq:
-            print "toofar"
+            #print "toofar"
             return
         i = self.nl.iap[k,0]
         j = self.nl.iap[k,1]
@@ -150,7 +150,7 @@ class SpamForce(Force):
     def __init__(self,particles,nl):
         self.p = particles
         self.nl = nl
-        self.nl.cutoff_radius_sq = CUTOFF_RADIUS**2
+        #self.nl.cutoff_radius_sq = CUTOFF_RADIUS**2
 
     def apply_force(self,k):
         """ Calculates spam interaction between two particles.
@@ -160,9 +160,45 @@ class SpamForce(Force):
         i = self.nl.iap[k,0]
         j = self.nl.iap[k,1]
         p = self.p
+        # todo add some logic to deal with one or 2 component pressure
+        pri = self.p.p[i,0]
+        prj = self.p.p[j,0]
         dwdx = self.nl.dwij[k,:]
-        dvx =  -(p.p[i]/p.rho[i]**2 + p.p[j]/p.rho[j]**2) * dwdx[0]
-        dvy =  -(p.p[i]/p.rho[i]**2 + p.p[j]/p.rho[j]**2) * dwdx[1]
+        dvx =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[0]
+        dvy =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[1]
+        p.vdot[i,0] += dvx
+        p.vdot[i,1] += dvy
+        p.vdot[j,0] += -dvx
+        p.vdot[j,1] += -dvy
+
+        ### derived properties
+        # force accumulator
+        # internal energy
+        # smoothing length
+        # udot accumulator (sphforce(rho,q,p)
+        # Q heat flux tensor
+        # P pressure tensor ( eos(rho,t) )
+
+class CohesiveSpamForce(Force):
+    
+    def __init__(self,particles,nl):
+        self.p = particles
+        self.nl = nl
+        #self.nl.cutoff_radius_sq = CUTOFF_RADIUS**2
+
+    def apply_force(self,k):
+        """ Calculates spam interaction between two particles.
+            The spam density must have already been calculated.
+        """
+        #def spam(p,i,j,dwdx):
+        i = self.nl.iap[k,0]
+        j = self.nl.iap[k,1]
+        pri = self.p.p[i,1]
+        prj = self.p.p[j,1]
+        p = self.p
+        dwdx = self.nl.dwij[k,:]
+        dvx =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[0]
+        dvy =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[1]
         p.vdot[i,0] += dvx
         p.vdot[i,1] += dvy
         p.vdot[j,0] += -dvx
