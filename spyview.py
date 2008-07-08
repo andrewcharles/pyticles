@@ -3,6 +3,10 @@
     Copyright Andrew Charles 2008
     All rights reserved.
     This module is new BSD licensed.
+
+    To mess around with the various (all 3...) visualisation
+    options edit the function redraw()
+
 """
 
 import sys
@@ -25,7 +29,6 @@ import scipy.ndimage
 import pylab
 from PIL import Image as pilmage
 import scipy.misc.pilutil
-# \todo install python image library
 WINDOW_WIDTH = 640 #640
 WINDOW_HEIGHT = 480 #480
 RES =  2
@@ -102,8 +105,8 @@ class ParticleView:
             glEnd()
         
     def draw_neighbours(self,p):
-        """ issues the opengl commands to draw the 
-            draw lines connecting neighbours """
+        """ issues the opengl commands to draw 
+            lines connecting neighbours """
         for i in range (p.nl_default.nip):
             glBegin(GL_LINES)
             glColor3f(0.3,0.3,0.0)
@@ -133,7 +136,7 @@ class ParticleView:
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
         self.win.clear()
-        self.render_density(p)
+        #self.render_density(p)
         self.hud(p)
-        #self.draw_neighbours(p)
-        #self.draw_particles(p)
+        self.draw_neighbours(p)
+        self.draw_particles(p)
