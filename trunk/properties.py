@@ -1,10 +1,15 @@
 """ The idea behind this module - it is for calculating sph densities,
     interparticle distances and any other properties that are
     needed before computing the rates of change.
+    
+    Copyright Andrew Charles 2008
+    All rights reserved.
+    This module is new BSD licensed.
+
 """
 
 import sys
-sys.path.append("../vasp")
+#sys.path.append("../vasp")
 import spdensity
 import spkernel
 import math
