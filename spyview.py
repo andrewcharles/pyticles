@@ -1,5 +1,9 @@
-
-# viewer module for particle system
+"""
+    Viewer module for particle system
+    Copyright Andrew Charles 2008
+    All rights reserved.
+    This module is new BSD licensed.
+"""
 
 import sys
 import particles
@@ -13,7 +17,6 @@ from pygarrayimage.arrayimage import ArrayInterfaceImage
 from pylab import *
 import pdb
 
-sys.path.append("../../vasp")
 import spkernel
 import interpolate
 import renderspam

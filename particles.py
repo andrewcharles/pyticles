@@ -5,6 +5,7 @@
     out, applying some good OO principles.
     Copyright Andrew Charles 2008
     All rights reserved.
+    This module is new BSD licensed.
 """
 
 import random
