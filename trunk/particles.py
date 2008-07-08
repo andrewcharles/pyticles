@@ -1,8 +1,6 @@
 """
     Particle system model. Contains data structures and basic functions
     for a particle system and associated neighbour list.
-    Might be worth going back and abstracting some of the higher level stuff
-    out, applying some good OO principles.
     Copyright Andrew Charles 2008
     All rights reserved.
     This module is new BSD licensed.
