@@ -13,12 +13,14 @@ import sys
 import spdensity
 import spkernel
 import math
+import numpy
 
-H = 5.0
+H = 3.0
 ADASH = 2.0
 BDASH = 0.5
 KBDASH = 1.0
 RHONAUGHT = 1.0
+ADKE = True
 
 def ideal_isothermal(rho,t):
     """ Calculates the pressure from the kinetic
@@ -78,6 +80,17 @@ def spam_properties(p,nl,h):
 
         p.rho[i] += nl.wij[k] * p.m[j]
         p.rho[j] += nl.wij[k] * p.m[i]
+
+
+    if ADKE:
+        # We are using adaptive density kernel estimation
+        # the density calculated above was just a pilot
+        # the smoothing length above is the reference length
+        KSC = 1.0
+        SENS = 0.5
+        rhoav = numpy.mean(p.rho)
+        p.h = H * KSC * ((p.rho/rhoav)**SENS)
+        
 
 
     for i in range(p.n):

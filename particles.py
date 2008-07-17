@@ -19,7 +19,7 @@ import box
 #from Numeric import *
 #import pdb
 
-dt = 0.05
+dt = 0.01
 XMAX = 64 #64
 YMAX = 32 #48
 N = 25 
@@ -32,6 +32,7 @@ NVARS = 8 # this is now 8 with pco
 RAMAL = 0.0 
 VSPLIT = 20.0 
 rhosplit = 0.0
+ADKE = True # Sigalotti style adaptive density kernel estimation
 # make the mins just 0
 
 # variables for the integrator - put these somewhere cleaver
