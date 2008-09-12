@@ -22,7 +22,7 @@ import box
 dt = 0.01
 XMAX = 64 #64
 YMAX = 32 #48
-N = 25 
+N = 9 
 MAXN =100 
 DIM = 2
 VMAX = 0.1
@@ -40,9 +40,14 @@ verbose = False
 
 
 class Particles:
-    """ A group of similar particles """
-    def __init__(self):
-        self.n = N
+    """ A group of similar particles 
+
+
+
+        colour: a 3 tuple giving the RGB colour to render the particles in
+    """
+    def __init__(self,n):
+        self.n = n
         self.maxn = MAXN
         self.dim = DIM 
         self.box = box.Box(self)
@@ -65,7 +70,7 @@ class Particles:
  
         #def grid(n,xside,yside,origin,spacing=1.0):
         self.r[0:self.n] = configuration.grid(self.n,5,5,(20,20),spacing=2)
-        
+        self.colour = 1.0,0.0,0.0 
         # sph properties
         self.rho = numpy.zeros(self.maxn)
         # pressure is just a scalar for now but this will
@@ -75,8 +80,6 @@ class Particles:
         # the cohesive pressure and the repulsive pressure
         self.p = numpy.zeros([self.maxn,2])
         
-        self.nforce = 0
-        self.forces = []
         self.nlists = []
         # the next line just creates a placeholder list
         self.nl_default = neighbour_list.NeighbourList(self,10.0)
@@ -87,12 +90,6 @@ class Particles:
 
         self.x = numpy.zeros([NVARS,self.maxn])
         self.xdot = numpy.zeros([NVARS,self.maxn])
-
-
-    def add_force(self,f):
-        """ Adds a force to a particle system """
-        self.forces.append(f)
-        self.nforce += 1
 
 
     def split(self,i):
@@ -258,10 +255,11 @@ class Particles:
         #hookes law
         self.vdot[:,:] = 0.0
     
-        for force in self.forces:
-            # check rebuild condition and rebuild if needed
-            if force.nl.rebuild_list:
-                force.nl.build_nl_verlet()
-            force.apply()
+        for nl in self.nlists: 
+            if nl.rebuild_list:
+                nl.build_nl_verlet()
+            for force in nl.forces:
+                force.apply()
+
    #     forces.apply_forces(self,nl)
 
