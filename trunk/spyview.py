@@ -98,7 +98,7 @@ class ParticleView:
         #    self.img.blit(p.r[i,0],p.r[i,1])
             r = p.r[i,0] * self.xmap, p.r[i,1] * self.ymap
             glBegin(GL_POLYGON)
-            glColor3f(1.0,0.0,0.0)
+            glColor3f(p.colour[0],p.colour[1],p.colour[2])
             for angle in range(6):
                 a = radians(angle*60)
                 glVertex2f(r[0]+sin(a)*radius,r[1]+cos(a)*radius)
@@ -129,13 +129,17 @@ class ParticleView:
         self.npart.draw()
         self.maxvol.text = "V_max: "+ str(max(p.m[0:p.n]/p.rho[0:p.n]))
         self.maxvol.draw()
- 
-        
-    def redraw(self,p):
+
+    def clear(self): 
         self.win.dispatch_events()
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
         self.win.clear()
+        
+    def redraw(self,p):
+        #self.win.dispatch_events()
+        #glClear(GL_COLOR_BUFFER_BIT)
+        #glLoadIdentity()
         #self.render_density(p)
         self.hud(p)
         self.draw_neighbours(p)
