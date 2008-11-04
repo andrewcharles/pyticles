@@ -150,8 +150,9 @@ class ParticleView:
         #self.win.dispatch_events()
         #glClear(GL_COLOR_BUFFER_BIT)
         #glLoadIdentity()
-        self.render_density(p)
+        #self.render_density(p)
         self.hud(p)
         self.draw_neighbours(p)
         self.draw_particles(p)
-        self.draw_particle_sprites(p)
+        #self.draw_particle_sprites(p)
+
