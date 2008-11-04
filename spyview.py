@@ -20,7 +20,6 @@ from pygarrayimage.arrayimage import ArrayInterfaceImage
 
 from pylab import *
 import pdb
-
 import spkernel
 import interpolate
 import renderspam
@@ -31,14 +30,14 @@ from PIL import Image as pilmage
 import scipy.misc.pilutil
 WINDOW_WIDTH = 640 #640
 WINDOW_HEIGHT = 480 #480
-RES =  2
+RES = 0.1 
 # res greater than 1 is still not registering in the right spot! 
 
 class ParticleView:
     " A particle viewer"
     def __init__(self):
         #config = Config(alpha_size=8)
-        self.win = pyglet.window.Window(WINDOW_WIDTH,WINDOW_HEIGHT,visible=False)
+        self.win = pyglet.window.Window(WINDOW_WIDTH,WINDOW_HEIGHT,visible=False,caption='Pyticles')
         self.fps = 0
         self.fpslab = pyglet.text.Label("Hello pyglet",font_name="Arial", \
         font_size=12,color =(255,0,0,255),x=10,y=400 )
@@ -53,9 +52,10 @@ class ParticleView:
         # multipliers to map system to screen coordinates
         self.xmap = WINDOW_WIDTH / float(particles.XMAX)
         self.ymap = WINDOW_HEIGHT / float(particles.YMAX)
-        #self.img = image.load('p.png')
+        self.img = pyglet.image.load('p.png')
         self.fps = 0
-        self.gridx,self.gridy = renderspam.get_grid_map(0.0,particles.XMAX,0.0,particles.YMAX,RES)
+        self.gridx,self.gridy = renderspam.get_grid_map(0.0,particles.XMAX, \
+        0.0,particles.YMAX,RES)
         rx,ry = scipy.mgrid[0:WINDOW_WIDTH:1,0:WINDOW_HEIGHT:1]
         dx = RES*WINDOW_WIDTH/float(particles.XMAX)
         dy = RES*WINDOW_HEIGHT/float(particles.YMAX)
@@ -70,22 +70,25 @@ class ParticleView:
             onto it.
             Currently dependent on vasp modules. 
         """ 
-        glColor3f(1.0,0.0,0.0)
+        glColor3f(1.0,1.0,1.0)
         #cutoff=p.nl_default.cutoff_radius
-        cutoff=3
+        cutoff=5
         bounds = 0,particles.XMAX,0,particles.YMAX
-        Z = interpolate.splash_map(self.gridx,self.gridy,p.r[0:p.n,:],p.m[0:p.n],p.rho[0:p.n],p.rho[0:p.n],p.h[0:p.n],bounds,cutoff)
-        D = scipy.ndimage.map_coordinates(Z,self.G,order=1,mode='nearest',prefilter=False)
+        Z = interpolate.splash_map(self.gridx,self.gridy,p.r[0:p.n,:], \
+            p.m[0:p.n],p.rho[0:p.n],p.rho[0:p.n],p.h[0:p.n],bounds,cutoff)
+        D = scipy.ndimage.map_coordinates(Z,self.G,order=1,mode='nearest', \
+            prefilter=False)
         #D = numpy.random.random([640,480])
         # need to create an image the size of the screen
         # and then interpolate based on our splashmap
         D = numpy.rot90(D)
-        D = 255*(D/amax(D))
+        #print amax(D/amax(D))
+        D = 255.*(D/amax(D))
         D = numpy.flipud(D)
         D = numpy.cast['uint8'](D)
         A = ArrayInterfaceImage(D)
+        img = A.image_data
         #A = pilmage.fromarray(D,'L')
-        img = A.image_data 
         #img = pyglet.image.load('wtf.png',A)
         img.blit(0,0)
 
@@ -103,6 +106,13 @@ class ParticleView:
                 a = radians(angle*60)
                 glVertex2f(r[0]+sin(a)*radius,r[1]+cos(a)*radius)
             glEnd()
+
+    def draw_particle_sprites(self,p):
+        """ Draws particles as sprites.
+        """
+        for i in range(p.n):
+            self.img.blit(self.xmap*p.r[i,0],self.ymap*p.r[i,1])
+
         
     def draw_neighbours(self,p):
         """ issues the opengl commands to draw 
@@ -140,7 +150,8 @@ class ParticleView:
         #self.win.dispatch_events()
         #glClear(GL_COLOR_BUFFER_BIT)
         #glLoadIdentity()
-        #self.render_density(p)
+        self.render_density(p)
         self.hud(p)
         self.draw_neighbours(p)
         self.draw_particles(p)
+        self.draw_particle_sprites(p)

@@ -20,7 +20,7 @@ ADASH = 2.0
 BDASH = 0.5
 KBDASH = 1.0
 RHONAUGHT = 1.0
-ADKE = True
+ADKE = False
 
 def ideal_isothermal(rho,t):
     """ Calculates the pressure from the kinetic
