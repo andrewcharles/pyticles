@@ -19,21 +19,23 @@ import box
 #from Numeric import *
 #import pdb
 
-dt = 0.01
+dt = 0.1
 XMAX = 64 #64
 YMAX = 32 #48
-N = 9 
+N = 25 
 MAXN =100 
 DIM = 2
 VMAX = 0.1
 CUTOFF_RADIUS =6 
 VACUUM_VISCOSITY = 0.1
 NVARS = 8 # this is now 8 with pco
-RAMAL = 0.0 
-VSPLIT = 20.0 
+RAMAL = 0.5  #Amalgamation radius
+VSPLIT = 10.0 
 rhosplit = 0.0
 ADKE = True # Sigalotti style adaptive density kernel estimation
 # make the mins just 0
+AMALGAMATE = False
+SPLIT = False
 
 # variables for the integrator - put these somewhere cleaver
 verbose = False
@@ -58,7 +60,7 @@ class Particles:
         self.m = numpy.zeros(self.maxn)
         self.m[:] = 1.
         self.h = numpy.zeros(self.maxn)
-        self.h[:] = 6.
+        self.h[:] = 3.
         self.v = VMAX * (numpy.random.random([self.maxn,2]) - 0.5)
         self.r = self.box.xmax * numpy.random.random([self.maxn,self.dim])
         self.rdot = numpy.zeros(self.r.shape)
@@ -66,10 +68,10 @@ class Particles:
        
         #thermal properties
         self.t = numpy.ones(self.maxn)
-        self.t[:] = 0.2
+        self.t[:] = 0.4
  
         #def grid(n,xside,yside,origin,spacing=1.0):
-        self.r[0:self.n] = configuration.grid(self.n,5,5,(20,20),spacing=2)
+        self.r[0:self.n] = configuration.grid(self.n,5,5,(20,20),spacing=0.8)
         self.colour = 1.0,0.0,0.0 
         # sph properties
         self.rho = numpy.zeros(self.maxn)
@@ -185,8 +187,10 @@ class Particles:
         """
         # how to check that p is of class Particle?
 
-        self.check_refine()
-        self.check_amalg(self.nl_default) 
+        if SPLIT:
+            self.check_refine()
+        if AMALGAMATE:
+            self.check_amalg(self.nl_default) 
         self.rebuild_lists()
         self.derivatives()
         
