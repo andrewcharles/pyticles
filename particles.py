@@ -42,10 +42,7 @@ verbose = False
 
 
 class Particles:
-    """ A group of similar particles 
-
-
-
+    """ A group of similar particles. 
         colour: a 3 tuple giving the RGB colour to render the particles in
     """
     def __init__(self,n):
@@ -137,6 +134,14 @@ class Particles:
         self.n = self.n+3
         #print "There are now ",self.n,"particles"
         return True
+
+    def create_particle(self,x,y):
+        self.r[self.n] = x,y
+        self.m[self.n] = self.m[self.n-1] 
+        self.v[self.n] = 0,0
+        self.n = self.n+1
+        for nl in self.nlists: 
+            nl.rebuild_list = True
 
     def check_refine(self):
         split = False
