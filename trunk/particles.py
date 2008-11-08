@@ -21,7 +21,7 @@ import box
 
 dt = 0.1
 XMAX = 64 #64
-YMAX = 32 #48
+YMAX = 48 #48
 N = 25 
 MAXN =100 
 DIM = 2
