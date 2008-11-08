@@ -41,7 +41,6 @@ class NeighbourList:
         self.nforce = 0
         self.forces = []
 
-
     def build_nl_brute_force(self):
         """ When in doubt, use brute force """
         i=0

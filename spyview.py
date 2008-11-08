@@ -28,10 +28,9 @@ import scipy.ndimage
 import pylab
 from PIL import Image as pilmage
 import scipy.misc.pilutil
-WINDOW_WIDTH = 640 #640
-WINDOW_HEIGHT = 480 #480
-RES = 0.1 
-# res greater than 1 is still not registering in the right spot! 
+WINDOW_WIDTH = 640
+WINDOW_HEIGHT = 480
+RES = 2.1 
 
 class ParticleView:
     " A particle viewer"
@@ -40,13 +39,13 @@ class ParticleView:
         self.win = pyglet.window.Window(WINDOW_WIDTH,WINDOW_HEIGHT,visible=False,caption='Pyticles')
         self.fps = 0
         self.fpslab = pyglet.text.Label("Hello pyglet",font_name="Arial", \
-        font_size=12,color =(255,0,0,255),x=10,y=400 )
+        font_size=12,color =(255,0,0,255),x=10,y=4 )
         self.npart = pyglet.text.Label("Hello pyglet",font_name="Arial", \
-        font_size=12,color =(255,0,0,255),x=10,y=380 )
+        font_size=12,color =(255,0,0,255),x=100,y=4 )
         self.nebs = pyglet.text.Label("Hello pyglet",font_name="Arial", \
-        font_size=12,color =(255,0,0,255),x=10,y=360 )
+        font_size=12,color =(255,0,0,255),x=10,y=18 )
         self.maxvol = pyglet.text.Label("Hello pyglet",font_name="Arial", \
-        font_size=12,color =(255,0,0,255),x=10,y=340 )
+        font_size=12,color =(255,0,0,255),x=100,y=18 )
         
         self.win.set_visible()
         # multipliers to map system to screen coordinates
@@ -54,13 +53,16 @@ class ParticleView:
         self.ymap = WINDOW_HEIGHT / float(particles.YMAX)
         self.img = pyglet.image.load('p.png')
         self.fps = 0
+        # gridx,gridy is a grid at the rendering resolution
         self.gridx,self.gridy = renderspam.get_grid_map(0.0,particles.XMAX, \
         0.0,particles.YMAX,RES)
+        # rx,ry is a pixel grid
         rx,ry = scipy.mgrid[0:WINDOW_WIDTH:1,0:WINDOW_HEIGHT:1]
         dx = RES*WINDOW_WIDTH/float(particles.XMAX)
         dy = RES*WINDOW_HEIGHT/float(particles.YMAX)
-        xvals = (rx-dx/RES)/dx #(rx-RES?)
-        yvals = (ry-dy/RES)/dy
+        #xvals = (rx-dx/RES)/dx #(rx-RES?)
+        xvals = (rx-dx/2)/dx #(rx-RES?)
+        yvals = (ry-dy/2)/dy
         self.G = numpy.array([xvals,yvals])
           
 
@@ -131,13 +133,13 @@ class ParticleView:
         k = 20
         xi = 10
         yi = 450
-        self.fpslab.text = "fps: "+str(self.fps)
+        self.fpslab.text = "fps: %4.2f" %(self.fps)
         self.fpslab.draw()
         self.nebs.text = "n: "+str(p.n)
         self.nebs.draw()
         self.npart.text = "pairs: "+str(p.nl_default.nip)
         self.npart.draw()
-        self.maxvol.text = "V_max: "+ str(max(p.m[0:p.n]/p.rho[0:p.n]))
+        self.maxvol.text = "max vol: %4.2f" %(max(p.m[0:p.n]/p.rho[0:p.n]))
         self.maxvol.draw()
 
     def clear(self): 
@@ -150,9 +152,9 @@ class ParticleView:
         #self.win.dispatch_events()
         #glClear(GL_COLOR_BUFFER_BIT)
         #glLoadIdentity()
-        #self.render_density(p)
+        self.render_density(p)
         self.hud(p)
-        self.draw_neighbours(p)
+        #self.draw_neighbours(p)
         self.draw_particles(p)
         #self.draw_particle_sprites(p)
 
