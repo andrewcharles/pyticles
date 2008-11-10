@@ -41,6 +41,7 @@ class Force:
         for k in range(self.nl.nip):
             self.apply_force(k)
 
+
 class HookesForce(Force):
     def __init__(self,particles1,particles2,nl):
         self.p1 = particles1
@@ -83,8 +84,8 @@ class CollisionForce(Force):
         self.p1 = particles1
         self.p2 = particles2
         self.nl = nl
-        self.nl.build_nl_brute_force()
-        self.nl.cutoff_radius_sq = COLLISION_RADIUS_SQ 
+        #self.nl.build_nl_brute_force()
+        #self.nl.cutoff_radius_sq = COLLISION_RADIUS_SQ 
 
     def apply_force(self,k):
         """ A hard collision is just an instantanous force. More
@@ -158,7 +159,6 @@ class CollisionForce(Force):
             exit()
 
 
-
 class SpamForce(Force):
     
     def __init__(self,particles,nl):
@@ -193,6 +193,7 @@ class SpamForce(Force):
         # Q heat flux tensor
         # P pressure tensor ( eos(rho,t) )
 
+
 class CohesiveSpamForce(Force):
     
     def __init__(self,particles,nl):
@@ -225,3 +226,51 @@ class CohesiveSpamForce(Force):
         # udot accumulator (sphforce(rho,q,p)
         # Q heat flux tensor
         # P pressure tensor ( eos(rho,t) )
+
+
+class Gravity(Force):
+    """Controller that attracts other objects with an inverse square force.
+
+       Acceleration of affected particles is computed as 
+
+                dv/dt = (g*M)/r^2
+
+       and directed towards the centre of the attractive domain.
+
+       To do:
+        - can we speed up the sqrt and vector ops?
+        - look ahead one frame for position?
+
+    """
+    def __init__(self,particles1,particles2,nl):
+        self.p1 = particles1
+        self.p2 = particles2
+        self.nl = nl
+        self.g = 03.
+
+    def apply_force(self,k):
+        """ Calculates spam interaction between two particles.
+            The spam density must have already been calculated.
+        """
+        i = self.nl.iap[k,0]
+        j = self.nl.iap[k,1]
+
+        p1 = self.p1
+        p2 = self.p2
+
+        drx =  self.nl.drij[k,0] 
+        dry =  self.nl.drij[k,1]
+        rdist = self.nl.rij[k]
+        rsquared = rdist**2 
+
+        fmag = self.g*p1.m[i]*p2.m[j]/rsquared
+
+        #resolve into components
+        dvx = fmag * ( drx ) / rdist
+        dvy = fmag * ( dry ) / rdist
+        p1.vdot[i,0] += dvx
+        p1.vdot[i,1] += dvy
+        p2.vdot[j,0] += -dvx
+        p2.vdot[j,1] += -dvy
+        
+
