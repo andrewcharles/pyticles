@@ -36,6 +36,7 @@ ADKE = True # Sigalotti style adaptive density kernel estimation
 # make the mins just 0
 AMALGAMATE = False
 SPLIT = False
+ADVECTIVE = True
 
 # variables for the integrator - put these somewhere cleaver
 verbose = False
@@ -62,6 +63,8 @@ class Particles:
         self.r = self.box.xmax * numpy.random.random([self.maxn,self.dim])
         self.rdot = numpy.zeros(self.r.shape)
         self.vdot = numpy.zeros(self.r.shape)
+        self.mdot = numpy.zeros(self.m.shape)
+
        
         #thermal properties
         self.t = numpy.ones(self.maxn)
@@ -72,6 +75,10 @@ class Particles:
         self.colour = 1.0,0.0,0.0 
         # sph properties
         self.rho = numpy.zeros(self.maxn)
+        self.rhodot = numpy.zeros(self.rho.shape)
+        # velocity gradient
+        self.gradv = numpy.zeros(self.r.shape)
+        
         # pressure is just a scalar for now but this will
         # become the full pressure tensor in time.
 
@@ -199,6 +206,7 @@ class Particles:
         self.rebuild_lists()
         self.derivatives()
         
+        #print self.rdot[0:self.n,:] 
         for nl in self.nlists: 
             properties.spam_properties(self,nl,nl.cutoff_radius)
         # now integrate numerically
@@ -207,11 +215,11 @@ class Particles:
         #integrator.euler(self.gather_state,self.derivatives, \
         #               self.gather_derivatives,self.scatter_state,dt)
         
-        
-        self.r[:,:] = self.r[:,:] + self.rdot[:,:]*dt
-        self.v[:,:] = self.v[:,:] + self.vdot[:,:]*dt
-        self.box.apply_mirror_bounds(self)
-        #self.box.apply_periodic_bounds(self)
+        #print self.rdot[0:self.n,:] 
+        #self.r[:,:] = self.r[:,:] + self.rdot[:,:]*dt
+        #self.v[:,:] = self.v[:,:] + self.vdot[:,:]*dt
+        #self.box.apply_mirror_bounds(self)
+        self.box.apply_periodic_bounds(self)
         
         #self.rebuild_lists()
 
@@ -244,14 +252,16 @@ class Particles:
     def gather_derivatives(self):
         """ Maps particle system's derivatives to a state vector
         """
-        self.xdot[0,0:self.n] = 0
-        self.xdot[1,0:self.n] = self.v[0:self.n,0]
-        self.xdot[2,0:self.n] = self.v[0:self.n,1]
+        self.xdot[0,0:self.n] = self.mdot[0:self.n] 
+        self.xdot[1,0:self.n] = self.rdot[0:self.n,0]
+        self.xdot[2,0:self.n] = self.rdot[0:self.n,1]
         self.xdot[3,0:self.n] = self.vdot[0:self.n,0]
         self.xdot[4,0:self.n] = self.vdot[0:self.n,1]
-        self.xdot[5,0:self.n] = 0
+        self.xdot[5,0:self.n] = self.rhodot[0:self.n] 
         self.xdot[6,0:self.n] = 0
         self.xdot[7,0:self.n] = 0
+
+            
         return self.xdot
 
     def derivatives(self):
@@ -270,5 +280,7 @@ class Particles:
             for force in nl.forces:
                 force.apply()
 
+        if ADVECTIVE:
+            self.rdot[:,:] = 0.0
    #     forces.apply_forces(self,nl)
 

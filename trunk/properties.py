@@ -62,6 +62,7 @@ def spam_properties(p,nl,h):
     zerokern = spkernel.lucy_kernel(0.0,(0.0,0.0),h)[0]
     #for i in range(p.n):
     p.rho[0:p.n] = zerokern
+    p.gradv[0:p.n] = 0.0
 
     # calc the distances, kernels, densities
     for k in range(nl.nip):
@@ -72,6 +73,7 @@ def spam_properties(p,nl,h):
         nl.drij[k,1] = p.r[j,1] - p.r[i,1]
         rsquared = nl.drij[k,0]**2 + nl.drij[k,1]**2 
         nl.rij[k] = math.sqrt(rsquared)
+        dv = p.v[j,:] - p.v[i,:]
 
         nl.wij[k], nl.dwij[k] = spkernel.lucy_kernel(nl.rij[k],nl.drij[k,:],h)
 
@@ -80,6 +82,11 @@ def spam_properties(p,nl,h):
 
         p.rho[i] += nl.wij[k] * p.m[j]
         p.rho[j] += nl.wij[k] * p.m[i]
+
+        p.gradv[i,0] += (p.m[j]/p.rho[j])*dv[0]*nl.dwij[k,0]
+        p.gradv[i,1] -= (p.m[j]/p.rho[j])*dv[1]*nl.dwij[k,1]
+        p.gradv[j,0] += (p.m[i]/p.rho[i])*dv[0]*nl.dwij[k,0]
+        p.gradv[j,1] -= (p.m[i]/p.rho[i])*dv[1]*nl.dwij[k,1]
 
 
     if ADKE:

@@ -4,6 +4,8 @@
     
 """
 # scipy integrators have the interface
+# X, infodict = integrate.odeint(dX_dt, X0, t, full_output=True)
+# where t is a sequence of time points
 # 
 
 
