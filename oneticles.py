@@ -20,8 +20,8 @@ from pyglet.gl import *
 # Global variables
 max_steps = 1000
 NP1 = 25 
-WINDOW_WIDTH = 640 #640
-WINDOW_HEIGHT = 480 #480
+WINDOW_WIDTH = 640
+WINDOW_HEIGHT = 480
 
 p = particles.Particles(NP1)
 
