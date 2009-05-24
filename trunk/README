@@ -1,3 +1,31 @@
+Pyticles is a set of python modules for a low performance physically based
+particle system in python.
+
+In the future I would like to integrate some elements with lepton.
+
+The main driver is my smooth particle research. There are a number of
+front end scripts for pyticles:
+
+1. pyspam
+This is the front end for testing algorithms related to my research.
+
+
+2. pyticles
+This is where the bulk of the work on the interactive gui is going.
+
+
+
+4. particle_man
+
+This is to be an effort to produce a simple game using the pyticles
+modules.
+
+
+
+
+
+
+
 This is an effort to produce a smooth particle code in python.
 
 Andrew Charles
@@ -9,7 +37,5 @@ Why?
 2. Visualisation in real time
 3. Fast prototyping of new algoritms
 4. Integration with the fortran code
-
-The octave code is OK, but is quite limited, especially when it comes to animated visualisation. Also, I'd rather use a language that was open from the start (even if it has borrowed from Matlab in places) than one that sets out explicitly to be a matlab clone. My Java and C experience will come in handy with python, and I really think it will open up the possibilities.
 
 Pyticles uses Pyglet by Alex Holkner, which is subject to its own license and so forth. I encourage you to check out the Pyglet web site.

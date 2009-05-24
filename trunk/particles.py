@@ -36,7 +36,7 @@ ADKE = True # Sigalotti style adaptive density kernel estimation
 # make the mins just 0
 AMALGAMATE = False
 SPLIT = False
-ADVECTIVE = True
+ADVECTIVE = False
 
 # variables for the integrator - put these somewhere cleaver
 verbose = False
@@ -206,16 +206,15 @@ class Particles:
         self.rebuild_lists()
         self.derivatives()
         
-        #print self.rdot[0:self.n,:] 
         for nl in self.nlists: 
             properties.spam_properties(self,nl,nl.cutoff_radius)
         # now integrate numerically
         integrator.rk4(self.gather_state,self.derivatives, \
                        self.gather_derivatives,self.scatter_state,dt)
         #integrator.euler(self.gather_state,self.derivatives, \
-        #               self.gather_derivatives,self.scatter_state,dt)
+        #                self.gather_derivatives,self.scatter_state,dt)
         
-        #print self.rdot[0:self.n,:] 
+        #print self.r[0:self.n,:] 
         #self.r[:,:] = self.r[:,:] + self.rdot[:,:]*dt
         #self.v[:,:] = self.v[:,:] + self.vdot[:,:]*dt
         #self.box.apply_mirror_bounds(self)
