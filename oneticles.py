@@ -12,7 +12,7 @@ import sys
 import time
 import particles
 import pyglet
-import spyview
+import spview
 import profile
 pyglet.options['debug_gl'] = False
 from pyglet.gl import *
