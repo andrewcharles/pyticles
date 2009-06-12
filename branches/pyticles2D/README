@@ -1,0 +1,12 @@
+This is for a branch of the code which will be strictly 2D.
+
+Dimension agnostic code is hard to write and hard to read.
+
+2D particle systems are fun and useful.
+
+hence this solution.
+
+Will need to plan the directory structure and how it works in svn when I am less tired.
+
+
+For simplicity all Cython extensions have been removed. To do: convert everything back to 2d, then add this as a branch to pyticles. Alternatively, add this as a branch to pyticles, and then convert everything to 2D.
