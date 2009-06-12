@@ -22,10 +22,10 @@ import neighbour_list
 from pyglet.gl import *
 
 # Global variables
-MAX_STEPS = 10
-NP1 = 4 
+MAX_STEPS = 1000
+NP1 = 100 
 
-p = particles.SmoothParticleSystem(NP1,maxn=NP1)
+p = particles.SmoothParticleSystem(NP1)
 s = pview.ParticleView()
 
 cnt = 0
@@ -55,7 +55,7 @@ def on_key_press(symbol,modifiers):
 def initialise():
     global p,nl_1,nl_2,cnt,buttons
     print "Restarting"
-    p = particles.SmoothParticleSystem(NP1,maxn=NP1)
+    p = particles.SmoothParticleSystem(NP1)
     
     nl_1 = neighbour_list.NeighbourList(p,5.0)
     nl_2 = neighbour_list.NeighbourList(p,2.0)

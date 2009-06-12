@@ -15,11 +15,10 @@ import controller
 
 class Box(controller.Controller):
     
-    def __init__(self,p,xmax=64,ymax=48,zmax=100):
+    def __init__(self,p,xmax=64,ymax=48):
         self.p = p
         self.xmax = xmax
         self.ymax = ymax
-        self.zmax = zmax
 
     def apply(self):
         print "Do nothing"
@@ -41,10 +40,6 @@ class PeriodicBox(Box):
                 p.r[i,1] = 0
             if p.r[i,1] < 0:
                 p.r[i,1] =self.ymax 
-            if p.r[i,2] > self.zmax:
-                p.r[i,2] = 0
-            if p.r[i,2] < 0:
-                p.r[i,2] =self.zmax 
 
 class MirrorBox(Box):
 
@@ -57,18 +52,9 @@ class MirrorBox(Box):
             if p.r[i,0] < 0:
                 p.r[i,0] = 0
                 p.v[i,0] = -p.v[i,0]
-
             if p.r[i,1] > self.ymax:
                 p.r[i,1] = self.ymax 
                 p.v[i,1] = -p.v[i,1]
             if p.r[i,1] < 0:
                 p.r[i,1] = 0
                 p.v[i,1] = -p.v[i,1]
-
-            if p.r[i,2] > self.zmax:
-                p.r[i,2] = self.zmax 
-                p.v[i,2] = -p.v[i,2]
-            if p.r[i,2] < 0:
-                p.r[i,2] = 0
-                p.v[i,2] = -p.v[i,2]
-

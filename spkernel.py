@@ -73,8 +73,6 @@ def lucy_kernel(r,dx,h):
         q = 5. / (4. * h)
     elif dim == 2:
         q = 5. / (pi * h**2)
-    elif dim ==3:
-        q = 105. / (pi * 16 * (h**3) )
 
     if r < 0:
         r = abs(r)

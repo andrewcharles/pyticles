@@ -81,8 +81,7 @@ def spam_properties(p,nl,h):
 
         p.rho[i] += nl.wij[k] * p.m[j]
         p.rho[j] += nl.wij[k] * p.m[i]
-    
-        # something is back 2 front?
+
         p.gradv[i,0] += (p.m[j]/p.rho[j])*dv[0]*nl.dwij[k,0]
         p.gradv[i,1] -= (p.m[j]/p.rho[j])*dv[1]*nl.dwij[k,1]
         p.gradv[j,0] += (p.m[i]/p.rho[i])*dv[0]*nl.dwij[k,0]

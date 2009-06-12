@@ -31,7 +31,7 @@ import box
 import profiler
 from integrator import rk4
 
-dt = 0.1
+dt = 0.01
 
 # variables for the integrator - put these somewhere cleaver
 verbose = False
@@ -40,7 +40,7 @@ XMAX = 64 #64
 YMAX = 48 #48
 ZMAX = 100
 N = 25 
-MAXN = 4
+MAXN =100 
 DIM = 2
 VMAX = 0.1
 CUTOFF_RADIUS =6 
