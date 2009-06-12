@@ -29,6 +29,9 @@ class Force:
         p2: The second particle set
         nl: list of interacting pairs (p1,p2)
 
+        The design is wrong here:
+
+
     """ 
 
     def __init__(self,particles1,particles2,nl):
@@ -175,8 +178,8 @@ class SpamForce(Force):
         j = self.nl.iap[k,1]
         p = self.p
         # todo add some logic to deal with one or 2 component pressure
-        pri = self.p.p[i,0]
-        prj = self.p.p[j,0]
+        pri = self.p.p[i]
+        prj = self.p.p[j]
         dwdx = self.nl.dwij[k,:]
         dvx =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[0]
         dvy =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[1]
@@ -208,8 +211,8 @@ class CohesiveSpamForce(Force):
         #def spam(p,i,j,dwdx):
         i = self.nl.iap[k,0]
         j = self.nl.iap[k,1]
-        pri = self.p.p[i,1]
-        prj = self.p.p[j,1]
+        pri = self.p.pco[i]
+        prj = self.p.pco[j]
         p = self.p
         dwdx = self.nl.dwij[k,:]
         dvx =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[0]

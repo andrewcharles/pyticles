@@ -40,7 +40,6 @@ def vdw(rho,t):
     """ Van der Waals repulsive pressure.
     """
     return (rho*KBDASH*t)/(1-rho*BDASH), - ADASH*rho*rho
-    
 
 
 #calc_pressure = art_water
@@ -82,7 +81,8 @@ def spam_properties(p,nl,h):
 
         p.rho[i] += nl.wij[k] * p.m[j]
         p.rho[j] += nl.wij[k] * p.m[i]
-
+    
+        # something is back 2 front?
         p.gradv[i,0] += (p.m[j]/p.rho[j])*dv[0]*nl.dwij[k,0]
         p.gradv[i,1] -= (p.m[j]/p.rho[j])*dv[1]*nl.dwij[k,1]
         p.gradv[j,0] += (p.m[i]/p.rho[i])*dv[0]*nl.dwij[k,0]
@@ -103,7 +103,7 @@ def spam_properties(p,nl,h):
     for i in range(p.n):
         # todo add some logic to determine whether we have a one or two part
         # pressure
-        p.p[i,:] = calc_pressure(p.rho[i],p.t[i])
+        p.p[i],p.pco[i] = calc_pressure(p.rho[i],p.t[i])
 
         
 

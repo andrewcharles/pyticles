@@ -1,26 +1,31 @@
 #! /usr/local/bin/python
 
-""" This is the main file for the python sph code
+""" This is the main file for the particle system code.
+    This does not use the SPH particle class currently - see spana
+    for details of that. This one is for driving developments
+    of the GUI and of fast generic particle system components.
+
     Copyright Andrew Charles 2008
     All rights reserved.
 """
 
 import sys
-#sys.path.append("/home/ac/pyglet-1.0")
 import time
 import particles
 import pyglet
 from pyglet.window import mouse
-import spyview
+import pview
 import profile
 from pyglet.gl import *
+import controller
+import gui
 
 # Global variables
 max_steps = 1000
 NP1 = 2 
 NP2 = 0 
 
-p = particles.Particles(NP1)
+p = particles.ParticleSystem(NP1,controllers=[controller.BodyForce()])
 buttons = []
 #b = particles.Particles(NP2)
 #b.colour = 0.0,0.0,1.0
@@ -31,7 +36,7 @@ buttons = []
 #nl_1 = particles.neighbour_list.NeighbourList(p,3.0)
 #nl_2 = particles.neighbour_list.NeighbourList(p,3.0,particle2=b)
 
-s = spyview.ParticleView()
+s = pview.ParticleView()
 
 cnt = 0
 fps = 0
@@ -87,45 +92,6 @@ def on_mouse_press(x,y,button,modifiers):
         p.create_particle(x/s.xmap,y/s.ymap)
         print "Creating particle at ",x/s.xmap,y/s.ymap
 
-class Button:
-    """ A button.
-    """
-    
-    def __init__(self):
-        self.colour=0.1,0.1,0.1
-        self.mcolour=0.9,0.9,0.9
-        self.x = 2
-        self.y = 2
-        self.width = 40
-        self.height = 40
-        self.img = "none"
-
-    def activate(self):
-            print "Hit the button"
-
-    def hit(self,x,y):
-        """ Checks if the given coords are in the
-            button's hitbox.
-        """
-        if( (x>self.x) and (y>self.y)
-        and (x<self.x+self.width) and (y<self.y+self.width)):
-            #self.activate()
-            return True
-    
-    def draw(self):
-        if self.img != "none":
-            self.img.blit(self.x,self.y)
-        else:
-            glPolygonMode(GL_FRONT_AND_BACK,GL_FILL)
-            glBegin(GL_POLYGON)
-            glColor3f(self.colour[0],self.colour[1],self.colour[2])
-            glVertex2f(self.x,self.y)
-            glVertex2f(self.x,self.y+self.height)
-            glVertex2f(self.x+self.width,self.y+self.height)
-            glVertex2f(self.x+self.width,self.y)
-            glVertex2f(self.x,self.y)
-            glEnd()
-
 
 def clear_forces():
     global p 
@@ -137,15 +103,15 @@ def add_hookes():
     print "Adding spring force"
     p.nl_default.add_force(particles.forces.HookesForce(p,p,p.nl_default))
 
-def add_spam():
-    print "Adding spam force"
-    p.nl_default.add_force(particles.forces.SpamForce(p,p.nl_default))
+def add_grav():
+    print "Adding gravity force"
+    p.nl_default.add_force(particles.forces.Gravity(p,p,p.nl_default))
 
 def create_ui():
     global buttons
     pyglet.resource.path.append('res')
     pyglet.resource.reindex()
-    hookes_button = Button()
+    hookes_button = gui.Button()
     hookes_button.colour = 0.5,0.1,0.1
     hookes_button.x = 600
     hookes_button.y = 355
@@ -153,14 +119,14 @@ def create_ui():
     hookes_button.activate = add_hookes
     hookes_button.img = pyglet.resource.image('spring.png')
 
-    sph_button = Button()
-    sph_button.colour = 0.1,0.5,0.1
-    sph_button.x = 600 
-    sph_button.y = 395
-    sph_button.label = "Spam"
-    sph_button.activate = add_spam
+    grav_button = gui.Button()
+    grav_button.colour = 0.1,0.5,0.1
+    grav_button.x = 600 
+    grav_button.y = 395
+    grav_button.label = "grav"
+    grav_button.activate = add_grav
 
-    clear_button = Button()
+    clear_button = gui.Button()
     clear_button.colour = 0.1,0.1,05.
     clear_button.x = 600
     clear_button.y = 435
@@ -168,13 +134,15 @@ def create_ui():
     clear_button.label = "clear"
 
     buttons.append(hookes_button)
-    buttons.append(sph_button)
+    buttons.append(grav_button)
     buttons.append(clear_button)
 
 def initialise():
     global p,nl_1,nl_2,cnt,buttons
     print "Restarting"
-    p = particles.Particles(NP1)
+    p = particles.ParticleSystem(NP1
+        ,controllers=[controller.BodyForce()]
+        )
     
     nl_1 = particles.neighbour_list.NeighbourList(p,10.0)
     #nl_2 = particles.neighbour_list.NeighbourList(p,5.0)
@@ -189,7 +157,7 @@ def initialise():
     #nl_1.add_force(particles.forces.CohesiveSpamForce(p,p.nlists[1]))
     #nl_1.add_force(particles.forces.CollisionForce(p,p,nl_1))
     #nl_1.add_force(particles.forces.HookesForce(p,p,nl_1))
-    nl_1.add_force(particles.forces.Gravity(p,p,nl_1))
+    #nl_1.add_force(particles.forces.Gravity(p,p,nl_1))
 
     for nl in p.nlists:
         nl.build_nl_verlet()
