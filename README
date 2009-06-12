@@ -1,37 +1,75 @@
+========
+Pyticles
+========
+
 Pyticles is a set of python modules for a low performance physically based
 particle system in python.
 
-In the future I would like to integrate some elements with lepton.
+controller.py
+-------------
+Forces, boundary conditions, anything that mutates particles is
+a subclass of controller.
+
+
+forces.py
+--------- 
+Each Force class instance contains a reference to two particle systems and a
+neighbour list. But a neighbour list should contain references to the particles
+it maps. This looks like a design flaw. The force should operate as a one body
+or n body force. Given a list of particles, or particle pairs. A force iterates
+over a neighbour list.
+
+
+neighbour_list.py
+----------------- 
+Neighbour lists contain a reference to one or two particle systems.
+
+
+particles.py
+------------
+Instances of the particle class have attributes that are mostly numpy arrays.
+
+The update() method calls the numerical integrator to advance time step.
+
+config is a dictionary of configuration options.
+
+The ParticleSystem class.
+
+The SmoothParticleSystem class.
+
+
+
+
+About
+=====
 
 The main driver is my smooth particle research. There are a number of
 front end scripts for pyticles:
 
-1. pyspam
+1. spana
 This is the front end for testing algorithms related to my research.
 
+1.1 ospana
+This is a front end to the cython optimised version of the code.
 
 2. pyticles
 This is where the bulk of the work on the interactive gui is going.
 
 
-
 4. particle_man
-
 This is to be an effort to produce a simple game using the pyticles
-modules.
+modules. It is pretty much nothing at the moment.
 
 
+Road Map
+========
+Integrate some elements with lepton.
 
 
-
-
-
-This is an effort to produce a smooth particle code in python.
 
 Andrew Charles
 ac1201@gmail.com
 
-Why?
 
 1. More scripted approach to execution
 2. Visualisation in real time
@@ -39,3 +77,16 @@ Why?
 4. Integration with the fortran code
 
 Pyticles uses Pyglet by Alex Holkner, which is subject to its own license and so forth. I encourage you to check out the Pyglet web site.
+
+
+
+Cython Notes
+============ 
+After the success of the simple nbody Cython, I have effectively
+forked the code by writing particle_module.pyx and forces_module.pyx. At this
+stage I just want to get a feel for the amount of difference in the code and
+the amount of speed increase. Later I can think about organising it better.
+
+Having trouble with the modules using objects that reference each other.
+
+

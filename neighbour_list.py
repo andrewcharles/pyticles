@@ -5,8 +5,7 @@
 """
 import numpy
 
-
-DIM = 2
+DIM = 3
 
 class NeighbourList:
     """ A neighbour list that works with the Particle and Force class """
@@ -52,7 +51,8 @@ class NeighbourList:
             for j in range(i+1,self.particle.n):
                 self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
                 self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
-                rsquared = self.drij[k,0]**2 + self.drij[k,1]**2
+                self.drij[k,1] = self.particle.r[j,2] - self.particle.r[i,2]
+                rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
                 self.rij[k] = numpy.sqrt(rsquared)
                 self.iap[self.nip,0] = i
                 self.iap[self.nip,1] = j
@@ -64,7 +64,7 @@ class NeighbourList:
         self.forces.append(f)
         self.nforce += 1
     
-    def minimum_image(self,dr,xmax,ymax):
+    def minimum_image(self,dr,xmax,ymax,zmax):
         """ applies the minimum image convention to the distance
             between two particles. Based on code by Peter Daivis
             <insert reference to paper>
@@ -75,6 +75,8 @@ class NeighbourList:
             dr[0] = dr[0] - xmax
         if (dr[1] > ymax):
             dr[1] = dr[1] - ymax 	
+        if (dr[2] > zmax):
+            dr[2] = dr[2] - zmax 	
 
     def build_nl_verlet(self):
         """ Not sure if verlet is the right term. We build a brute
@@ -91,8 +93,9 @@ class NeighbourList:
                 for j in range(i+1,self.particle.n):
                     self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
                     self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
+                    self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
                     #self.minimum_image(self.drij[k,:],XMAX/2,YMAX/2)
-                    rsquared = self.drij[k,0]**2 + self.drij[k,1]**2
+                    rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
                     if (rsquared < cutsq):
                         self.iap[k,0] = i
                         self.iap[k,1] = j
@@ -104,17 +107,18 @@ class NeighbourList:
                 for j in range(self.particle2.n):
                     self.drij[k,0] = self.particle2.r[j,0] - self.particle.r[i,0]
                     self.drij[k,1] = self.particle2.r[j,1] - self.particle.r[i,1]
+                    self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
                     #self.minimum_image(self.drij[k,:],XMAX/2,YMAX/2)
-                    rsquared = self.drij[k,0]**2 + self.drij[k,1]**2
+                    rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
                     if (rsquared < cutsq):
                         self.iap[k,0] = i
                         self.iap[k,1] = j
                         self.rij[k] = numpy.sqrt(rsquared)
                         k += 1
 
-
-
         self.nip = k     
             
 
+class CouplingList(NeighbourList):
+    """ An nlist for two particle systems."""
 
