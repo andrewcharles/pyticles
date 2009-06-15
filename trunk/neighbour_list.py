@@ -8,7 +8,7 @@
     todo: add Pd's sophisticated minimum image?
 
 """
-import numpy
+import numpy as np
 
 DIM = 3
 
@@ -28,12 +28,12 @@ class NeighbourList:
         self.nip = 0 
         self.particle = particle
         self.max_interactions = (particle.maxn * particle.maxn) / 2 - 1   
-        self.iap = numpy.zeros((self.max_interactions,2),dtype=int)
-        self.rij = numpy.zeros(self.max_interactions)
-        self.rsq = numpy.zeros(self.max_interactions)
-        self.drij = numpy.zeros((self.max_interactions,DIM))
-        self.wij = numpy.zeros(self.max_interactions)
-        self.dwij = numpy.zeros((self.max_interactions,DIM))
+        self.iap = np.zeros((self.max_interactions,2),dtype=int)
+        self.rij = np.zeros(self.max_interactions)
+        self.rsq = np.zeros(self.max_interactions)
+        self.drij = np.zeros((self.max_interactions,DIM))
+        self.wij = np.zeros(self.max_interactions)
+        self.dwij = np.zeros((self.max_interactions,DIM))
         self.rebuild_list = False
         self.nforce = 0
         self.forces = []
@@ -52,6 +52,7 @@ class NeighbourList:
 
     def compress(self):
         """There is no concept of compression for a brute force list."""
+        print 'Cannot compress a brute list'
         pass
 
     def separations(self):
@@ -64,7 +65,7 @@ class NeighbourList:
             self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
             self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
             rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
-            self.rij[k] = numpy.sqrt(rsquared)
+            self.rij[k] = np.sqrt(rsquared)
 
     def minimum_image(self,dr,xmax,ymax,zmax):
         """ Applies the minimum image convention to the distance
@@ -104,31 +105,31 @@ class VerletList(NeighbourList):
             in the iap list.
 
     """
-    def __init__(self,particle,cutoff=2.0):
-        NeighbourList.__init__(self,n=n,d=d,maxn=maxn)
-        self.V_split = VSPLIT
-        self.r_amalg = RAMAL
+    def __init__(self,particle,cutoff=2.0,tolerance=2.0):
+        NeighbourList.__init__(self,particle)
         self.cutoff_radius = cutoff 
         self.cutoff_radius_sq = cutoff**2
-        self.tolerance_sq = 5.0
-        self.dsq_thres = 2.0
-        self.r_old = numpy.zeros(self.particle.r.shape)
-
+        self.tolerance_sq = tolerance * tolerance
+        self.r_old = np.zeros(self.particle.r.shape)
 
     def build(self):
         """ Brute force with a cutoff radius. """
-        i=0
-        j=0
+        i = 0
+        j = 0
+        k = 0
         self.nip = 0
         self.rebuild_list = False
-        self.r_old = self.particle.r[:,:]
+        self.r_old[:,:] = self.particle.r[:,:]
         for i in range(self.particle.n):
             for j in range(i+1,self.particle.n):
-                self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
-                self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
-                self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
-                rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
+                drx = self.particle.r[j,0] - self.particle.r[i,0]
+                dry = self.particle.r[j,1] - self.particle.r[i,1]
+                drz = self.particle.r[j,2] - self.particle.r[i,2]
+                rsquared = drx**2 + dry**2 + drz**2
                 if (rsquared < self.cutoff_radius_sq + self.tolerance_sq):
+                    self.drij[k,0] = drx
+                    self.drij[k,1] = dry
+                    self.drij[k,2] = drz
                     self.rsq[k] = rsquared
                     self.iap[self.nip,0] = i
                     self.iap[self.nip,1] = j
@@ -139,19 +140,26 @@ class VerletList(NeighbourList):
             the maximum interaction radius plus tolerance. 
             This is a separate function because we may want to compress several
             times before rebuilding the list.
+            q -- new running total of pairs
         """
-        for k in range(self.np):
-            i = self.pairs[k,0]
-            j = self.pairs[k,1]
-            self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
-            self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
-            self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
+        q = 0
+        for k in range(self.nip):
+            i = self.iap[k,0]
+            j = self.iap[k,1]
+            drx = self.particle.r[j,0] - self.particle.r[i,0]
+            dry = self.particle.r[j,1] - self.particle.r[i,1]
+            drz = self.particle.r[j,2] - self.particle.r[i,2]
             rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
             if (rsquared < self.cutoff_radius_sq + self.tolerance_sq):
-                self.rsq[k] = rsquared
-                self.iap[nip,0] = i
-                self.iap[nip,1] = j
-                self.nip += 1
+                q += 1
+                self.drij[q,0] = drx
+                self.drij[q,1] = dry
+                self.drij[q,2] = drz
+                self.rsq[q] = rsquared
+                self.iap[q,0] = i
+                self.iap[q,1] = j
+            self.nip = q
+        ponder_rebuild()
 
     def ponder_rebuild(self):
         """ Ponder the decision of whether to rebuild the list.
@@ -161,7 +169,7 @@ class VerletList(NeighbourList):
         dr = self.r_old - self.particle.r
         rsquared = dr[:,0]**2 + dr[:,1]**2 + dr[:,2]**2
         dsq = np.max(rsquared)
-        if dsq > self.dsq_thres:
+        if dsq > self.tolerance_sq:
             self.rebuild_list = True
             
 
@@ -190,11 +198,11 @@ class CouplingList(NeighbourList):
             self.max_interactions = (particle.maxn * particle2.maxn) / 2 - 1   
         self.max_interactions = (particle.maxn * particle.maxn) / 2 - 1   
         
-        self.iap = numpy.zeros((self.max_interactions,2),dtype=int)
-        self.rij = numpy.zeros(self.max_interactions)
-        self.drij = numpy.zeros((self.max_interactions,DIM))
-        self.wij = numpy.zeros(self.max_interactions)
-        self.dwij = numpy.zeros((self.max_interactions,DIM))
+        self.iap = np.zeros((self.max_interactions,2),dtype=int)
+        self.rij = np.zeros(self.max_interactions)
+        self.drij = np.zeros((self.max_interactions,DIM))
+        self.wij = np.zeros(self.max_interactions)
+        self.dwij = np.zeros((self.max_interactions,DIM))
         self.rebuild_list = False
         self.nforce = 0
         self.forces = []
@@ -220,7 +228,7 @@ class CouplingList(NeighbourList):
                     if (rsquared < cutsq):
                         self.iap[k,0] = i
                         self.iap[k,1] = j
-                        self.rij[k] = numpy.sqrt(rsquared)
+                        self.rij[k] = np.sqrt(rsquared)
                         k += 1
 
         else:
@@ -234,5 +242,5 @@ class CouplingList(NeighbourList):
                     if (rsquared < cutsq + tolerance):
                         self.iap[k,0] = i
                         self.iap[k,1] = j
-                        self.rij[k] = numpy.sqrt(rsquared)
+                        self.rij[k] = np.sqrt(rsquared)
                         k += 1

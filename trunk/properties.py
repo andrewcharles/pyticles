@@ -47,7 +47,6 @@ calc_pressure = vdw
 
 def spam_properties(p,nl,h):
     """ Calculates and assigns:
-        interparticle distances and displacements
         kernel values
         kernel gradient values
         and smoothed particle
@@ -57,36 +56,27 @@ def spam_properties(p,nl,h):
         todo: move the spam stuff to sp_neighbour list
     
     """
-    # self contribution to rho
+    # self contribution to density
     zerokern = spkernel.lucy_kernel(0.0,(0.0,0.0),h)[0]
-    #for i in range(p.n):
     p.rho[0:p.n] = zerokern
     p.gradv[0:p.n] = 0.0
 
-    # calc the distances, kernels, densities
+    # calc the kernels, velocities and densities
     for k in range(nl.nip):
         i = nl.iap[k,0]
         j = nl.iap[k,1]
-        
-        nl.drij[k,0] = p.r[j,0] - p.r[i,0]
-        nl.drij[k,1] = p.r[j,1] - p.r[i,1]
-        rsquared = nl.drij[k,0]**2 + nl.drij[k,1]**2 
-        nl.rij[k] = math.sqrt(rsquared)
-        dv = p.v[j,:] - p.v[i,:]
 
         nl.wij[k], nl.dwij[k] = spkernel.lucy_kernel(nl.rij[k],nl.drij[k,:],h)
 
         p.rho[i] += nl.wij[k] * p.m[j]
         p.rho[j] += nl.wij[k] * p.m[i]
-
-        p.rho[i] += nl.wij[k] * p.m[j]
-        p.rho[j] += nl.wij[k] * p.m[i]
     
-        # something is back 2 front?
-        p.gradv[i,0] += (p.m[j]/p.rho[j])*dv[0]*nl.dwij[k,0]
-        p.gradv[i,1] -= (p.m[j]/p.rho[j])*dv[1]*nl.dwij[k,1]
-        p.gradv[j,0] += (p.m[i]/p.rho[i])*dv[0]*nl.dwij[k,0]
-        p.gradv[j,1] -= (p.m[i]/p.rho[i])*dv[1]*nl.dwij[k,1]
+        dv = p.v[j,:] - p.v[i,:]
+
+        for a in range p.dim:
+            for b in range p.dim:
+                p.gradv[i,a,b] += (p.m[j]/p.rho[i])*dv[a]*nl.dwij[k,b]
+                p.gradv[j,a,b] += (p.m[i]/p.rho[j])*dv[a]*nl.dwij[k,b]
 
 
     if ADKE:
