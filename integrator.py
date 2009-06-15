@@ -8,9 +8,6 @@
 # where t is a sequence of time points
 # 
 
-import profiler
-
-profiler = profiler.timeprofile()
 
 def euler(get_state,calc_derivs,get_derivs,set_state,dt):
     """ Simple euler integration. So simple it's pointless to wrap it like
@@ -41,7 +38,6 @@ def euler(get_state,calc_derivs,get_derivs,set_state,dt):
     x = x+xdot*dt
     set_state(x)
 
-
 def imp_euler(get_state,calc_derivs,get_derivs,set_state,dt):
     """ Improved euler integration (two step predictor-corrector
     """
@@ -65,15 +61,9 @@ def rk4(get_state,calc_derivs,get_derivs,set_state,dt):
     """
 
     # First guess 
-    profiler.mark('t')
     calc_derivs()
-    print 'calc derivs took',profiler.timegap()
-    profiler.mark('t')
     x_start = get_state()
-    print 'get_state() took',profiler.timegap()
-    profiler.mark('t')
     xdot = get_derivs()
-    print 'get_derivs() took',profiler.timegap()
     c1 = xdot*dt
 
     # Take half step and get the second term
@@ -99,9 +89,7 @@ def rk4(get_state,calc_derivs,get_derivs,set_state,dt):
 
     # Final step
     x = x_start + (1.0/6.0) * (c1 + 2*c2 + 2*c3 + c4) 
-    profiler.mark('t')
     set_state(x) 
-    print 'set_state() took',profiler.timegap()
     
     del x_start
     del xdot

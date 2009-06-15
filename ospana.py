@@ -13,7 +13,7 @@
 import sys
 import time
 import particles
-import _forces
+import c_forces as forces
 import pyglet
 from pyglet.window import mouse
 import pview
@@ -23,9 +23,9 @@ from pyglet.gl import *
 
 # Global variables
 MAX_STEPS = 1000
-NP1 = 100 
+NP1 = 100
 
-p = particles.SmoothParticleSystem(NP1,d=3)
+p = particles.SmoothParticleSystem(NP1,maxn=NP1,d=3)
 s = pview.ParticleView()
 
 cnt = 0
@@ -36,9 +36,10 @@ rebuild_nl = 1
 def update(dt):
     global cnt,fps,rebuild_nl 
     cnt += 1
-    p.update()
+    print 'Step',cnt
     if cnt >= MAX_STEPS:
         pyglet.app.exit()
+    p.update()
     pass
 
 @s.win.event
@@ -55,7 +56,7 @@ def on_key_press(symbol,modifiers):
 def initialise():
     global p,nl_1,nl_2,cnt,buttons
     print "Restarting"
-    p = particles.SmoothParticleSystem(NP1,d=3)
+    p = particles.SmoothParticleSystem(NP1,maxn=NP1,d=3)
     
     nl_1 = neighbour_list.NeighbourList(p,2.0)
     nl_2 = neighbour_list.NeighbourList(p,5.0)
@@ -64,11 +65,11 @@ def initialise():
     p.nlists.append(nl_2)
     p.nl_default = nl_1
 
-    p.forces.append(_forces.SpamForce(p,nl_1))
-    p.forces.append(_forces.CohesiveSpamForce(p,nl_2))
+    p.forces.append(forces.SpamForce(p,nl_1))
+    #p.forces.append(forces.CohesiveSpamForce(p,nl_2))
 
     for nl in p.nlists:
-        nl.build_nl_verlet()
+        nl.build()
     cnt = 0
 
 def main():

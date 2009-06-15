@@ -48,10 +48,10 @@ def vdw(rho,t):
 calc_pressure = vdw
 
 
-cdef void lucy_kernel_3d(float r,float dx[3],float h,float w, float dwdx[3]):
+cdef void lucy_kernel_3d(float r,float dx[3],float h,float* w, float dwdx[3]):
     """High performance sph kernel. Thanks Klaus Dolag from whose
        notes I got the normalisation for 3D. Yes, I have no time for
-       algebra.
+       algebra. I really should get on top of Sage.
     """
     
     cdef float q
@@ -60,13 +60,14 @@ cdef void lucy_kernel_3d(float r,float dx[3],float h,float w, float dwdx[3]):
 
     r = abs(r)
     if( r > h ):
-        w = 0
+        w[0] = 0
         dwdx[0] = 0
         dwdx[1] = 0
         dwdx[2] = 0
         return
 
-    w = q * (1 + 3.*r/h)*((1.-r/h))**3
+    w[0] = q * (1 + 3.*r/h)*((1.-r/h))**3
+
     if(r == 0):
         dwdx[0] = 0.0
         dwdx[1] = 0.0
@@ -127,10 +128,8 @@ def spam_properties(p,nl,h):
     drk[0] = 0.0
     drk[1] = 0.0
     drk[2] = 0.0
-    lucy_kernel_3d(0.0,drk,h,zerokern,dwk)
+    lucy_kernel_3d(0.0,drk,h,&zerokern,dwk)
 
-    print zerokern
-    
     for i in range(p.n):
         _rho[i] = zerokern
         _gradv[i] = 0.0
@@ -155,9 +154,7 @@ def spam_properties(p,nl,h):
         rk = math.sqrt(rksq)
 
         _rij[k] = rk
-        print rk
-
-        lucy_kernel_3d(rk,drk,h,wk,dwk)
+        lucy_kernel_3d(rk,drk,h,&wk,dwk)
         
         _wij[k] = wk
         
@@ -180,8 +177,6 @@ def spam_properties(p,nl,h):
         _gradv[j,0] += (_m[i]/_rho[i])*dvk[0]*_dwij[k,0]
         _gradv[j,1] -= (_m[i]/_rho[i])*dvk[1]*_dwij[k,1]
         _gradv[j,2] -= (_m[i]/_rho[i])*dvk[2]*_dwij[k,2]
-
-    print _rho
 
     if ADKE:
         # We are using adaptive density kernel estimation

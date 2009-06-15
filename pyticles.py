@@ -13,6 +13,7 @@ import sys
 import time
 import particles
 import pyglet
+import _forces
 from pyglet.window import mouse
 import pview
 import profile
@@ -25,7 +26,7 @@ max_steps = 1000
 NP1 = 2 
 NP2 = 0 
 
-p = particles.ParticleSystem(NP1,controllers=[controller.BodyForce()])
+p = particles.ParticleSystem(NP1,d=3,controllers=[controller.BodyForce()])
 buttons = []
 #b = particles.Particles(NP2)
 #b.colour = 0.0,0.0,1.0
@@ -140,7 +141,7 @@ def create_ui():
 def initialise():
     global p,nl_1,nl_2,cnt,buttons
     print "Restarting"
-    p = particles.ParticleSystem(NP1
+    p = particles.ParticleSystem(NP1,d=3
         ,controllers=[controller.BodyForce()]
         )
     

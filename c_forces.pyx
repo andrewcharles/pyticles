@@ -15,7 +15,7 @@ cimport numpy as np
 import math
 import scipy
 import neighbour_list
-import _particles
+import particles
 #cimport _particles
 
 # CONSTANTS
@@ -83,6 +83,7 @@ class SpamForce(Force):
 
         cdef unsigned int nip = self.nl.nip
         cdef unsigned int i,j,k,n
+        cdef float dvx, dvy, dvz
 
         n = p.n
 
@@ -91,7 +92,7 @@ class SpamForce(Force):
             j = _iap[k,1]
             dvx =  (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2) * _dwdx[k,0]
             dvy =  (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2) * _dwdx[k,1]
-            dvz =  (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2) * _dwdx[k,1]
+            dvz =  (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2) * _dwdx[k,2]
             _vdot[i,0] += dvx
             _vdot[i,1] += dvy
             _vdot[i,2] += dvz
@@ -138,6 +139,7 @@ class CohesiveSpamForce(Force):
 
         cdef unsigned int nip = self.nl.nip
         cdef unsigned int i,j,k,n
+        cdef float dvx, dvy, dvz
         n = p.n
 
         for k in xrange(nip):

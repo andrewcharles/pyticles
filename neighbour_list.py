@@ -2,21 +2,180 @@
     Neighbour list class that works with particle and force
     Copyright Andrew Charles 2008
     All rights reserved.
+
+    iap[] is always the list of particles for the purposes of interaction.
+
+    todo: add Pd's sophisticated minimum image?
+
 """
 import numpy
 
 DIM = 3
 
 class NeighbourList:
-    """ A neighbour list that works with the Particle and Force class """
-    """ nip: number of interacting pairs
-        max_interactions: self describing
-        iap: current number of pairs
-        drij: displacement between pairs
-        rij: distance between pairs
-        wij: interpolation kernel between pairs
-        dwij: interpolation kernel gradient between pairs
+    """ A neighbour list that works with the Particle class.
+        build() -- creates the pairs list and sets nip and rijsq
+        nip -- number of interacting pairs
+        max_interactions -- self describing
+        iap[nip] -- pair indices
+        rsq[nip]: squared distance between all list members
+        drij[nip]: displacement between pairs
+        rij[nip]: distance between pairs
+        wij[nip]: interpolation kernel between pairs
+        dwij[nip]: interpolation kernel gradient between pairs
     """
+    def __init__(self,particle):
+        self.nip = 0 
+        self.particle = particle
+        self.max_interactions = (particle.maxn * particle.maxn) / 2 - 1   
+        self.iap = numpy.zeros((self.max_interactions,2),dtype=int)
+        self.rij = numpy.zeros(self.max_interactions)
+        self.rsq = numpy.zeros(self.max_interactions)
+        self.drij = numpy.zeros((self.max_interactions,DIM))
+        self.wij = numpy.zeros(self.max_interactions)
+        self.dwij = numpy.zeros((self.max_interactions,DIM))
+        self.rebuild_list = False
+        self.nforce = 0
+        self.forces = []
+
+    def build(self):
+        """ When in doubt, use brute force """
+        i=0
+        j=0
+        self.nip = 0
+        self.rebuild_list = False
+        for i in range(self.particle.n):
+            for j in range(i+1,self.particle.n):
+                self.iap[self.nip,0] = i
+                self.iap[self.nip,1] = j
+                self.nip=self.nip+1
+
+    def compress(self):
+        """There is no concept of compression for a brute force list."""
+        pass
+
+    def separations(self):
+        """ Computes the distance between pairs in the list
+        """
+        for k in range(self.nip):
+            i = self.iap[k,0]
+            j = self.iap[k,1]
+            self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
+            self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
+            self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
+            rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
+            self.rij[k] = numpy.sqrt(rsquared)
+
+    def minimum_image(self,dr,xmax,ymax,zmax):
+        """ Applies the minimum image convention to the distance
+            between two particles.
+        """
+        if (dr[0] > xmax):
+            dr[0] = dr[0] - xmax
+        if (dr[1] > ymax):
+            dr[1] = dr[1] - ymax 	
+        if (dr[2] > zmax):
+            dr[2] = dr[2] - zmax
+
+
+class VerletList(NeighbourList):
+    """A brute force list with the added step of pruning pairs that
+        are outside of the interaction range plus a tolerance.
+        If pairs' separation changes by more than the tolerance
+        the list needs to be rebuilt.
+
+        We build a list in a number of steps. 
+
+        First we build(), iterating over all possible pairs of 
+        particles. If the squared distance is less than than the interaction
+        cutoff plus the tolerance, the pair is added to the nlist.
+
+        At any time we can compress(), which prunes additional pairs from
+        the list.
+
+        cutoff_radius_sq
+        tolerance_sq
+        dsqmax -- particle displacement threshold before list rebuild
+        r_old -- particle positions at list build
+
+        In the future I will
+            add the concept of a neighbour list and an interaction list,
+            but for now this simply computes the distances between pairs
+            in the iap list.
+
+    """
+    def __init__(self,particle,cutoff=2.0):
+        NeighbourList.__init__(self,n=n,d=d,maxn=maxn)
+        self.V_split = VSPLIT
+        self.r_amalg = RAMAL
+        self.cutoff_radius = cutoff 
+        self.cutoff_radius_sq = cutoff**2
+        self.tolerance_sq = 5.0
+        self.dsq_thres = 2.0
+        self.r_old = numpy.zeros(self.particle.r.shape)
+
+
+    def build(self):
+        """ Brute force with a cutoff radius. """
+        i=0
+        j=0
+        self.nip = 0
+        self.rebuild_list = False
+        self.r_old = self.particle.r[:,:]
+        for i in range(self.particle.n):
+            for j in range(i+1,self.particle.n):
+                self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
+                self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
+                self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
+                rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
+                if (rsquared < self.cutoff_radius_sq + self.tolerance_sq):
+                    self.rsq[k] = rsquared
+                    self.iap[self.nip,0] = i
+                    self.iap[self.nip,1] = j
+                    self.nip += 1
+
+    def compress(self):
+        """ Elimates pairs from the neigbour list that are outside
+            the maximum interaction radius plus tolerance. 
+            This is a separate function because we may want to compress several
+            times before rebuilding the list.
+        """
+        for k in range(self.np):
+            i = self.pairs[k,0]
+            j = self.pairs[k,1]
+            self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
+            self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
+            self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
+            rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
+            if (rsquared < self.cutoff_radius_sq + self.tolerance_sq):
+                self.rsq[k] = rsquared
+                self.iap[nip,0] = i
+                self.iap[nip,1] = j
+                self.nip += 1
+
+    def ponder_rebuild(self):
+        """ Ponder the decision of whether to rebuild the list.
+            Set rebuild_list to True if any particle has moved
+            further than the threshold distance
+        """
+        dr = self.r_old - self.particle.r
+        rsquared = dr[:,0]**2 + dr[:,1]**2 + dr[:,2]**2
+        dsq = np.max(rsquared)
+        if dsq > self.dsq_thres:
+            self.rebuild_list = True
+            
+
+class SmoothVerletList:
+    """A Verlet list with smooth particle neighbourly properties,
+        which are computed when the distances are computed.
+    """
+
+    def compute():
+        pass
+
+
+class CouplingList(NeighbourList):
+    """ An nlist for two particle systems."""
     def __init__(self,particle,cutoff,particle2=None):
         self.nip = 0
         self.particle = particle
@@ -40,45 +199,7 @@ class NeighbourList:
         self.nforce = 0
         self.forces = []
 
-    def build_nl_brute_force(self):
-        """ When in doubt, use brute force """
-        i=0
-        j=0
-        self.nip = 0
-        k = 0
-        self.rebuild_list = False
-        for i in range(self.particle.n):
-            for j in range(i+1,self.particle.n):
-                self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
-                self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
-                self.drij[k,1] = self.particle.r[j,2] - self.particle.r[i,2]
-                rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
-                self.rij[k] = numpy.sqrt(rsquared)
-                self.iap[self.nip,0] = i
-                self.iap[self.nip,1] = j
-                self.nip=self.nip+1
-                k = self.nip
-
-    def add_force(self,f):
-        """ Adds a force to a neighbour list """
-        self.forces.append(f)
-        self.nforce += 1
-    
-    def minimum_image(self,dr,xmax,ymax,zmax):
-        """ applies the minimum image convention to the distance
-            between two particles. Based on code by Peter Daivis
-            <insert reference to paper>
-        """
-        # don't use the general shape pbs
-        # just the 2d rectangle
-        if (dr[0] > xmax):
-            dr[0] = dr[0] - xmax
-        if (dr[1] > ymax):
-            dr[1] = dr[1] - ymax 	
-        if (dr[2] > zmax):
-            dr[2] = dr[2] - zmax 	
-
-    def build_nl_verlet(self):
+    def old_verlet_build_with_two_system_code(self):
         """ Not sure if verlet is the right term. We build a brute
             force list, and then eliminate pairs outside the
             interaction radius.
@@ -110,15 +231,8 @@ class NeighbourList:
                     self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
                     #self.minimum_image(self.drij[k,:],XMAX/2,YMAX/2)
                     rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
-                    if (rsquared < cutsq):
+                    if (rsquared < cutsq + tolerance):
                         self.iap[k,0] = i
                         self.iap[k,1] = j
                         self.rij[k] = numpy.sqrt(rsquared)
                         k += 1
-
-        self.nip = k     
-            
-
-class CouplingList(NeighbourList):
-    """ An nlist for two particle systems."""
-
