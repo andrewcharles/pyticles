@@ -137,7 +137,7 @@ class SmoothParticleView(ParticleView):
         # multipliers to map system to screen coordinates
         self.xmap = WINDOW_WIDTH / float(particles.XMAX)
         self.ymap = WINDOW_HEIGHT / float(particles.YMAX)
-        self.img = pyglet.image.load('p.png')
+        #self.img = pyglet.image.load('p.png')
         self.fps = 0
         # gridx,gridy is a grid at the rendering resolution
         self.gridx,self.gridy = renderspam.get_grid_map(0.0,particles.XMAX, \

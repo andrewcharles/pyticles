@@ -21,17 +21,17 @@ import math
 #import forces
 import neighbour_list
 #import properties
-import _properties as properties
+import c_properties as properties
 import scipy
 import integrator
 import configuration
 import box
 #from Numeric import *
 #import pdb
-import profiler
-from integrator import rk4
+from integrator import rk4, euler
+from time import time
 
-dt = 0.1
+dt = 0.01
 
 # variables for the integrator - put these somewhere cleaver
 verbose = False
@@ -43,7 +43,7 @@ N = 25
 MAXN = 4
 DIM = 2
 VMAX = 0.1
-CUTOFF_RADIUS =6 
+CUTOFF_RADIUS = 6 
 VACUUM_VISCOSITY = 0.1
 RAMAL = 0.5  #Amalgamation radius
 VSPLIT = 10.0 
@@ -52,8 +52,6 @@ ADKE = True # Sigalotti style adaptive density kernel estimation
 AMALGAMATE = False
 SPLIT = False
 ADVECTIVE = False
-
-profiler = profiler.timeprofile()
 
 
 class ParticleSystem:
@@ -102,9 +100,10 @@ class ParticleSystem:
         self.nlists = []
         self.forces = []
 
+        # Don't do this anymore
         # Create a placeholder list and initialise SPH properties
-        self.nl_default = neighbour_list.NeighbourList(self,10.0)
-        self.rebuild_lists()
+        #self.nl_default = neighbour_list.NeighbourList(self,10.0)
+        #self.rebuild_lists()
 
         self.controllers = controllers
         for controller in self.controllers:
@@ -126,7 +125,7 @@ class ParticleSystem:
         
         for nl in self.nlists: 
             if nl.rebuild_list:
-                nl.build_nl_verlet()
+                nl.build()
 
     def update(self):
         """ Update the particle system, using the
@@ -186,7 +185,7 @@ class ParticleSystem:
     
         for nl in self.nlists: 
             if nl.rebuild_list:
-                nl.build_nl_verlet()
+                nl.build()
         
         for force in self.forces:
             force.apply()
@@ -328,7 +327,7 @@ class SmoothParticleSystem(ParticleSystem):
         
         for nl in self.nlists: 
             if nl.rebuild_list:
-                nl.build_nl_verlet()
+                nl.build()
 
     def update(self):
         """ Update the particle system, using the
@@ -341,32 +340,26 @@ class SmoothParticleSystem(ParticleSystem):
         if AMALGAMATE:
             self.check_amalg(self.nl_default)
 
-        profiler.mark('t')
+        t = time()
         self.rebuild_lists()
-        print 'lists took',profiler.timegap(),'for update'
+        print 'Rebuild lists --',time() - t,'for update'
         
-        profiler.mark('t')
+        t = time()
         self.derivatives()
-        print 'derivs took',profiler.timegap(),'for update'
+        print 'Derivatives --',time() - t,'for update'
        
-        profiler.mark('t')
+        t = time()
         for nl in self.nlists: 
             properties.spam_properties(self,nl,nl.cutoff_radius)
-        print 'props took',profiler.timegap(),'for update'
+        print 'Spam --',time() - t,'for update'
 
-
-        profiler.mark('t')
+        t = time()
         # now integrate numerically
         rk4(self.gather_state,self.derivatives, \
             self.gather_derivatives,self.scatter_state,dt)
-        #integrator.euler(self.gather_state,self.derivatives, \
-        #                self.gather_derivatives,self.scatter_state,dt)
-        
-        print 'integrate took',profiler.timegap(),'for update'
+        print 'Integration --',time() - t,'for update'
         
         self.box.apply(self)
-
-
         
         #self.rebuild_lists()
 
@@ -423,13 +416,16 @@ class SmoothParticleSystem(ParticleSystem):
         # random velocity
         #self.vdot = numpy.random.random(self.v.shape)-0.5
         self.vdot[:,:] = 0.0
-    
+
+        t = time()
         for nl in self.nlists: 
-            if nl.rebuild_list:
-                nl.build_nl_verlet()
-        
+            nl.separations()
+        print 'Distances --',time() - t
+    
+        t = time()
         for force in self.forces:
             force.apply()
+        print 'Forces --',time() - t
 
         if ADVECTIVE:
             self.rdot[:,:] = 0.0

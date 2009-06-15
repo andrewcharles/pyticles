@@ -11,8 +11,9 @@ setup(name = 'pyticles',
       ext_modules=[
 #         Extension('_integrator', ['integrator.pyx'],include_dirs=include_dirs),
 #         Extension('_particles', ['particles_module.pyx'],include_dirs=include_dirs)
-         Extension('_forces', ['forces_module.pyx'],include_dirs=include_dirs),
-         Extension('_properties', ['properties.pyx'],include_dirs=include_dirs)
+         Extension('c_test', ['c_test.pyx'],include_dirs=include_dirs),
+         Extension('c_forces', ['c_forces.pyx'],include_dirs=include_dirs),
+         Extension('c_properties', ['c_properties.pyx'],include_dirs=include_dirs)
          ],
       cmdclass = { 'build_ext': build_pyx })
 
