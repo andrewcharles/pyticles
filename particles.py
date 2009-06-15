@@ -219,7 +219,7 @@ class SmoothParticleSystem(ParticleSystem):
         """
         self.rho = numpy.zeros(self.maxn)
         self.rhodot = numpy.zeros(self.rho.shape)
-        self.gradv = numpy.zeros(self.r.shape)
+        self.gradv = numpy.zeros([self.maxn,self.dim,self.dim])
         #thermal properties
         self.t = numpy.ones(self.maxn)
         self.t[:] = 0.4
@@ -348,10 +348,6 @@ class SmoothParticleSystem(ParticleSystem):
         self.derivatives()
         print 'Derivatives --',time() - t,'for update'
        
-        t = time()
-        for nl in self.nlists: 
-            properties.spam_properties(self,nl,nl.cutoff_radius)
-        print 'Spam --',time() - t,'for update'
 
         t = time()
         # now integrate numerically
@@ -421,6 +417,11 @@ class SmoothParticleSystem(ParticleSystem):
         for nl in self.nlists: 
             nl.separations()
         print 'Distances --',time() - t
+
+        t = time()
+        for nl in self.nlists: 
+            properties.spam_properties(self,nl,nl.cutoff_radius)
+        print 'Spam --',time() - t,'for update'
     
         t = time()
         for force in self.forces:

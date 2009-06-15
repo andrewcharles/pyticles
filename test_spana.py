@@ -20,10 +20,25 @@ class NeighbourListTest(unittest.TestCase):
         nl = neighbour_list.NeighbourList(p)
         nl.build()
         nl.separations()
-        print 'Number of pairs for',n,'particles',nl.nip
-        print 'Particle positions',p.r[0:n]
-        print 'Pair separations',nl.rij[0:nl.nip]
         self.assertEqual(nl.rij[0],1.0)
+
+    def test_verlet_list(self):
+        import particles
+        import neighbour_list
+        n = 3
+        p = particles.ParticleSystem(n,d=3,maxn=5)
+        p.r[0,:] = (0.0,0.0,0.0) 
+        p.r[1,:] = (1.0,0.0,0.0) 
+        p.r[2,:] = (0.0,0.0,1.0) 
+        nl = neighbour_list.VerletList(p,cutoff=10,tolerance=2)
+        nl.build()
+        nl.compress()
+        nl.separations()
+        self.assertEqual(nl.rij[0],1.0)
+        nl.ponder_rebuild()
+        p.r[0,:] = (100.0,100.0,100.0)
+        nl.ponder_rebuild()
+        self.assertEqual(nl.rebuild_list,True)
 
 class KernelTest(unittest.TestCase):
     """ 1. Test the smooth particle kernel functions. """

@@ -163,18 +163,16 @@ def spam_properties(p,nl,h):
 
         _rho[i] += _wij[k] * _m[j]
         _rho[j] += _wij[k] * _m[i]
-        _rho[i] += _wij[k] * _m[j]
-        _rho[j] += _wij[k] * _m[i]
 
         # BIG ERROR ALERT
         # LOOK UP THE 3d EXPRESSION FOR GRADV!!!!
         # 
 
         _gradv[i,0] += (_m[j]/_rho[j])*dvk[0]*_dwij[k,0]
-        _gradv[i,1] -= (_m[j]/_rho[j])*dvk[1]*_dwij[k,1]
-        _gradv[i,2] -= (_m[j]/_rho[j])*dvk[2]*_dwij[k,2]
+        _gradv[i,1] += (_m[j]/_rho[j])*dvk[1]*_dwij[k,1]
+        _gradv[i,2] += (_m[j]/_rho[j])*dvk[2]*_dwij[k,2]
         
-        _gradv[j,0] += (_m[i]/_rho[i])*dvk[0]*_dwij[k,0]
+        _gradv[j,0] -= (_m[i]/_rho[i])*dvk[0]*_dwij[k,0]
         _gradv[j,1] -= (_m[i]/_rho[i])*dvk[1]*_dwij[k,1]
         _gradv[j,2] -= (_m[i]/_rho[i])*dvk[2]*_dwij[k,2]
 
