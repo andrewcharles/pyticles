@@ -23,7 +23,7 @@ from pyglet.gl import *
 
 # Global variables
 MAX_STEPS = 100
-NP1 = 100
+NP1 = 10
 
 p = particles.SmoothParticleSystem(NP1,maxn=NP1)
 s = pview.ParticleView()
@@ -57,8 +57,8 @@ def initialise():
     print "Restarting"
     p = particles.SmoothParticleSystem(NP1,maxn=NP1)
     
-    nl_1 = neighbour_list.VerletList(p,cutoff=5.0)
-    nl_2 = neighbour_list.VerletList(p,cutoff=2.0)
+    nl_1 = neighbour_list.VerletList(p,cutoff=2.0)
+    nl_2 = neighbour_list.VerletList(p,cutoff=5.0)
     p.nlists.append(nl_1)
     p.nlists.append(nl_2)
     p.nl_default = nl_1

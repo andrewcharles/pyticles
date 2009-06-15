@@ -107,7 +107,7 @@ def spam_properties(p,nl,h):
     cdef np.ndarray[np.float_t,ndim=2,mode='c'] _r
     cdef np.ndarray[np.float_t,ndim=1,mode='c'] _rho
     cdef np.ndarray[np.float_t,ndim=2,mode='c'] _v
-    cdef np.ndarray[np.float_t,ndim=2,mode='c'] _gradv
+    cdef np.ndarray[np.float_t,ndim=3,mode='c'] _gradv
     cdef np.ndarray[np.float_t,ndim=1,mode='c'] _rij
     cdef np.ndarray[np.float_t,ndim=1,mode='c'] _wij
     cdef np.ndarray[np.float_t,ndim=2,mode='c'] _dwij
