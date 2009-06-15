@@ -23,7 +23,7 @@ from pyglet.gl import *
 
 # Global variables
 MAX_STEPS = 1000
-NP1 = 100
+NP1 = 10
 
 p = particles.SmoothParticleSystem(NP1,maxn=NP1,d=3)
 s = pview.ParticleView()

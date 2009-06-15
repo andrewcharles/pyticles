@@ -159,7 +159,7 @@ class VerletList(NeighbourList):
                 self.iap[q,0] = i
                 self.iap[q,1] = j
             self.nip = q
-        ponder_rebuild()
+        self.ponder_rebuild()
 
     def ponder_rebuild(self):
         """ Ponder the decision of whether to rebuild the list.

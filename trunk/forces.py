@@ -2,9 +2,6 @@
     A generic force class ,and several force objects that operate on particle
     systems.
 
-    The assumption is that two interacting particles are not from the
-    same system.
-
     Andrew Charles
 """
 
@@ -29,8 +26,7 @@ class Force:
         p2: The second particle set
         nl: list of interacting pairs (p1,p2)
 
-        The design is wrong here:
-
+        The design is wrong here...
 
     """ 
 
@@ -167,17 +163,14 @@ class SpamForce(Force):
     def __init__(self,particles,nl):
         self.p = particles
         self.nl = nl
-        #self.nl.cutoff_radius_sq = CUTOFF_RADIUS**2
 
     def apply_force(self,k):
         """ Calculates spam interaction between two particles.
             The spam density must have already been calculated.
         """
-        #def spam(p,i,j,dwdx):
         i = self.nl.iap[k,0]
         j = self.nl.iap[k,1]
         p = self.p
-        # todo add some logic to deal with one or 2 component pressure
         pri = self.p.p[i]
         prj = self.p.p[j]
         dwdx = self.nl.dwij[k,:]

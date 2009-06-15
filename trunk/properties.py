@@ -73,8 +73,8 @@ def spam_properties(p,nl,h):
     
         dv = p.v[j,:] - p.v[i,:]
 
-        for a in range p.dim:
-            for b in range p.dim:
+        for a in range(p.dim):
+            for b in range(p.dim):
                 p.gradv[i,a,b] += (p.m[j]/p.rho[i])*dv[a]*nl.dwij[k,b]
                 p.gradv[j,a,b] += (p.m[i]/p.rho[j])*dv[a]*nl.dwij[k,b]
 

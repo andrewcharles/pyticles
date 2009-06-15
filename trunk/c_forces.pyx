@@ -59,7 +59,6 @@ class SpamForce(Force):
     def __init__(self,particles,nl):
         self.p = particles
         self.nl = nl
-        #self.nl.cutoff_radius_sq = CUTOFF_RADIUS**2
 
     def apply(self):
         """Iterate over the neighbour list and apply the force to all
