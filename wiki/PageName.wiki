@@ -1,18 +1,14 @@
 #summary Birds eye view
 = Introduction =
+The main components of the program are *particle systems*,*forces*,*neighbour lists* and *integrator* and a time stepping algorithm.
 
+== ParticleSystem ==
+Contains coordinates, velocities and other properties for a given number (traditionally denoted n) particles, which may vary. Particles' coordinates may be updated in a number of ways, including body forces, interparticle forces, and boundary conditions. A promising way of modelling all of these is the concept of a 'controller', borrowed from Casey Duncan's Lepton.
 
+== NeighbourList ==
+A neighbour list tracks interacting pairs of particles from a given ParticleSystem (or in the case of a CouplingNeighbourList from two different particle systems) and maintains 'neighbourly' properties such as interparticle displacements. The list of neighbourly properties depends on the type of particle system. If the particle system has only positions and velocities then the position and velocity differences are of course the only two neighbourly properties. For a SmoothParticleSystem there will be additional properties. As square root operations are expensive it is important to only compute distances as often as necessary.
 
-
-ParticleSystem: Positions, Velocities, Masses, 
-
-
-NeighbourList: Pairs of particles. Neighbouring particles interact. 
-
-Integrator
-
-
-= Details =
+== Force ==
 
 Add your content here.  Format your content with:
   * Text in *bold* or _italic_
