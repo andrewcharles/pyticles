@@ -70,6 +70,7 @@ class NeighbourList:
     def minimum_image(self,dr,xmax,ymax,zmax):
         """ Applies the minimum image convention to the distance
             between two particles.
+            # --- a permutation of dimensions --- #
         """
         if (dr[0] > xmax):
             dr[0] = dr[0] - xmax
@@ -77,6 +78,32 @@ class NeighbourList:
             dr[1] = dr[1] - ymax 	
         if (dr[2] > zmax):
             dr[2] = dr[2] - zmax
+
+
+class SortedNeighbourList(NeighbourList):
+    """ A sorted nieghbour list.
+        idx is always an index.
+    """
+
+    def sort_by_r(self):
+        """ Sorts the list by interparticle separation.
+        """
+        idx = np.argsort(self.rij[:,:])
+        self.rij = self.rij[idx] 
+        self.particle = self.particle[idx]
+        self.max_interactions = self.max_interactions[idx]
+        self.iap = self.iap [idx]
+        self.rij = self.rij[idx]
+        self.rsq = self.rsq[idx]
+        self.drij = self.drij[idx]
+        self.wij = self.wij[idx]
+        self.dwij = self.dwij[idx]
+
+    def sort_by_i(self):
+        """ Sorted by i so we can only do say each particle's nearest
+            couple of neighbours.
+        """
+        pass
 
 
 class VerletList(NeighbourList):

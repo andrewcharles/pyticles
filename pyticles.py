@@ -13,7 +13,8 @@ import sys
 import time
 import particles
 import pyglet
-import _forces
+import forces
+#import c_forces as forces
 from pyglet.window import mouse
 import pview
 import profile
@@ -28,9 +29,10 @@ NP2 = 0
 
 p = particles.ParticleSystem(NP1,d=3,controllers=[controller.BodyForce()])
 buttons = []
+
+# CODE FOR MULTIPLE INTERACTING PARTICLE SYSTEMS
 #b = particles.Particles(NP2)
 #b.colour = 0.0,0.0,1.0
-
 # nl_1 gives internal p interactions
 # nl_2 gives p-b interactions
 # there are no internal b interactions
@@ -49,6 +51,36 @@ cmd_label = pyglet.text.Label("Command",font_name="Arial", \
 
 act_label = pyglet.text.Label("Command",font_name="Arial", \
             font_size=12,color =(100,100,220,244),x=200,y=400 )
+
+
+def initialise():
+    global p,nl_1,nl_2,cnt,buttons
+    print "Restarting"
+    p = particles.ParticleSystem(NP1,d=3
+        ,controllers=[controller.BodyForce()]
+        )
+    
+    nl_1 = particles.neighbour_list.NeighbourList(p)
+    nl_2 = particles.neighbour_list.VerletList(p,cutoff=10)
+    #nl_3 = particles.neighbour_list.NeighbourList(p,3.0,particle2=b)
+    
+    p.nlists.append(nl_1)
+    #p.nlists.append(nl_2)
+    #p.nlists.append(nl_3)
+    p.nl_default = nl_1
+    
+    #p.forces.append(forces.SpamForce(p,nl_1))
+    #p.forces.append(forces.CohesiveSpamForce(p,nl_2))
+    #nl_1.add_force(particles.forces.CollisionForce(p,p,nl_1))
+    #nl_1.add_force(particles.forces.HookesForce(p,p,nl_1))
+    #nl_1.add_force(particles.forces.Gravity(p,p,nl_1))
+
+    for nl in p.nlists:
+        nl.build()
+    cnt = 0
+
+    create_ui()
+
 
 def update(dt):
     global cnt,fps,rebuild_nl 
@@ -102,69 +134,66 @@ def clear_forces():
 
 def add_hookes():
     print "Adding spring force"
-    p.nl_default.add_force(particles.forces.HookesForce(p,p,p.nl_default))
+    p.nl_default.add_force(forces.HookesForce(p,p,p.nl_default))
 
 def add_grav():
     print "Adding gravity force"
-    p.nl_default.add_force(particles.forces.Gravity(p,p,p.nl_default))
+    p.nl_default.add_force(forces.Gravity(p,p,p.nl_default))
+
+def add_spam():
+    print "Adding smooth particle hydrodynamic force"
+    p.forces.append(forces.SpamForce(p,nl_1))
+
+def add_spam_attract():
+    print "Adding smooth particle hydrodynamic force"
+    p.forces.append(forces.CohesiveSpamForce(p,nl_2))
+
+
 
 def create_ui():
     global buttons
     pyglet.resource.path.append('res')
     pyglet.resource.reindex()
+
+    bx = 600
+
+    # spring button
     hookes_button = gui.Button()
     hookes_button.colour = 0.5,0.1,0.1
-    hookes_button.x = 600
+    hookes_button.x = bx
     hookes_button.y = 355
     hookes_button.label = "Springs"
     hookes_button.activate = add_hookes
     hookes_button.img = pyglet.resource.image('spring.png')
+    buttons.append(hookes_button)
 
+    # gravity button
     grav_button = gui.Button()
     grav_button.colour = 0.1,0.5,0.1
-    grav_button.x = 600 
+    grav_button.x = bx
     grav_button.y = 395
     grav_button.label = "grav"
     grav_button.activate = add_grav
+    buttons.append(grav_button)
 
+    # clear forces button
     clear_button = gui.Button()
-    clear_button.colour = 0.1,0.1,05.
-    clear_button.x = 600
+    clear_button.color = 0.1,0.1,05.
+    clear_button.x = bx
     clear_button.y = 435
     clear_button.activate=clear_forces
     clear_button.label = "clear"
-
-    buttons.append(hookes_button)
-    buttons.append(grav_button)
     buttons.append(clear_button)
 
-def initialise():
-    global p,nl_1,nl_2,cnt,buttons
-    print "Restarting"
-    p = particles.ParticleSystem(NP1,d=3
-        ,controllers=[controller.BodyForce()]
-        )
-    
-    nl_1 = particles.neighbour_list.NeighbourList(p,10.0)
-    #nl_2 = particles.neighbour_list.NeighbourList(p,5.0)
-    #nl_3 = particles.neighbour_list.NeighbourList(p,3.0,particle2=b)
-    
-    p.nlists.append(nl_1)
-    #p.nlists.append(nl_2)
-    #p.nlists.append(nl_3)
-    p.nl_default = nl_1
+    spam_button = gui.Button(
+                    loc = (bx,300)
+                    ,color = (0.9,0.3,0.5)
+                    ,activate = add_spam
+                    ,image = None
+                    ,label = "button"
+                )
+    buttons.append(spam_button)
 
-    #nl_1.add_force(particles.forces.SpamForce(p,p.nlists[0]))
-    #nl_1.add_force(particles.forces.CohesiveSpamForce(p,p.nlists[1]))
-    #nl_1.add_force(particles.forces.CollisionForce(p,p,nl_1))
-    #nl_1.add_force(particles.forces.HookesForce(p,p,nl_1))
-    #nl_1.add_force(particles.forces.Gravity(p,p,nl_1))
-
-    for nl in p.nlists:
-        nl.build_nl_verlet()
-    cnt = 0
-
-    create_ui()
 
 def main():
     #glEnable(GL_BLEND)

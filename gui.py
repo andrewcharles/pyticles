@@ -6,18 +6,33 @@ import pyglet
 from pyglet.window import mouse
 from pyglet.gl import *
 
+def nothing():
+    pass
+
 class Button:
     """ A button.
+
+        __init__() -- create a button with default values
+
     """
     
-    def __init__(self):
-        self.colour=0.1,0.1,0.1
-        self.mcolour=0.9,0.9,0.9
-        self.x = 2
-        self.y = 2
+    def __init__(self
+                ,loc=(30,30)
+                ,color=(0.5,0.5,0.5)
+                ,mcolor=(0.9,0.9,0.9)
+                ,activate=nothing()
+                ,image=None
+                ,label="button"
+                ):
+        self.color = color
+        self.mcolor = mcolor
+        self.x = loc[0]
+        self.y = loc[1]
         self.width = 40
         self.height = 40
-        self.img = "none"
+        self.activate = activate
+        self.img = image
+        self.label=label
 
     def activate(self):
             print "Hit the button"
@@ -32,15 +47,17 @@ class Button:
             return True
     
     def draw(self):
-        if self.img != "none":
+        if self.img:
             self.img.blit(self.x,self.y)
         else:
             glPolygonMode(GL_FRONT_AND_BACK,GL_FILL)
             glBegin(GL_POLYGON)
-            glColor3f(self.colour[0],self.colour[1],self.colour[2])
+            glColor3f(self.color[0],self.color[1],self.color[2])
             glVertex2f(self.x,self.y)
             glVertex2f(self.x,self.y+self.height)
             glVertex2f(self.x+self.width,self.y+self.height)
             glVertex2f(self.x+self.width,self.y)
             glVertex2f(self.x,self.y)
             glEnd()
+
+

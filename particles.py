@@ -20,8 +20,8 @@ import numpy
 import math
 #import forces
 import neighbour_list
-#import properties
-import c_properties as properties
+import properties
+#import c_properties as properties
 import scipy
 import integrator
 import configuration
@@ -31,7 +31,7 @@ import box
 from integrator import rk4, euler
 from time import time
 
-dt = 0.01
+dt = 0.1
 
 # variables for the integrator - put these somewhere cleaver
 verbose = False
@@ -117,8 +117,8 @@ class ParticleSystem:
         self.m[self.n] = self.m[self.n-1] 
         self.v[self.n] = 0,0,0
         self.n = self.n+1
-        for nl in self.nlists: 
-            nl.rebuild_list = True
+        self.rebuild_lists()
+
 
     def rebuild_lists(self):
         """ rebuilds all nlists """
