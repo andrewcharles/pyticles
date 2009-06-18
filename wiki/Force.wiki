@@ -1,0 +1,10 @@
+#summary Describes the Force object and how it works
+
+= Issues =
+A Force alters the rates of change of a ParticleSystem. It is the mapping from the particle attributes to the x and xdot state vectors that tells you which variables are fair game for being modified by a Force, and which aren't.
+
+A Force is the right hand side of the differential equation xdot = f(x).
+
+If a force depends on a rate of change then we have a potential ordering problem where the application of one force before another alters the outcome of the other force calculation. This is inconsistent, as we assume all the forces act simultaneously.
+
+Most applications will only require the update of dv/dt and de/dt, 
