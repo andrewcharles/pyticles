@@ -1,0 +1,4 @@
+#summary Features to add and the order in which to add them
+
+Particle Refinement and Amalgamation
+Suggest not allowing refinement every step - otherwise we can't study the effects of amalgamation shock. Should be a user control to initiate a refinement event. For long runs this could just be converted to a periodical refinement, or even monte-carlo refinement.
