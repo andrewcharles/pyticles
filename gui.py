@@ -28,8 +28,8 @@ class Button:
         self.mcolor = mcolor
         self.x = loc[0]
         self.y = loc[1]
-        self.width = 40
-        self.height = 40
+        self.width = 32
+        self.height = 32
         self.activate = activate
         self.img = image
         self.label=label

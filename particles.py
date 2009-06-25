@@ -109,6 +109,8 @@ class ParticleSystem:
         for controller in self.controllers:
             controller.bind_particles(self)
 
+        """ Variables for measuring performance. """
+
 
     def create_particle(self,x,y):
         """Adds a new particle to the system.
@@ -127,12 +129,11 @@ class ParticleSystem:
             if nl.rebuild_list:
                 nl.build()
 
-    def update(self):
+    def update(self,dt):
         """ Update the particle system, using the
             neighbour list supplied.
         """
         self.rebuild_lists()
-        self.derivatives()
         rk4(self.gather_state,self.derivatives, \
                        self.gather_derivatives,self.scatter_state,dt)
         self.box.apply(self)
@@ -184,8 +185,7 @@ class ParticleSystem:
         self.vdot[:,:] = 0.0
     
         for nl in self.nlists: 
-            if nl.rebuild_list:
-                nl.build()
+            nl.separations()
         
         for force in self.forces:
             force.apply()

@@ -5,6 +5,16 @@
     for details of that. This one is for driving developments
     of the GUI and of fast generic particle system components.
 
+    Create some particles
+    Use numerical intergration to step them forward in time
+    The numerical integrator uses a subroutine that computes the forces
+    SPHFORCES (subroutine)
+    ## outputs 
+    vdot 
+    udot
+    Q
+    P
+
     Copyright Andrew Charles 2008
     All rights reserved.
 """
@@ -24,6 +34,7 @@ import gui
 
 # Global variables
 max_steps = 1000
+timestep_size = 0.01
 NP1 = 2 
 NP2 = 0 
 
@@ -61,19 +72,12 @@ def initialise():
         )
     
     nl_1 = particles.neighbour_list.NeighbourList(p)
-    nl_2 = particles.neighbour_list.VerletList(p,cutoff=10)
-    #nl_3 = particles.neighbour_list.NeighbourList(p,3.0,particle2=b)
-    
     p.nlists.append(nl_1)
-    #p.nlists.append(nl_2)
-    #p.nlists.append(nl_3)
     p.nl_default = nl_1
     
-    #p.forces.append(forces.SpamForce(p,nl_1))
-    #p.forces.append(forces.CohesiveSpamForce(p,nl_2))
-    #nl_1.add_force(particles.forces.CollisionForce(p,p,nl_1))
-    #nl_1.add_force(particles.forces.HookesForce(p,p,nl_1))
-    #nl_1.add_force(particles.forces.Gravity(p,p,nl_1))
+    p.forces.append(forces.CollisionForce(p,nl_1))
+    #p.forces.append(forces.HookesForce(p,nl_1))
+    #p.forces.append(forces.Gravity(p,nl_1))
 
     for nl in p.nlists:
         nl.build()
@@ -85,7 +89,7 @@ def initialise():
 def update(dt):
     global cnt,fps,rebuild_nl 
     cnt += 1
-    p.update()
+    p.update(timestep_size)
     #b.update()
     if cnt >= max_steps:
         pyglet.app.exit()
@@ -128,26 +132,28 @@ def on_mouse_press(x,y,button,modifiers):
 
 def clear_forces():
     global p 
-    for nl in p.nlists:
-        nl.forces=[]
-        nl.nforce=0
+    p.forces = []
+    p.controllers = []
 
 def add_hookes():
     print "Adding spring force"
-    p.nl_default.add_force(forces.HookesForce(p,p,p.nl_default))
+    p.forces.append(forces.HookesForce(p,p.nlists[0]))
+    p.nlists[0].build()
 
 def add_grav():
     print "Adding gravity force"
-    p.nl_default.add_force(forces.Gravity(p,p,p.nl_default))
+    p.forces.append(forces.Gravity(p,p.nl_default))
+    p.nlists[0].build()
 
-def add_spam():
-    print "Adding smooth particle hydrodynamic force"
-    p.forces.append(forces.SpamForce(p,nl_1))
+def add_collisions():
+    p.forces.append(forces.CollisionForce(p,p.nl_default))
+    p.nlists[0].build()
 
-def add_spam_attract():
-    print "Adding smooth particle hydrodynamic force"
-    p.forces.append(forces.CohesiveSpamForce(p,nl_2))
-
+def add_body_force():
+    c = controller.BodyForce() 
+    p.controllers.append(c)
+    c.bind_particles(p)
+    p.nlists[0].build()
 
 
 def create_ui():
@@ -185,15 +191,21 @@ def create_ui():
     clear_button.label = "clear"
     buttons.append(clear_button)
 
-    spam_button = gui.Button(
-                    loc = (bx,300)
-                    ,color = (0.9,0.3,0.5)
-                    ,activate = add_spam
-                    ,image = None
-                    ,label = "button"
-                )
-    buttons.append(spam_button)
+    collision_button = gui.Button(
+                             loc = (bx,300)
+                            ,color = (0.9,0.3,0.5)
+                            ,activate = add_collisions
+                            ,image = "collision.png"
+                            ,label = "collision")
+    buttons.append(collision_button)
 
+    body_button = gui.Button(
+                             loc = (bx,200)
+                            ,color = (0.1,0.3,0.5)
+                            ,activate = add_body_force
+                            ,image = None
+                            ,label = "button")
+    buttons.append(body_button)
 
 def main():
     #glEnable(GL_BLEND)
@@ -204,18 +216,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-#Create some particles
-#Use numerical intergration to step them forward in time
-#The numerical integrator uses a subroutine that computes the forces
-#SPHFORCES (subroutine)
-## outputs 
-#vdot 
-#udot
-
-## inputs
-#Q
-#P
 
 
