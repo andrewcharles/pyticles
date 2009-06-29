@@ -61,11 +61,14 @@ class ParticleSystem:
     def __init__(self,n,d=3,maxn=100,controllers=[]):
         """
         DIMENSIONS
-        n -- initial number of particles
-        maxn -- maximum number of particles
-        dim -- number of spatial dimensions (1-3)
-        nlists -- neighbour lists associated with this particle system
+        n -- initial number of particles.
+        maxn -- maximum number of particles.
+        dim -- number of spatial dimensions (1-3).
+        nlists -- neighbour lists associated with this particle system.
         colour -- a 3 tuple giving the particles' RBG color.
+        box -- the simulation box. Should replace this with constraint forces.
+        nlists -- neighbour lists associated with this system.
+        forces -- internal forces associated with this system.
 
         """
         self.n = n
@@ -91,26 +94,18 @@ class ParticleSystem:
         self.x = numpy.zeros([n_variables,self.maxn])
         self.xdot = numpy.zeros([n_variables,self.maxn])
 
-        """
-        MACHINERY
-        box -- the simulation box. Should replace this with constraint forces.
-        nlists -- neighbout lists associated with this particle.
-
-        """
         self.nlists = []
         self.forces = []
-
-        # Don't do this anymore
-        # Create a placeholder list and initialise SPH properties
-        #self.nl_default = neighbour_list.NeighbourList(self,10.0)
-        #self.rebuild_lists()
 
         self.controllers = controllers
         for controller in self.controllers:
             controller.bind_particles(self)
 
         """ Variables for measuring performance. """
-
+        self.timing = {}
+        self.timing['Force time'] = -1
+        self.timing['Deriv time'] = -1
+        self.timing['Sep time'] = -1
 
     def create_particle(self,x,y):
         """Adds a new particle to the system.
@@ -216,6 +211,9 @@ class SmoothParticleSystem(ParticleSystem):
         p -- pressure. Just a scalar for now but this will
         become the full pressure tensor in time.
 
+        timing -- a dictionary of average execution times for
+                  particular subroutines.
+
         """
         self.rho = numpy.zeros(self.maxn)
         self.rhodot = numpy.zeros(self.rho.shape)
@@ -225,20 +223,17 @@ class SmoothParticleSystem(ParticleSystem):
         self.t[:] = 0.4
         self.h = numpy.zeros(self.maxn)
         self.h[:] = 3.
-        # I added another dimension to pressure, so that we have
-        # the cohesive pressure and the repulsive pressure
-        # this is a big problem
         self.p = numpy.zeros([self.maxn])
         self.pco = numpy.zeros([self.maxn])
         
-        #def grid(n,xside,yside,origin,spacing=1.0):
-
         for nl in self.nlists: 
             properties.spam_properties(self,nl,nl.cutoff_radius)
 
         n_variables = 10
         self.x = numpy.zeros([n_variables,self.maxn])
         self.xdot = numpy.zeros([n_variables,self.maxn])
+
+        self.timing['SPAM time'] = -1
 
 
     def split(self,i):
@@ -329,7 +324,7 @@ class SmoothParticleSystem(ParticleSystem):
             if nl.rebuild_list:
                 nl.build()
 
-    def update(self):
+    def update(self,dt):
         """ Update the particle system, using the
             neighbour list supplied.
         """
@@ -340,20 +335,19 @@ class SmoothParticleSystem(ParticleSystem):
         if AMALGAMATE:
             self.check_amalg(self.nl_default)
 
+
         t = time()
         self.rebuild_lists()
-        print 'Rebuild lists --',time() - t,'for update'
+        self.timing['Nlist rebuild time'] = time() - t
         
         t = time()
         self.derivatives()
-        print 'Derivatives --',time() - t,'for update'
+        self.timing['Deriv time'] = time() - t
        
-
         t = time()
-        # now integrate numerically
         rk4(self.gather_state,self.derivatives, \
             self.gather_derivatives,self.scatter_state,dt)
-        print 'Integration --',time() - t,'for update'
+        self.timing['Integrate time'] = -1
         
         self.box.apply(self)
         
@@ -416,19 +410,19 @@ class SmoothParticleSystem(ParticleSystem):
         t = time()
         for nl in self.nlists: 
             nl.separations()
-        print 'Distances --',time() - t
+        self.timing['Sep time'] = 0.2*(time() - t) + self.timing['Sep time']/4. 
+        
 
         t = time()
         for nl in self.nlists: 
             properties.spam_properties(self,nl,nl.cutoff_radius)
-        print 'Spam --',time() - t,'for update'
-    
+        self.timing['SPAM time'] = time() - t
+        
         t = time()
         for force in self.forces:
             force.apply()
-        print 'Forces --',time() - t
-
+        self.timing['Force time'] = time() - t
+        
         if ADVECTIVE:
             self.rdot[:,:] = 0.0
-   #     forces.apply_forces(self,nl)
 

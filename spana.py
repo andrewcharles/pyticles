@@ -26,6 +26,7 @@ import gui
 MAX_STEPS = 10000
 NP1 = 1
 MAXN = 50
+dt = 0.1
 
 p = particles.SmoothParticleSystem(NP1,maxn=MAXN)
 s = pview.ParticleView()
@@ -64,19 +65,32 @@ def initialise():
 
 def add_hookes():
     print "Adding spring force"
-    p.forces.append(forces.HookesForce(p,p,p.nl_default))
+    p.forces.append(forces.HookesForce(p,p.nl_default))
+    nl_1.build()
 
 def add_grav():
     print "Adding gravity force"
-    p.forces.append(forces.Gravity(p,p,p.nl_default))
+    p.forces.append(forces.Gravity(p,nl_1))
+    nl_1.build()
 
 def add_spam():
     print "Adding smooth particle hydrodynamic force"
     p.forces.append(forces.SpamForce(p,nl_1))
+    nl_1.build()
 
 def add_spam_attract():
     print "Adding smooth particle hydrodynamic force"
     p.forces.append(forces.CohesiveSpamForce(p,nl_2))
+    nl_2.build()
+
+
+def inc_dt():
+    global dt
+    dt *= 1.2
+
+def dec_dt():
+    global dt
+    dt *= 0.8
 
 def create_ui():
     global buttons
@@ -102,35 +116,58 @@ def create_ui():
     grav_button.y = 395
     grav_button.label = "grav"
     grav_button.activate = add_grav
+    grav_button.image = pyglet.resource.image('gravity_button.png')
     buttons.append(grav_button)
 
     # clear forces button
-    clear_button = gui.Button()
-    clear_button.color = 0.1,0.1,05.
-    clear_button.x = bx
-    clear_button.y = 435
-    clear_button.activate=clear_forces
-    clear_button.label = "clear"
+    clear_button = gui.Button(
+                    loc =(bx,425)
+                    ,color = (0.1,0.1,0.5)
+                    ,activate=clear_forces
+                    ,label = "clear"
+                    ,image = pyglet.resource.image('clear_button.png')
+                    )
     buttons.append(clear_button)
 
+    # spam button
     spam_button = gui.Button(
                     loc = (bx,300)
                     ,color = (0.9,0.3,0.5)
                     ,activate = add_spam
-                    ,image = None
+                    ,image = pyglet.resource.image('spam_button_yellow.png')
                     ,label = "button"
                 )
     buttons.append(spam_button)
+
+    # increase dt
+    dt_up = gui.Button(
+                loc = (bx,200)
+                ,color = (1.0,0.0,0.0)
+                ,activate = inc_dt
+                ,image = None
+                ,label = "dt_up"
+                )
+    buttons.append(dt_up)
+
+    # decrease dt
+    dt_down = gui.Button(
+                loc = (bx,100)
+                ,color = (0.0,0.0,1.0)
+                ,activate = dec_dt
+                ,image = None
+                ,label = "dt_down"
+                )
+    buttons.append(dt_down)
 
 
 def clear_forces():
     global p 
     p.forces=[]
 
-def update(dt):
-    global cnt,fps,rebuild_nl 
+def update(t):
+    global cnt,fps,rebuild_nl,dt 
     cnt += 1
-    p.update()
+    p.update(dt)
     if cnt >= MAX_STEPS:
         pyglet.app.exit()
     pass
@@ -173,7 +210,7 @@ def on_mouse_press(x,y,button,modifiers):
 
 def main():
     initialise()
-    pyglet.clock.schedule_interval(update,1/5.0)
+    pyglet.clock.schedule_interval(update,1/10.0)
     pyglet.app.run()
 
 if __name__ == "__main__":

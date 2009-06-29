@@ -75,7 +75,7 @@ def initialise():
     p.nlists.append(nl_1)
     p.nl_default = nl_1
     
-    p.forces.append(forces.CollisionForce(p,nl_1))
+    #p.forces.append(forces.CollisionForce(p,nl_1))
     #p.forces.append(forces.HookesForce(p,nl_1))
     #p.forces.append(forces.Gravity(p,nl_1))
 
@@ -136,16 +136,17 @@ def clear_forces():
     p.controllers = []
 
 def add_hookes():
-    print "Adding spring force"
-    p.forces.append(forces.HookesForce(p,p.nlists[0]))
+    print "Adding spring force."
+    p.forces.append(forces.HookesForce(p,p.nl_default))
     p.nlists[0].build()
 
 def add_grav():
-    print "Adding gravity force"
+    print "Adding gravity force."
     p.forces.append(forces.Gravity(p,p.nl_default))
     p.nlists[0].build()
 
 def add_collisions():
+    print "Adding collision force."
     p.forces.append(forces.CollisionForce(p,p.nl_default))
     p.nlists[0].build()
 
@@ -195,7 +196,7 @@ def create_ui():
                              loc = (bx,300)
                             ,color = (0.9,0.3,0.5)
                             ,activate = add_collisions
-                            ,image = "collision.png"
+                            ,image = pyglet.resource.image('collision.png')
                             ,label = "collision")
     buttons.append(collision_button)
 
@@ -204,7 +205,7 @@ def create_ui():
                             ,color = (0.1,0.3,0.5)
                             ,activate = add_body_force
                             ,image = None
-                            ,label = "button")
+                            ,label = "body force")
     buttons.append(body_button)
 
 def main():

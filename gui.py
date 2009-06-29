@@ -17,12 +17,12 @@ class Button:
     """
     
     def __init__(self
-                ,loc=(30,30)
-                ,color=(0.5,0.5,0.5)
-                ,mcolor=(0.9,0.9,0.9)
-                ,activate=nothing()
-                ,image=None
-                ,label="button"
+                ,loc = (30,30)
+                ,color = (0.5,0.5,0.5)
+                ,mcolor = (0.9,0.9,0.9)
+                ,activate = nothing()
+                ,image = None
+                ,label = "button"
                 ):
         self.color = color
         self.mcolor = mcolor

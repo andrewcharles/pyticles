@@ -5,6 +5,8 @@
     Force -- A generic pairwise force that can be instantiated but
             does nothing.
 
+    HookesForce -- a pairwise force that is linear in particle distance
+
 
     Andrew Charles
 """
@@ -14,13 +16,6 @@ import math
 import scipy
 import neighbour_list
 
-# CONSTANTS
-#CUTOFF_RADIUS = 10
-#DIM = 2
-#COLLISION_RADIUS_SQ = 1.0
-#VACUUM_VISCOSITY = 0.1
-#spring_k = 1.1
-#rest_distance =  0.2
 
 class Force:
     """ A generic pairwise particle force
@@ -43,13 +38,6 @@ class Force:
         for k in range(self.nl.nip):
             if self.nl.rij[k]**2 <= self.cutoffsq:
                 self.apply_force(k)
-
-#CUTOFF_RADIUS = 10
-#DIM = 2
-#COLLISION_RADIUS_SQ = 1.0
-#VACUUM_VISCOSITY = 0.1
-#spring_k = 1.1
-#rest_distance =  0.2
 
 
 class HookesForce(Force):
@@ -86,7 +74,7 @@ class HookesForce(Force):
 
 class CollisionForce(Force):
    
-    def __init__(self,particles,neighbour_list,cutoff=2.0):
+    def __init__(self,particles,neighbour_list,cutoff=5.0):
         Force.__init__(self,particles,neighbour_list,cutoff=cutoff)
 
     def apply_force(self,k):
