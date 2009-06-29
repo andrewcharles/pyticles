@@ -56,7 +56,9 @@ class NeighbourList:
         pass
 
     def separations(self):
-        """ Computes the distance between pairs in the list
+        """ Computes the distance between pairs in the list and stores
+            the result in the array rij, indexed by the same k that
+            indexes the interacting pairs array iap.
         """
         for k in range(self.nip):
             i = self.iap[k,0]
@@ -66,6 +68,20 @@ class NeighbourList:
             self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
             rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
             self.rij[k] = np.sqrt(rsquared)
+
+    def find_pair(self,i,j):
+        """ Finds the pair index k for the pair i,j if it exists.
+            If it does not exist, returns -1.
+            This is not optimised because the only use for it at the moment
+            is in testing.
+        """
+        for k in range(self.nip):
+            m = self.iap[k,0]
+            n = self.iap[k,1]
+            if( (i == m) and (j == n) ):
+                return k
+        return -1
+
 
     def minimum_image(self,dr,xmax,ymax,zmax):
         """ Applies the minimum image convention to the distance
@@ -132,7 +148,7 @@ class VerletList(NeighbourList):
             in the iap list.
 
     """
-    def __init__(self,particle,cutoff=2.0,tolerance=2.0):
+    def __init__(self,particle,cutoff=2.0,tolerance=1.0):
         NeighbourList.__init__(self,particle)
         self.cutoff_radius = cutoff 
         self.cutoff_radius_sq = cutoff**2
