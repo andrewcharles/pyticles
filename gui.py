@@ -41,8 +41,8 @@ class Button:
         """ Checks if the given coords are in the
             button's hitbox.
         """
-        if( (x>self.x) and (y>self.y)
-        and (x<self.x+self.width) and (y<self.y+self.width)):
+        if( (x > self.x) and (y > self.y)
+        and (x < self.x + self.width) and (y < self.y + self.width)):
             #self.activate()
             return True
     
