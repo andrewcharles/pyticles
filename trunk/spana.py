@@ -29,7 +29,7 @@ MAXN = 50
 dt = 0.1
 
 p = particles.SmoothParticleSystem(NP1,maxn=MAXN)
-s = pview.ParticleView()
+s = pview.SmoothParticleView()
 
 buttons = []
 cnt = 0
@@ -47,7 +47,6 @@ def initialise():
     global p,nl_1,nl_2,cnt,buttons
     print "Restarting"
     p = particles.SmoothParticleSystem(NP1,maxn=MAXN)
-    
     nl_1 = neighbour_list.VerletList(p,cutoff=2.0)
     nl_2 = neighbour_list.VerletList(p,cutoff=5.0)
     p.nlists.append(nl_1)
@@ -62,6 +61,7 @@ def initialise():
     cnt = 0
     create_ui()
 
+# Define GUI hook functions
 
 def add_hookes():
     print "Adding spring force"
@@ -82,7 +82,6 @@ def add_spam_attract():
     print "Adding smooth particle hydrodynamic force"
     p.forces.append(forces.CohesiveSpamForce(p,nl_2))
     nl_2.build()
-
 
 def inc_dt():
     global dt
@@ -136,7 +135,7 @@ def create_ui():
                     ,activate = add_spam
                     ,image = pyglet.resource.image('spam_button_yellow.png')
                     ,label = "button"
-                )
+                  )
     buttons.append(spam_button)
 
     # increase dt
@@ -191,19 +190,22 @@ def on_key_press(symbol,modifiers):
 def on_mouse_motion(x,y,dx,dy):
     for b in buttons:
         if b.hit(x,y):
-            #print "mouseover ",b.label
             cmd_label.text = b.label
-            #cmd_label.x=b.x
-            #cmd_label.y=b.y
     
 @s.win.event
 def on_mouse_press(x,y,button,modifiers):
+    """ If we hit a button, activate it. Otherwise, we have
+        hit somewhere in space, so create a particle.
+        Will need the concept of depth when the display is 3D.
+    """
     if button == mouse.LEFT:
         for b in buttons:
             if b.hit(x,y):
                 b.activate()
                 return
         p.create_particle(x/s.xmap,y/s.ymap)
+        for nl in p.nlists:
+            nl.build()
         print "Creating particle at ",x/s.xmap,y/s.ymap
 
 

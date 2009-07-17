@@ -2,7 +2,6 @@
     Viewer module for particle system
     Copyright Andrew Charles 2008
     All rights reserved.
-    This module is new BSD licensed.
 
     To mess around with the various (all 3...) visualisation
     options edit the function redraw()
@@ -39,34 +38,22 @@ class ParticleView:
         #config = Config(alpha_size=8)
         self.win = pyglet.window.Window(WINDOW_WIDTH,WINDOW_HEIGHT
                  ,visible=False,caption='Pyticles')
+
+        # Set up labels. These labels are pretty tightly coupled to the
+        # gui buttons
         self.fps = 0
-        self.fpslab = pyglet.text.Label("Hello pyglet",font_name="Arial", \
-        font_size=12,color =(255,0,0,255),x=10,y=4 )
-        self.npart = pyglet.text.Label("Hello pyglet",font_name="Arial", \
-        font_size=12,color =(255,0,0,255),x=100,y=4 )
-        self.nebs = pyglet.text.Label("Hello pyglet",font_name="Arial", \
-        font_size=12,color =(255,0,0,255),x=10,y=18 )
-        self.maxvol = pyglet.text.Label("Hello pyglet",font_name="Arial", \
-        font_size=12,color =(255,0,0,255),x=100,y=18 )
+        self.fpslab = pyglet.text.Label("fps label",font_name="Arial", \
+            font_size=12,color =(255,0,0,255),x=10,y=4 )
+        self.npart = pyglet.text.Label("np label",font_name="Arial", \
+            font_size=12,color =(255,0,0,255),x=100,y=4 )
+        self.nebs = pyglet.text.Label("ni label",font_name="Arial", \
+            font_size=12,color =(255,0,0,255),x=10,y=18 )
         
         self.win.set_visible()
         # multipliers to map system to screen coordinates
         self.xmap = WINDOW_WIDTH / float(particles.XMAX)
         self.ymap = WINDOW_HEIGHT / float(particles.YMAX)
-        self.fps = 0
-        # gridx,gridy is a grid at the rendering resolution
-        self.gridx,self.gridy = renderspam.get_grid_map(0.0,particles.XMAX, \
-        0.0,particles.YMAX,RES)
-        # rx,ry is a pixel grid
-        rx,ry = scipy.mgrid[0:WINDOW_WIDTH:1,0:WINDOW_HEIGHT:1]
-        dx = RES*WINDOW_WIDTH/float(particles.XMAX)
-        dy = RES*WINDOW_HEIGHT/float(particles.YMAX)
-        #xvals = (rx-dx/RES)/dx #(rx-RES?)
-        xvals = (rx-dx/2)/dx #(rx-RES?)
-        yvals = (ry-dy/2)/dy
-        self.G = numpy.array([xvals,yvals])
-          
-
+        
     def draw_particles(self,p):
         """ issues the opengl commands to draw the 
             particle system """
@@ -117,28 +104,20 @@ class ParticleView:
         self.draw_particles(p)
 
 
-
 class SmoothParticleView(ParticleView):
-    " A particle viewer"
+    """ Extends ParticleView to provide specialised visualisation of
+        smooth particle systems. """
     def __init__(self):
         #config = Config(alpha_size=8)
-        self.win = pyglet.window.Window(WINDOW_WIDTH,WINDOW_HEIGHT,visible=False,caption='Pyticles')
-        self.fps = 0
-        self.fpslab = pyglet.text.Label("Hello pyglet",font_name="Arial", \
-        font_size=12,color =(255,0,0,255),x=10,y=4 )
-        self.npart = pyglet.text.Label("Hello pyglet",font_name="Arial", \
-        font_size=12,color =(255,0,0,255),x=100,y=4 )
-        self.nebs = pyglet.text.Label("Hello pyglet",font_name="Arial", \
-        font_size=12,color =(255,0,0,255),x=10,y=18 )
-        self.maxvol = pyglet.text.Label("Hello pyglet",font_name="Arial", \
-        font_size=12,color =(255,0,0,255),x=100,y=18 )
+        ParticleView.__init__(self)
+        self.win = pyglet.window.Window(WINDOW_WIDTH,WINDOW_HEIGHT,visible=False
+            ,caption='Pyticles')
         
         self.win.set_visible()
-        # multipliers to map system to screen coordinates
-        self.xmap = WINDOW_WIDTH / float(particles.XMAX)
-        self.ymap = WINDOW_HEIGHT / float(particles.YMAX)
-        #self.img = pyglet.image.load('p.png')
-        self.fps = 0
+        
+        self.maxvol = pyglet.text.Label("maxvol label",font_name="Arial", \
+            font_size=12,color =(255,0,0,255),x=200,y=18 )
+
         # gridx,gridy is a grid at the rendering resolution
         self.gridx,self.gridy = renderspam.get_grid_map(0.0,particles.XMAX, \
         0.0,particles.YMAX,RES)
@@ -151,7 +130,6 @@ class SmoothParticleView(ParticleView):
         yvals = (ry-dy/2)/dy
         self.G = numpy.array([xvals,yvals])
           
-
     def render_density(self,p):
         """ Generates a splashmap, then creates an image the
             size of the viewing window and interpolates the splashmap
@@ -238,9 +216,9 @@ class SmoothParticleView(ParticleView):
         #self.win.dispatch_events()
         #glClear(GL_COLOR_BUFFER_BIT)
         #glLoadIdentity()
-        #self.render_density(p)
+        self.render_density(p)
         self.hud(p)
-        #self.draw_neighbours(p)
+        self.draw_neighbours(p)
         self.draw_particles(p)
         #self.draw_particle_sprites(p)
 

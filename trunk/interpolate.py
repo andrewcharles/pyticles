@@ -79,7 +79,7 @@ def splash_map(x,y,r,m,rho,a,h,bounds,cutoff):
                 if xpx >= nx: xpx -= nx
                 if xpx < 0: xpx += nx
                 
-                dr = numpy.array( (r[i] - (x[xpx],y[ypx])))
+                dr = numpy.array( (r[i,0] - x[xpx], y[ypx] - r[i,1] ))
                 # need to apply a minimum image convention
                 neighbours.minimum_image(dr,xmax,ymax)
                 rsq =  numpy.dot(dr,dr)
@@ -104,7 +104,7 @@ def map_to_grid(x,y,r,m,rho,a,h,bounds,cutoff):
 
     nx = x.size
     ny = y.size
-#    X,Y =  pylab.meshgrid(x,y)
+#   X,Y =  pylab.meshgrid(x,y)
     Z = numpy.zeros((nx,ny))
     nlists = []
     ngridpts = x.size*y.size
