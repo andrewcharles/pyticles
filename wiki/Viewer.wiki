@@ -1,0 +1,11 @@
+#summary Documents the viewer and other UI components
+
+= Introduction =
+
+Fast feedback improves the past of scientific software development.
+The interface is designed to provide a game-like level of control
+over the visualisation and control of the particle systems.
+
+Currently it is 2D and a bit naff. As the priority feature for the python
+code is 3 dimensions, it seems appropriate that the 3 dimensional view be
+also a priority. This will simply use Pyglet's interface to OpenGL.
