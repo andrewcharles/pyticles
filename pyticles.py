@@ -5,18 +5,15 @@
     for details of that. This one is for driving developments
     of the GUI and of fast generic particle system components.
 
-    Create some particles
-    Use numerical intergration to step them forward in time
-    The numerical integrator uses a subroutine that computes the forces
-    SPHFORCES (subroutine)
-    ## outputs 
-    vdot 
-    udot
-    Q
-    P
-
-    Copyright Andrew Charles 2008
+    Copyright Andrew Charles 2009
     All rights reserved.
+
+    Global variables
+    ----------------
+    max_steps -- the program will end when this number of steps
+        have been taken.
+    timestep_size -- length of simulated timestep
+
 """
 
 import sys
@@ -25,6 +22,9 @@ import particles
 import pyglet
 import forces
 #import c_forces as forces
+sys.path.append('/Users/acharles/masters/active/fsph')
+import hello
+import collision
 from pyglet.window import mouse
 import pview
 import profile
@@ -35,7 +35,7 @@ import gui
 # Global variables
 max_steps = 1000
 timestep_size = 0.01
-NP1 = 2 
+NP1 = 12 
 NP2 = 0 
 
 p = particles.ParticleSystem(NP1,d=3,controllers=[controller.BodyForce()])
@@ -98,7 +98,7 @@ def update(dt):
 @s.win.event
 def on_draw():
     s.fps = pyglet.clock.get_fps()
-    s.clear()
+    #s.clear()
     s.redraw(p)
     cmd_label.draw()
     act_label.draw()
@@ -110,24 +110,25 @@ def on_key_press(symbol,modifiers):
     if symbol == pyglet.window.key.R:
         initialise()
 
-@s.win.event
-def on_mouse_motion(x,y,dx,dy):
-    for b in buttons:
-        if b.hit(x,y):
-            #print "mouseover ",b.label
-            cmd_label.text = b.label
+#@s.win.event
+#def on_mouse_motion(x,y,dx,dy):
+#    for b in buttons:
+#        if b.hit(x,y):
+#            #print "mouseover ",b.label
+#            cmd_label.text = b.label
             #cmd_label.x=b.x
             #cmd_label.y=b.y
     
-@s.win.event
-def on_mouse_press(x,y,button,modifiers):
-    if button == mouse.LEFT:
-        for b in buttons:
-            if b.hit(x,y):
-                b.activate()
-                return
-        p.create_particle(x/s.xmap,y/s.ymap)
-        print "Creating particle at ",x/s.xmap,y/s.ymap
+#@s.win.event
+#def on_mouse_press(x,y,button,modifiers):
+#    if button == mouse.LEFT:
+#        for b in buttons:
+#            if b.hit(x,y):
+#                b.activate()
+#                return
+#        p.create_particle(x/s.xmap,y/s.ymap)
+#        print "Creating particle at ",x/s.xmap,y/s.ymap
+#        p.nlists[0].build()
 
 
 def clear_forces():
@@ -207,6 +208,9 @@ def create_ui():
                             ,image = None
                             ,label = "body force")
     buttons.append(body_button)
+
+
+
 
 def main():
     #glEnable(GL_BLEND)

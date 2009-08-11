@@ -1,5 +1,6 @@
-""" Graphical user interface elements using simple pyglet
+""" A very minimal library of graphical user interface elements using simple pyglet
     primitives.
+
 """
 
 import pyglet
@@ -48,8 +49,13 @@ class Button:
     
     def draw(self):
         if self.img:
+            glPushMatrix()
+            glLoadIdentity()
             self.img.blit(self.x,self.y)
+            glPopMatrix()
         else:
+            glPushMatrix()
+            glLoadIdentity()
             glPolygonMode(GL_FRONT_AND_BACK,GL_FILL)
             glBegin(GL_POLYGON)
             glColor3f(self.color[0],self.color[1],self.color[2])
@@ -59,5 +65,6 @@ class Button:
             glVertex2f(self.x+self.width,self.y)
             glVertex2f(self.x,self.y)
             glEnd()
+            glPopMatrix()
 
 
