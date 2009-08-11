@@ -99,42 +99,42 @@ def create_ui():
     bx = 600
 
     # spring button
-    hookes_button = gui.Button()
-    hookes_button.colour = 0.5,0.1,0.1
-    hookes_button.x = bx
-    hookes_button.y = 355
-    hookes_button.label = "Springs"
-    hookes_button.activate = add_hookes
-    hookes_button.img = pyglet.resource.image('spring.png')
+    hookes_button = gui.Button(
+        loc = (bx,355),
+        color = (0.5,0.1,0.1),
+        label = "Springs",
+        activate = add_hookes,
+        img = pyglet.resource.image('spring.png')
+        )
     buttons.append(hookes_button)
 
     # gravity button
-    grav_button = gui.Button()
-    grav_button.colour = 0.1,0.5,0.1
-    grav_button.x = bx
-    grav_button.y = 395
-    grav_button.label = "grav"
-    grav_button.activate = add_grav
-    grav_button.image = pyglet.resource.image('gravity_button.png')
+    grav_button = gui.Button(
+        loc = (bx,395),
+        color = (0.1,0.5,0.1),
+        label = "grav",
+        activate = add_grav,
+        image = pyglet.resource.image('gravity_button.png')
+        )
     buttons.append(grav_button)
 
     # clear forces button
     clear_button = gui.Button(
-                    loc =(bx,425)
-                    ,color = (0.1,0.1,0.5)
-                    ,activate=clear_forces
-                    ,label = "clear"
-                    ,image = pyglet.resource.image('clear_button.png')
+                    loc =(bx,425),
+                    color = (0.1,0.1,0.5),
+                    activate=clear_forces,
+                    label = "clear",
+                    image = pyglet.resource.image('clear_button.png')
                     )
     buttons.append(clear_button)
 
     # spam button
     spam_button = gui.Button(
-                    loc = (bx,300)
-                    ,color = (0.9,0.3,0.5)
-                    ,activate = add_spam
-                    ,image = pyglet.resource.image('spam_button_yellow.png')
-                    ,label = "button"
+                    loc = (bx,300),
+                    color = (0.9,0.3,0.5),
+                    activate = add_spam,
+                    image = pyglet.resource.image('spam_button_yellow.png'),
+                    label = "button"
                   )
     buttons.append(spam_button)
 
@@ -157,7 +157,6 @@ def create_ui():
                 ,label = "dt_down"
                 )
     buttons.append(dt_down)
-
 
 def clear_forces():
     global p 
@@ -207,8 +206,6 @@ def on_mouse_press(x,y,button,modifiers):
         for nl in p.nlists:
             nl.build()
         print "Creating particle at ",x/s.xmap,y/s.ymap
-
-
 
 def main():
     initialise()

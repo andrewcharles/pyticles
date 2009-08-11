@@ -85,7 +85,7 @@ class ParticleSystem:
         self.mdot = numpy.zeros(self.m.shape)
 
         # Initialise values
-        self.r[0:self.n]=configuration.grid3d(self.n,5,5,(20,20,0),spacing=0.8)
+        self.r[0:self.n]=configuration.grid3d(self.n,5,5,(20,20,20),spacing=0.8)
         self.m[:] = 1.
         self.colour = 1.0,0.0,0.0 
 

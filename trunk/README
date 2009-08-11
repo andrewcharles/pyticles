@@ -46,17 +46,17 @@ About
 The main driver is my smooth particle research. There are a number of
 front end scripts for pyticles:
 
-1. spana
+1. spana.py
 This is the front end for testing algorithms related to my research.
 
-1.1 ospana
+1.1 ospana.py
 This is a front end to the cython optimised version of the code.
 
-2. pyticles
+2. pyticles.py
 This is where the bulk of the work on the interactive gui is going.
 
 
-4. particle_man
+4. particle_man.py
 This is to be an effort to produce a simple game using the pyticles
 modules. It is pretty much nothing at the moment.
 
@@ -76,7 +76,8 @@ ac1201@gmail.com
 3. Fast prototyping of new algoritms
 4. Integration with the fortran code
 
-Pyticles uses Pyglet by Alex Holkner, which is subject to its own license and so forth. I encourage you to check out the Pyglet web site.
+Pyticles uses Pyglet by Alex Holkner, which is subject to its own license
+and so forth. I encourage you to check out the Pyglet web site.
 
 
 
