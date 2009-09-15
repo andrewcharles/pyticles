@@ -15,6 +15,9 @@ import numpy
 import math
 import scipy
 import neighbour_list
+import sys
+sys.path.append('/Users/acharles/masters/active/fsph')
+from collision import collision
 
 
 class Force:
@@ -247,5 +250,23 @@ class Gravity(Force):
         p.vdot[i,1] += dvy
         p.vdot[j,0] += -dvx
         p.vdot[j,1] += -dvy
-        
+       
+
+class FortranCollisionForce(Force):
+    """ A wrapper for the fortran collide3d subroutine.
+    """
+
+    def __init__(self,particles,neighbour_list,cutoff=1.0):
+        Force.__init__(self,particles,neighbour_list,cutoff=cutoff)
+        self.nl = neighbour_list
+
+    def apply_force(self,k):
+        """ A hard collision is just an instantanous force.
+        """
+        nl = self.nl
+        i = nl.iap[k,0]
+        j = nl.iap[k,1]
+        p = self.p
+        collision.collide3d(p.v[i],p.v[j],p.m[i],p.m[j],nl.drij[k],nl.rsq[k])
+
 

@@ -31,13 +31,14 @@ def smooth_point(r,dr,x,vol,h,type):
     x_smooth = 0.0
     j = 0
     for rj in r:
-        x_smooth = x_smooth + x[j] * vol[j] * spkernel.kernel(rj,dr[j],h[j],type)[0]
+        x_smooth = x_smooth + x[j] * vol[j] \
+                * spkernel.kernel(rj,dr[j],h[j],type)[0]
         j += 1
     return x_smooth
 
 def splash_map(x,y,r,m,rho,a,h,bounds,cutoff): 
     """ I used Daniel Price's algorithm for this version of
-        the rendering which should be a good dead faster.
+        the rendering which should be a good deal faster.
         res is the width of grid cells
 
         x - x positions of grid
@@ -78,7 +79,7 @@ def splash_map(x,y,r,m,rho,a,h,bounds,cutoff):
                 if ypx < 0: ypx += ny
                 if xpx >= nx: xpx -= nx
                 if xpx < 0: xpx += nx
-                
+               
                 dr = numpy.array( (r[i,0] - x[xpx], y[ypx] - r[i,1] ))
                 # need to apply a minimum image convention
                 neighbours.minimum_image(dr,xmax,ymax)
