@@ -36,8 +36,8 @@ dt = 0.1
 # variables for the integrator - put these somewhere cleaver
 verbose = False
 
-XMAX = 64 #64
-YMAX = 48 #48
+XMAX = 100 #64
+YMAX = 100 #48
 ZMAX = 100
 N = 25 
 MAXN = 4
@@ -85,7 +85,7 @@ class ParticleSystem:
         self.mdot = numpy.zeros(self.m.shape)
 
         # Initialise values
-        self.r[0:self.n]=configuration.grid3d(self.n,5,5,(20,20,20),spacing=0.8)
+        #self.r[0:self.n]=configuration.grid3d(self.n,5,5,(20,20,20),spacing=0.8)
         self.m[:] = 1.
         self.colour = 1.0,0.0,0.0 
 
@@ -110,9 +110,9 @@ class ParticleSystem:
     def create_particle(self,x,y):
         """Adds a new particle to the system.
         """
-        self.r[self.n] = x,y,0
+        self.r[self.n] = (x, y, 0.0)
         self.m[self.n] = self.m[self.n-1] 
-        self.v[self.n] = 0,0,0
+        self.v[self.n] = (0.0, 0.0, 0.0)
         self.n = self.n+1
         self.rebuild_lists()
 

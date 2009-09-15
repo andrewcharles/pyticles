@@ -4,8 +4,9 @@
     that calculate several versions of the
     sph smoothing kernel
     There should be two functions for each kernel. One just gets the kernel
-    - this is designed for doing interpolation. The other also gets the kernel gradient - this is designed for doing simulations.
-    For example: gauss_kernel, and gauss_kernel_ag (kernel and gradient).
+    - this is designed for doing interpolation. The other also gets the kernel
+      gradient - this is designed for doing simulations.  For example:
+      gauss_kernel, and gauss_kernel_ag (kernel and gradient).
     gauss_kernel_ag will call both the kernel and its derivative.
     Worried a bit about the function call overhead when doing this twice.
 """
@@ -29,9 +30,7 @@ def kernel(r,dx,h,type):
         w,dwdx = lucy_kernel(r,dx,h)
     elif type == 'debrun':
         w,dwdx = debrun_kernel(r,dx,h)
-
     return w,dwdx
-
 
 def gauss_kernel(r,dx,h):
     """ Ye old Gaussian SPH kernel. Returns w, dwdx """
@@ -41,7 +40,7 @@ def gauss_kernel(r,dx,h):
     dx = numpy.atleast_1d(dx)
     dim = dx.size
     q = r/h
-    factor = 1.e0 / (h**dim * pi**(dim/2.))
+    factor = 1.e0 / ( (h**dim) * (numpy.pi**(dim/2.)) )
     w = factor * exp(-q*q)
     dwdx=[]
     for i in range(0,dim):
@@ -127,6 +126,8 @@ def debrun_kernel(r,dx,h):
 
 def test():
     """ Tests the module """
+    from scipy import integrate
+
     print "Testing spkernel.py"
 
     print "Testing for one dimension"
@@ -138,7 +139,8 @@ def test():
     print "Gaussian"
     print kernel(r,dx,h,"gaussian")
     print gauss_kernel(r,dx,h)
-    
+    print 'area:',integrate.quad(lambda r: gauss_kernel(r,dx,h)[0],0.0,4.*h) 
+
     print "Debrun"
     print kernel(r,dx,h,"debrun")
     print debrun_kernel(r,dx,h)

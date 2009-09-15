@@ -23,8 +23,8 @@ import pyglet
 import forces
 #import c_forces as forces
 sys.path.append('/Users/acharles/masters/active/fsph')
-import hello
-import collision
+#import hello
+#import collision
 from pyglet.window import mouse
 import pview
 import profile
@@ -41,14 +41,6 @@ NP2 = 0
 p = particles.ParticleSystem(NP1,d=3,controllers=[controller.BodyForce()])
 buttons = []
 
-# CODE FOR MULTIPLE INTERACTING PARTICLE SYSTEMS
-#b = particles.Particles(NP2)
-#b.colour = 0.0,0.0,1.0
-# nl_1 gives internal p interactions
-# nl_2 gives p-b interactions
-# there are no internal b interactions
-#nl_1 = particles.neighbour_list.NeighbourList(p,3.0)
-#nl_2 = particles.neighbour_list.NeighbourList(p,3.0,particle2=b)
 
 s = pview.ParticleView()
 
@@ -223,3 +215,11 @@ if __name__ == "__main__":
     main()
 
 
+# CODE FOR MULTIPLE INTERACTING PARTICLE SYSTEMS
+#b = particles.Particles(NP2)
+#b.colour = 0.0,0.0,1.0
+# nl_1 gives internal p interactions
+# nl_2 gives p-b interactions
+# there are no internal b interactions
+#nl_1 = particles.neighbour_list.NeighbourList(p,3.0)
+#nl_2 = particles.neighbour_list.NeighbourList(p,3.0,particle2=b)

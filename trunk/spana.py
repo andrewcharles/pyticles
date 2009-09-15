@@ -24,7 +24,7 @@ import gui
 
 # Global variables
 MAX_STEPS = 10000
-NP1 = 1
+NP1 = 3 
 MAXN = 50
 dt = 0.1
 
@@ -104,7 +104,7 @@ def create_ui():
         color = (0.5,0.1,0.1),
         label = "Springs",
         activate = add_hookes,
-        img = pyglet.resource.image('spring.png')
+        image = pyglet.resource.image('spring.png')
         )
     buttons.append(hookes_button)
 
