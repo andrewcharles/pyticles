@@ -36,12 +36,9 @@ dt = 0.1
 # variables for the integrator - put these somewhere cleaver
 verbose = False
 
-XMAX = 100 #64
-YMAX = 100 #48
-ZMAX = 100
-N = 25 
-MAXN = 4
-DIM = 2
+XMAX = 50 #64
+YMAX = 50 #48
+ZMAX = 10
 VMAX = 0.1
 CUTOFF_RADIUS = 6 
 VACUUM_VISCOSITY = 0.1
@@ -58,7 +55,7 @@ class ParticleSystem:
     """ A group of similar particles with basic mechanical properties.
 
     """
-    def __init__(self,n,d=3,maxn=100,controllers=[]):
+    def __init__(self,n,d=3,maxn=100,controllers=[],simbox=None):
         """
         DIMENSIONS
         n -- initial number of particles.
@@ -74,9 +71,11 @@ class ParticleSystem:
         self.n = n
         self.dim = d
         self.maxn = maxn
+        self.dt = 0.0
 
         # Basic mechanical properties
-        self.box = box.MirrorBox(self,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
+        if not simbox:
+            self.box = box.MirrorBox(self,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
         self.r = self.box.xmax * numpy.random.random([self.maxn,self.dim])
         self.m = numpy.zeros(self.maxn)
         self.v = VMAX * (numpy.random.random([self.maxn,self.dim]) - 0.5)

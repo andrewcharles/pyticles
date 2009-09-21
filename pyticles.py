@@ -33,14 +33,13 @@ import controller
 import gui
 
 # Global variables
-max_steps = 1000
+max_steps = 100000
 timestep_size = 0.01
-NP1 = 12 
+NP1 = 9 
 NP2 = 0 
 
 p = particles.ParticleSystem(NP1,d=3,controllers=[controller.BodyForce()])
 buttons = []
-
 
 s = pview.ParticleView()
 
@@ -55,7 +54,6 @@ cmd_label = pyglet.text.Label("Command",font_name="Arial", \
 act_label = pyglet.text.Label("Command",font_name="Arial", \
             font_size=12,color =(100,100,220,244),x=200,y=400 )
 
-
 def initialise():
     global p,nl_1,nl_2,cnt,buttons
     print "Restarting"
@@ -67,9 +65,9 @@ def initialise():
     p.nlists.append(nl_1)
     p.nl_default = nl_1
     
-    #p.forces.append(forces.CollisionForce(p,nl_1))
+    p.forces.append(forces.CollisionForce(p,nl_1))
     #p.forces.append(forces.HookesForce(p,nl_1))
-    #p.forces.append(forces.Gravity(p,nl_1))
+    p.forces.append(forces.Gravity(p,nl_1))
 
     for nl in p.nlists:
         nl.build()
@@ -92,24 +90,21 @@ def on_draw():
     s.fps = pyglet.clock.get_fps()
     #s.clear()
     s.redraw(p)
-    cmd_label.draw()
-    act_label.draw()
-    for b in buttons:
-        b.draw()    
+    draw_ui()
 
 @s.win.event
 def on_key_press(symbol,modifiers):
     if symbol == pyglet.window.key.R:
         initialise()
 
-#@s.win.event
-#def on_mouse_motion(x,y,dx,dy):
-#    for b in buttons:
-#        if b.hit(x,y):
-#            #print "mouseover ",b.label
-#            cmd_label.text = b.label
-            #cmd_label.x=b.x
-            #cmd_label.y=b.y
+@s.win.event
+def on_mouse_motion(x,y,dx,dy):
+    for b in buttons:
+        if b.hit(x,y):
+            #print "mouseover ",b.label
+            cmd_label.text = b.label.text
+            cmd_label.x=b.x
+            cmd_label.y=b.y
     
 #@s.win.event
 #def on_mouse_press(x,y,button,modifiers):
@@ -121,7 +116,6 @@ def on_key_press(symbol,modifiers):
 #        p.create_particle(x/s.xmap,y/s.ymap)
 #        print "Creating particle at ",x/s.xmap,y/s.ymap
 #        p.nlists[0].build()
-
 
 def clear_forces():
     global p 
@@ -149,40 +143,49 @@ def add_body_force():
     c.bind_particles(p)
     p.nlists[0].build()
 
+def draw_ui():
+    s.set_ortho()
+    glPushMatrix()
+    glLoadIdentity()
+    cmd_label.draw()
+    act_label.draw()
+    for b in buttons:
+        b.draw()    
+    glFlush()
+    glPopMatrix()
+    s.reset_perspective()
 
 def create_ui():
     global buttons
     pyglet.resource.path.append('res')
     pyglet.resource.reindex()
-
     bx = 600
-
     # spring button
-    hookes_button = gui.Button()
-    hookes_button.colour = 0.5,0.1,0.1
-    hookes_button.x = bx
-    hookes_button.y = 355
-    hookes_button.label = "Springs"
-    hookes_button.activate = add_hookes
-    hookes_button.img = pyglet.resource.image('spring.png')
+    hookes_button = gui.Button(
+        labeltext="Springs",
+        color = (0.5,0.1,0.1),
+        loc = (bx,355),
+        activate = add_hookes,
+        image = pyglet.resource.image('spring.png')
+        )
     buttons.append(hookes_button)
 
     # gravity button
-    grav_button = gui.Button()
-    grav_button.colour = 0.1,0.5,0.1
-    grav_button.x = bx
-    grav_button.y = 395
-    grav_button.label = "grav"
-    grav_button.activate = add_grav
+    grav_button = gui.Button(
+        color = (0.1,0.5,0.1),
+        loc = (bx,395),
+        labeltext = "grav",
+        activate = add_grav
+        )
     buttons.append(grav_button)
 
     # clear forces button
-    clear_button = gui.Button()
-    clear_button.color = 0.1,0.1,05.
-    clear_button.x = bx
-    clear_button.y = 435
-    clear_button.activate=clear_forces
-    clear_button.label = "clear"
+    clear_button = gui.Button(
+        color = (0.1,0.1,0.5),
+        loc = (bx,435),
+        activate = clear_forces,
+        labeltext = "clear"
+        )
     buttons.append(clear_button)
 
     collision_button = gui.Button(
@@ -190,7 +193,7 @@ def create_ui():
                             ,color = (0.9,0.3,0.5)
                             ,activate = add_collisions
                             ,image = pyglet.resource.image('collision.png')
-                            ,label = "collision")
+                            ,labeltext = "collision")
     buttons.append(collision_button)
 
     body_button = gui.Button(
@@ -198,18 +201,43 @@ def create_ui():
                             ,color = (0.1,0.3,0.5)
                             ,activate = add_body_force
                             ,image = None
-                            ,label = "body force")
+                            ,labeltext = "body force")
     buttons.append(body_button)
 
+    # increase dt
+    dt_up = gui.Button(
+                loc = (bx,150)
+                ,color = (1.0,0.0,0.0)
+                ,activate = inc_dt
+                ,image = None
+                ,labeltext = "dt_up"
+                )
+    buttons.append(dt_up)
 
+    # decrease dt
+    dt_down = gui.Button(
+                loc = (bx,100)
+                ,color = (0.0,0.0,1.0)
+                ,activate = dec_dt
+                ,image = None
+                ,labeltext = "dt_down"
+                )
+    buttons.append(dt_down)
 
+def inc_dt():
+    global dt
+    dt *= 1.2
+
+def dec_dt():
+    global dt
+    dt *= 0.8
 
 def main():
-    #glEnable(GL_BLEND)
+    # We use the pyglet event loop to drive the application
     initialise()
+    #pyglet.clock.schedule(update)
     pyglet.clock.schedule_interval(update,1/5.0)
     pyglet.app.run()
-    #loop()
 
 if __name__ == "__main__":
     main()

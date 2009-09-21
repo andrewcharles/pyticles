@@ -24,9 +24,9 @@ import gui
 
 # Global variables
 MAX_STEPS = 10000
-NP1 = 3 
+NP1 = 10 
 MAXN = 50
-dt = 0.1
+dt = 10.1
 
 p = particles.SmoothParticleSystem(NP1,maxn=MAXN)
 s = pview.SmoothParticleView()
@@ -37,24 +37,22 @@ fps = 0
 tstart = time.time()
 rebuild_nl = 1
 
-cmd_label = pyglet.text.Label("Command",font_name="Arial", \
-            font_size=12,color =(240,0,220,244),x=500,y=460 )
-
 act_label = pyglet.text.Label("Command",font_name="Arial", \
-            font_size=12,color =(100,100,220,244),x=200,y=400 )
+            font_size=12,color =(100,100,220,244),x=200,y=20 )
 
 def initialise():
     global p,nl_1,nl_2,cnt,buttons
     print "Restarting"
     p = particles.SmoothParticleSystem(NP1,maxn=MAXN)
-    nl_1 = neighbour_list.VerletList(p,cutoff=2.0)
-    nl_2 = neighbour_list.VerletList(p,cutoff=5.0)
+    nl_1 = neighbour_list.VerletList(p,cutoff=5.0)
+    nl_2 = neighbour_list.VerletList(p,cutoff=10.0)
     p.nlists.append(nl_1)
     p.nlists.append(nl_2)
     p.nl_default = nl_1
 
     p.forces.append(forces.SpamForce(p,nl_1))
     p.forces.append(forces.CohesiveSpamForce(p,nl_2))
+    p.forces.append(forces.Gravity(p,nl_1))
 
     for nl in p.nlists:
         nl.build()
@@ -86,75 +84,73 @@ def add_spam_attract():
 def inc_dt():
     global dt
     dt *= 1.2
+    p.dt = dt
 
 def dec_dt():
     global dt
     dt *= 0.8
+    p.dt = dt
 
 def create_ui():
     global buttons
     pyglet.resource.path.append('res')
     pyglet.resource.reindex()
 
-    bx = 600
-
-    # spring button
-    hookes_button = gui.Button(
-        loc = (bx,355),
-        color = (0.5,0.1,0.1),
-        label = "Springs",
-        activate = add_hookes,
-        image = pyglet.resource.image('spring.png')
-        )
-    buttons.append(hookes_button)
-
-    # gravity button
-    grav_button = gui.Button(
-        loc = (bx,395),
-        color = (0.1,0.5,0.1),
-        label = "grav",
-        activate = add_grav,
-        image = pyglet.resource.image('gravity_button.png')
-        )
-    buttons.append(grav_button)
+    # GUI parameters are here for now
+    # Assume a little 640 by 480 window
+    # Put the buttons on the bottom like an
+    # MMO action bar. This is nice and simple
+    # so we don't need a layot manager.
+    # 
+    # (abar_x,abar_y) - action bar bottom left corner
+    #  button_width
+    # -------------------------------
+    button_height = 32
+    button_width = 64
+    bx = [580,580,580,580]
+    by = [140,100,60,20]
 
     # clear forces button
     clear_button = gui.Button(
-                    loc =(bx,425),
+                    loc =(bx[0],by[0]),
+                    size = (button_width,button_height),
                     color = (0.1,0.1,0.5),
                     activate=clear_forces,
-                    label = "clear",
+                    labeltext = "clear",
                     image = pyglet.resource.image('clear_button.png')
                     )
     buttons.append(clear_button)
 
     # spam button
     spam_button = gui.Button(
-                    loc = (bx,300),
+                    loc = (bx[1],by[1]),
+                    size = (button_width,button_height),
                     color = (0.9,0.3,0.5),
                     activate = add_spam,
                     image = pyglet.resource.image('spam_button_yellow.png'),
-                    label = "button"
+                    labeltext = "button"
                   )
     buttons.append(spam_button)
 
     # increase dt
     dt_up = gui.Button(
-                loc = (bx,200)
-                ,color = (1.0,0.0,0.0)
-                ,activate = inc_dt
-                ,image = None
-                ,label = "dt_up"
+                loc = (bx[2],by[2]),
+                size = (button_width,button_height),
+                color = (1.0,0.0,0.0),
+                activate = inc_dt,
+                image = None,
+                labeltext = "dt_up"
                 )
     buttons.append(dt_up)
 
     # decrease dt
     dt_down = gui.Button(
-                loc = (bx,100)
-                ,color = (0.0,0.0,1.0)
-                ,activate = dec_dt
-                ,image = None
-                ,label = "dt_down"
+                loc = (bx[3],by[3]),
+                size = (button_width,button_height),
+                color = (0.0,0.0,1.0),
+                activate = dec_dt,
+                image = None,
+                labeltext = "dt_down"
                 )
     buttons.append(dt_down)
 
@@ -173,12 +169,18 @@ def update(t):
 @s.win.event
 def on_draw():
     s.fps = pyglet.clock.get_fps()
-    s.clear()
     s.redraw(p)
-    cmd_label.draw()
+
+    # Draw UI
+    s.set_ortho()
+    glPushMatrix()
+    glLoadIdentity()
     act_label.draw()
     for b in buttons:
         b.draw()    
+    glFlush()
+    glPopMatrix()
+    s.reset_perspective()
 
 @s.win.event
 def on_key_press(symbol,modifiers):
@@ -189,7 +191,7 @@ def on_key_press(symbol,modifiers):
 def on_mouse_motion(x,y,dx,dy):
     for b in buttons:
         if b.hit(x,y):
-            cmd_label.text = b.label
+            act_label.text = b.label.text
     
 @s.win.event
 def on_mouse_press(x,y,button,modifiers):
@@ -202,14 +204,15 @@ def on_mouse_press(x,y,button,modifiers):
             if b.hit(x,y):
                 b.activate()
                 return
-        p.create_particle(x/s.xmap,y/s.ymap)
-        for nl in p.nlists:
-            nl.build()
-        print "Creating particle at ",x/s.xmap,y/s.ymap
+        #p.create_particle(x/s.xmap,y/s.ymap)
+        #for nl in p.nlists:
+         #   nl.build()
+        #print "Creating particle at ",x/s.xmap,y/s.ymap
 
 def main():
     initialise()
     pyglet.clock.schedule_interval(update,1/10.0)
+    pyglet.clock.schedule_interval(s.update_eye,1/2.0)
     pyglet.app.run()
 
 if __name__ == "__main__":

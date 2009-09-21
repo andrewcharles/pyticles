@@ -36,7 +36,7 @@ def smooth_point(r,dr,x,vol,h,type):
         j += 1
     return x_smooth
 
-def splash_map(x,y,r,m,rho,a,h,bounds,cutoff): 
+def splash_map_2d(x,y,r,m,rho,a,h,bounds,cutoff): 
     """ I used Daniel Price's algorithm for this version of
         the rendering which should be a good deal faster.
         res is the width of grid cells
@@ -67,9 +67,6 @@ def splash_map(x,y,r,m,rho,a,h,bounds,cutoff):
         xpixmax = int(floor( (r[i,0] + cutoff - xmin)/res )   )
         ypixmax = int(floor( (r[i,1] + cutoff - ymin)/res )   )
 
-        # print xpixmin,xpixmax,ypixmin,ypixmax
-        # print nx,ny
-
         for ypx in range(ypixmin,ypixmax):
             for xpx in range(xpixmin,xpixmax):
                 
@@ -90,6 +87,66 @@ def splash_map(x,y,r,m,rho,a,h,bounds,cutoff):
                                 * spkernel.lucy_w(s,h[i])
     return Z
 
+def splash_map_3d(x,y,z,r,m,rho,a,h,bounds,cutoff): 
+    """ I used Daniel Price's algorithm for this version of
+        the rendering which should be a good deal faster.
+        res is the width of grid cells.
+
+        This renders a 3D collection of particles to a 2D plane.
+        There are other ways to do this - marching cubes etc but
+        this is a nice place to start.
+
+        x -- x positions of grid
+        y -- y positions of grid
+        z -- z coordinate of grid
+        r -- particle positions
+        rho -- particle densities
+        bounds -- box boundaries xmin,xmax,ymin,ymax
+        cutoff -- smoothing cutoff
+
+    """
+
+    type = 'lucy'
+    nx = x.size
+    ny = y.size
+
+    if cutoff > nx: print "cutoff is too large this won't work"
+
+    res = x[1]-x[0] #assume regular
+    Z = numpy.zeros((nx,ny))
+    xmin,xmax,ymin,ymax = bounds
+    #loop over particle positions
+    for i in range(m.size):
+        # if the particle is too far in the z direction from the
+        # plane then it is excluded
+        if (r[i,2] - z) > cutoff:
+            continue
+
+        # each particle contributes to pixels
+        xpixmin = int(floor( (r[i,0] - cutoff - xmin)/res ) )
+        ypixmin = int(floor( (r[i,1] - cutoff - ymin)/res ) )
+        xpixmax = int(floor( (r[i,0] + cutoff - xmin)/res ) )
+        ypixmax = int(floor( (r[i,1] + cutoff - ymin)/res ) )
+
+        for ypx in range(ypixmin,ypixmax):
+            for xpx in range(xpixmin,xpixmax):
+                
+                # where the pixel bounds cross the box bounds, need to 
+                # wrap pixel coordinates
+                if ypx >= ny: ypx -= ny
+                if ypx < 0: ypx += ny
+                if xpx >= nx: xpx -= nx
+                if xpx < 0: xpx += nx
+               
+                dr = numpy.array( (r[i,0] - x[xpx], r[i,1] - y[ypx], r[i,2] - z ))
+                # need to apply a minimum image convention
+                neighbours.minimum_image(dr,xmax,ymax)
+                rsq =  numpy.dot(dr,dr)
+                if rsq < (cutoff*cutoff):
+                    s = numpy.sqrt(rsq)
+                    Z[xpx,ypx] += a[i]*m[i]/rho[i]\
+                                * spkernel.lucy_w3d(s,h[i])
+    return Z
 
 def map_to_grid(x,y,r,m,rho,a,h,bounds,cutoff): 
     """ Takes a distribution of sph particles and maps their
