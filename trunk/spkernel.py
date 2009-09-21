@@ -13,7 +13,8 @@
 
 
 from math import *
-import numpy
+import numpy as np
+import fkernel 
 
 def kernel(r,dx,h,type):
     """ Calculates the kernel and kernel gradient for one pair of particles """
@@ -37,10 +38,10 @@ def gauss_kernel(r,dx,h):
     """ Works for as many dimensions as you care to inhabit
     """
     
-    dx = numpy.atleast_1d(dx)
+    dx = np.atleast_1d(dx)
     dim = dx.size
     q = r/h
-    factor = 1.e0 / ( (h**dim) * (numpy.pi**(dim/2.)) )
+    factor = 1.e0 / ( (h**dim) * (np.pi**(dim/2.)) )
     w = factor * exp(-q*q)
     dwdx=[]
     for i in range(0,dim):
@@ -58,13 +59,33 @@ def lucy_w(r,h):
         w = 0
     return w
 
+def lucy_w3d(r,h):
+    """ The Lucy Kernel. Returns W. Only 3d
+        This is a wrapper around my bonza fortran wrapped
+        kernel. Why not start incorporating this stuff I
+        says.
+
+        I be worried that we allocate a new array here every time what a 
+        flipping waste.
+
+        r -- expect a just a distance
+        kfc -- kernel function
+        h -- smoothing length
+    """
+    kfc = fkernel.kernel.lucy_kernel
+    w = np.array([0.0])
+    dwdx = np.array([0.0,0.0,0.0])
+    dr = np.array([r,0.0,0.0])
+    kfc(r,dr,h,w,dwdx)
+    return w
+
 
 def lucy_kernel(r,dx,h):
     """ The Lucy Kernel. Returns W, dwdx"""
     """ Works for one and two dimensions
     """
 
-    dx = numpy.atleast_1d(dx)
+    dx = np.atleast_1d(dx)
     dim = dx.size
     dwdx=[]
 
@@ -100,7 +121,7 @@ def debrun_kernel(r,dx,h):
 
     #! gamma_g := 20/(Pi*h^6);
     #! w_spiky_2d := (r,h) -> piecewise((r<(h)), gamma_g * (h-r)^3, 0);
-    dx = numpy.atleast_1d(dx)
+    dx = np.atleast_1d(dx)
     dim = dx.size
     dwdx=[] 
     if r < 0:
@@ -109,7 +130,9 @@ def debrun_kernel(r,dx,h):
         if dim == 1:
             q = ( ( (-7.*(h**4)/4) + 2*(h**4) )**(-1) )/ 2  
             #(2.0/(3.0*(pi*(h**2)))) 
-        elif dim ==2:
+        elif dim == 2:
+            q = (10.0/(pi*(h**6)))
+        elif dim == 3:
             q = (15.0/(pi*(h**6)))
         w =  q * ((h - r)**3)
         if(r == 0):

@@ -1,5 +1,5 @@
-""" A very minimal library of graphical user interface elements using simple pyglet
-    primitives.
+""" A very minimal library of graphical user interface elements using simple
+pyglet primitives.
 
 """
 
@@ -19,21 +19,23 @@ class Button:
     
     def __init__(self
                 ,loc = (30,30)
+                ,size = (32,32)
                 ,color = (0.5,0.5,0.5)
                 ,mcolor = (0.9,0.9,0.9)
                 ,activate = nothing()
                 ,image = None
-                ,label = "button"
+                ,labeltext = "button"
                 ):
         self.color = color
         self.mcolor = mcolor
         self.x = loc[0]
         self.y = loc[1]
-        self.width = 32
-        self.height = 32
+        self.width = size[0] 
+        self.height = size[1]
         self.activate = activate
         self.img = image
-        self.label=label
+        self.label = pyglet.text.Label(labeltext,font_name="Arial", \
+            font_size=12,color =(220,220,220,244),x=self.x,y=self.y )
 
     def activate(self):
             print "Hit the button"
@@ -48,14 +50,15 @@ class Button:
             return True
     
     def draw(self):
+        """ Draw the button. We push the opengl state so that
+            we can draw to the screen plane, and then pop it
+            back.
+        """
+
+        self.label.draw()
         if self.img:
-            glPushMatrix()
-            glLoadIdentity()
             self.img.blit(self.x,self.y)
-            glPopMatrix()
         else:
-            glPushMatrix()
-            glLoadIdentity()
             glPolygonMode(GL_FRONT_AND_BACK,GL_FILL)
             glBegin(GL_POLYGON)
             glColor3f(self.color[0],self.color[1],self.color[2])
@@ -65,6 +68,4 @@ class Button:
             glVertex2f(self.x+self.width,self.y)
             glVertex2f(self.x,self.y)
             glEnd()
-            glPopMatrix()
-
 
