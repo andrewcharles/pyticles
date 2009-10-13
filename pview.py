@@ -32,6 +32,7 @@ import renderspam
 import scipy
 import scipy.ndimage
 import pylab
+from time import time
 from PIL import Image as pilmage
 import scipy.misc.pilutil
 from trackball_camera import TrackballCamera
@@ -46,15 +47,51 @@ WINDOW_DEPTH = 480
 # self.xmap =  box_width / particles.xmap
 BOX_WIDTH = 500
 BOX_HEIGHT = 500
-BOX_DEPTH = 100
-
+BOX_DEPTH = 500
+PSIZE = 10.0
 RES = 1.1
 width=WINDOW_WIDTH
 height=WINDOW_HEIGHT
 
+
+class ParticleInfo:
+    """ Display particle system information."""
+    """ The motivation for this class is to make information like
+        the time to execute certain subroutines available to a
+        range of objects, and keep the pyglet window for the
+        rendered view.
+    """
+
+    def __init__(self,p):
+        #config = Config(alpha_size=8)
+        self.win = pyglet.window.Window(200,300
+                 ,visible=True
+                 ,resizable=True
+                 ,caption='Pyticles info')
+        self.labels = []
+        self.npartlab = pyglet.text.Label("np label",font_name="Arial", \
+            font_size=12,color =(255,0,0,255),x=10,y=440 )
+        self.labels.append(self.npartlab)
+
+
+#class ViewController:
+    #""" Pyglet key mappings for controlling the camera and other
+        #elements of the view.
+    #"""
+
+class plabel(pyglet.text.Label):
+    """ Subclass of pyglet label with some defaults selected."""
+    def __init__(self,name,loc=(0,0)):
+        pyglet.text.Label.__init__(self,
+            name,
+            font_name="Arial",
+            font_size=12,
+            color =(255,0,0,255),x=loc[0],y=loc[1] )
+
+
 class ParticleView:
     " A particle viewer"
-    def __init__(self):
+    def __init__(self,p):
         #config = Config(alpha_size=8)
         self.win = pyglet.window.Window(WINDOW_WIDTH,WINDOW_HEIGHT
                  ,visible=False,caption='Pyticles')
@@ -63,21 +100,47 @@ class ParticleView:
         gluQuadricDrawStyle(self.sphere,GLU_LINE)
         glEnable(GL_DEPTH_TEST)
         glDisable(GL_CULL_FACE)
+        
+        self.bg_color = (0.8,0.8,0.8,1.0)
 
         # Set up labels. These labels are pretty tightly coupled to the
         # gui buttons
         self.fps = 0
-        self.fpslab = pyglet.text.Label("fps label",font_name="Arial", \
-            font_size=12,color =(255,0,0,255),x=10,y=460 )
-        self.npart = pyglet.text.Label("np label",font_name="Arial", \
-            font_size=12,color =(255,0,0,255),x=10,y=440 )
-        self.nebs = pyglet.text.Label("ni label",font_name="Arial", \
-            font_size=12,color =(255,0,0,255),x=10,y=420 )
-        self.dt = pyglet.text.Label("ni label",font_name="Arial", \
-            font_size=12,color =(255,0,0,255),x=10,y=400 )
-        self.eyelab = pyglet.text.Label("ni label",font_name="Arial", \
-            font_size=12,color =(255,0,0,255),x=10,y=380 )
-       
+
+        self.labels=[]
+
+        #for lname in ['fps label','np label','ni label','dt label','eye label',
+        #    'drawtime label','forcetime label','derivtime label',
+        #    'pairseptime label']
+
+        self.fpslab = plabel("fps label",loc=(10,460))
+        self.npartlab = plabel("np label",loc=(10,440))
+        self.nebslab = plabel("ni label",loc=(10,420))
+        self.dtlab = plabel("dt label",loc=(10,400))
+        self.eyelab = plabel("eye label",loc=(10,380) )
+        self.drawtimelab = plabel("drawtime label", loc=(10,360) )
+        self.forcetimelab = plabel("forcetime label",loc=(10,340) )
+        self.derivtimelab = plabel("derivtime label",loc=(10,320) )
+        self.pairseptimelab = plabel("pairseptime label",loc=(10,300) )
+        self.integtimelab = plabel("integtime label",loc=(10,280) )
+        self.stepslab = plabel("steps label",loc=(10,260) )
+        self.updatetimelab = plabel("updatetime label",loc=(10,240) )
+        self.spamtimelab = plabel("integtime label",loc=(10,220) )
+        
+        self.labels.append(self.fpslab)
+        self.labels.append(self.npartlab)
+        self.labels.append(self.nebslab)
+        self.labels.append(self.dtlab)
+        self.labels.append(self.eyelab)
+        self.labels.append(self.drawtimelab)
+        self.labels.append(self.forcetimelab)
+        self.labels.append(self.derivtimelab)
+        self.labels.append(self.pairseptimelab)
+        self.labels.append(self.integtimelab)
+        self.labels.append(self.stepslab)
+        self.labels.append(self.updatetimelab)
+        self.labels.append(self.spamtimelab)
+
         self.tbcam  = TrackballCamera(200.0) 
         self.win.on_resize = self.resize
         self.win.on_mouse_press = self.on_mouse_press
@@ -87,9 +150,9 @@ class ParticleView:
         self.win.set_visible()
         
         # multipliers to map system to opengl box coordinates
-        self.xmap = BOX_WIDTH / float(particles.XMAX)
-        self.ymap = BOX_HEIGHT / float(particles.YMAX)
-        self.zmap = BOX_DEPTH / float(particles.ZMAX)
+        self.xmap = BOX_WIDTH / float(p.box.xmax)
+        self.ymap = BOX_HEIGHT / float(p.box.ymax)
+        self.zmap = BOX_DEPTH / float(p.box.zmax)
 
         # Where is the center of the rectangle?
         cx = float(particles.XMAX/2.0) * self.xmap
@@ -98,13 +161,20 @@ class ParticleView:
         self.tbcam.cam_focus = (cx,cy,cz)
 
         # zoom out
-        self.tbcam.cam_eye[0] = -930
-        self.tbcam.cam_eye[1] = 1140
-        self.tbcam.cam_eye[2] = 1100
+        self.tbcam.cam_eye[0] = 690
+        self.tbcam.cam_eye[1] = 630
+        self.tbcam.cam_eye[2] = 900
         self.tbcam.update_modelview()
+
+        self.zoom = 0
+        self.rotation = 0
 
         # hit the movement buttons to start rotations etc
         self.eyespeed = [0.0,0.0,0.0]
+
+        """ Variables for measuring performance. """
+        self.timing = {}
+        self.timing['Draw time'] = -1
 
     def center_eye(self):
         self.tbcam.cam_eye[2] = -600
@@ -185,7 +255,7 @@ class ParticleView:
             glColor3f(1.0, 1.0/(i+1), 0)
             glPushMatrix()
             glTranslatef(r[0],r[1],r[2])
-            gluSphere(self.sphere,20.0,10,10)
+            gluSphere(self.sphere,PSIZE,10,10)
             glPopMatrix()
 
             #glBegin(GL_POLYGON)
@@ -222,13 +292,28 @@ class ParticleView:
         self.set_ortho()
         glPushMatrix()
         glLoadIdentity()
-        
+       
+        eye = self.tbcam.cam_eye
+        self.eyelab.text = 'eye: %d, %d, %d' %(eye[0],eye[1],eye[2])
+        self.dtlab.text = "dt: %4.2f" %(p.dt)
         self.fpslab.text = "fps: %4.2f" %(self.fps)
-        self.fpslab.draw()
-        self.nebs.text = "n: "+str(p.n)
-        self.nebs.draw()
-        self.npart.text = "pairs: "+str(p.nl_default.nip)
-        self.npart.draw()
+        self.nebslab.text = "n: %3d" %(p.n)
+        nebs = 0
+        for nl in p.nlists:
+            nebs += nl.nip
+        self.npartlab.text = "pairs: %3d" %(nebs)
+        self.drawtimelab.text = "drawtime: %5.3f" %(self.timing['Draw time'])
+        self.forcetimelab.text = "forcetime: %5.3f" %(p.timing['force time'])
+        self.derivtimelab.text = "derivtime: %5.3f" %(p.timing['deriv time'])
+        self.pairseptimelab.text = "pairtime: %5.3f" %(p.timing['pairsep time'])
+        self.integtimelab.text = "integtime: %5.3f" %(p.timing['integrate time'])
+        self.spamtimelab.text = "spamtime: %5.3f" %(p.timing['SPAM time'])
+        self.stepslab.text = "steps: %5d" %(p.steps)
+        self.updatetimelab.text = "updatetime: %5.3f" %(p.timing['update time'])
+
+        for lab in self.labels:
+            lab.draw()
+
         glFlush()
         glPopMatrix()
 
@@ -237,15 +322,21 @@ class ParticleView:
     def clear(self): 
         self.win.dispatch_events()
         glClear(GL_COLOR_BUFFER_BIT)
-        glLoadIdentity()
+        glClearColor(*self.bg_color)
+        #glLoadIdentity()
         self.win.clear()
         
     def redraw(self,p):
+        t = time()
+        self.win.dispatch_events()
+        glClearColor(*self.bg_color)
+        #self.win.clear()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         self.draw_neighbours(p)
         self.draw_particles(p)
         self.draw_box()
         self.hud(p)
+        self.timing['Draw time'] = time() - t
 
     def set_ortho(self):
         """ Sets up an orthographic projection for drawing text and the like.
@@ -314,9 +405,12 @@ class ParticleView:
         """ zoom and rotate directly with the fps keys.
         """
         if symbol == pyglet.window.key.W:
-            self.eyespeed[2] += 100
+            self.tbcam.mouse_zoom_diff(0.2,0.2)
+            # zoom in
+            #self.eyespeed[2] += 100
         if symbol == pyglet.window.key.S:
-            self.eyespeed[2] -= 100
+            self.tbcam.mouse_zoom_diff(-0.2,-0.2)
+            #self.eyespeed[2] -= 100
         if symbol == pyglet.window.key.A:
             self.eyespeed[1] -= 30
         if symbol == pyglet.window.key.D:
@@ -348,8 +442,8 @@ class ParticleView:
 class SmoothParticleView(ParticleView):
     """ Extends ParticleView to provide specialised visualisation of
         smooth particle systems. """
-    def __init__(self):
-        ParticleView.__init__(self)
+    def __init__(self,p):
+        ParticleView.__init__(self,p)
 
         self.maxvol = pyglet.text.Label("maxvol label",font_name="Arial", \
             font_size=12,color =(255,0,0,255),x=10,y=100 )
@@ -357,11 +451,11 @@ class SmoothParticleView(ParticleView):
         # Set up for two dimensional density rendering
         # gridx,gridy is a grid at the rendering resolution
         # rx,ry is a pixel grid
-        self.gridx,self.gridy = renderspam.get_grid_map(0.0,particles.XMAX, \
-        0.0,particles.YMAX,RES)
+        self.gridx,self.gridy = renderspam.get_grid_map(0.0,p.box.xmax, \
+        0.0,p.box.ymax,RES)
         rx,ry = scipy.mgrid[0:BOX_WIDTH:1,0:BOX_HEIGHT:1]
-        dx = RES*BOX_WIDTH/float(particles.XMAX)
-        dy = RES*BOX_HEIGHT/float(particles.YMAX)
+        dx = RES*BOX_WIDTH/float(p.box.xmax)
+        dy = RES*BOX_HEIGHT/float(p.box.ymax)
         #xvals = (rx-dx/RES)/dx #(rx-RES?)
         xvals = (rx-dx/2)/dx #(rx-RES?)
         yvals = (ry-dy/2)/dy
@@ -377,7 +471,7 @@ class SmoothParticleView(ParticleView):
         glColor3f(1.0,1.0,1.0)
         #cutoff=p.nl_default.cutoff_radius
         cutoff=5
-        bounds = 0,particles.XMAX,0,particles.YMAX
+        bounds = 0,p.box.xmax,0,p.box.ymax
         Z = interpolate.splash_map_3d(
             self.gridx,
             self.gridy,
@@ -411,31 +505,31 @@ class SmoothParticleView(ParticleView):
         for i in range(p.n):
             self.img.blit(self.xmap*p.r[i,0],self.ymap*p.r[i,1])
 
-    def hud(self,p):
-        """ Draws the heads up display. """
-
-        self.set_ortho()
-        glPushMatrix()
-        glLoadIdentity()
-
-        self.fpslab.text = "fps: %4.2f" %(self.fps)
-        self.fpslab.draw()
-        self.nebs.text = "n: "+str(p.n)
-        self.nebs.draw()
-        self.npart.text = "pairs: "+str(p.nl_default.nip)
-        self.npart.draw()
-        self.maxvol.text = "max vol: %4.2f" %(max(p.m[0:p.n]/p.rho[0:p.n]))
-        self.maxvol.draw()
-        self.dt.text = "dt: %4.2f" %(p.dt)
-        self.dt.draw()
-        eye = self.tbcam.cam_eye
-        self.eyelab.text = 'eye: %d, %d, %d' %(eye[0],eye[1],eye[2])
-        self.eyelab.draw() 
-        glFlush()
-        glPopMatrix()
-        self.reset_perspective()
+    #def hud(self,p):
+    #    """ Draws the heads up display. """
+#
+#        self.set_ortho()
+#        glPushMatrix()
+#        glLoadIdentity()
+#
+#        eye = self.tbcam.cam_eye
+#        self.eyelab.text = 'eye: %d, %d, %d' %(eye[0],eye[1],eye[2])
+##        self.fpslab.text = "fps: %4.2f" %(self.fps)
+#        self.nebslab.text = "n: " + str(p.n)
+#        self.npartlab.text = "pairs: " + str(p.nl_default.nip)
+#        self.drawtimelab.text = "drawtime: " + str(self.timing['Draw time'])
+#        self.maxvol.text = "max vol: %4.2f" %(max(p.m[0:p.n]/p.rho[0:p.n]))
+#        self.dtlab.text = "dt: %4.2f" %(p.dt)
+#
+#        for lab in self.labels:
+#            lab.draw()
+#
+#        glFlush()
+#        glPopMatrix()
+#        self.reset_perspective()
 
     def redraw(self,p):
+        t = time()
         self.win.dispatch_events()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         self.render_density(p)
@@ -443,4 +537,5 @@ class SmoothParticleView(ParticleView):
         self.draw_neighbours(p)
         self.draw_particles(p)
         self.draw_box()
+        self.timing['Draw time'] = time() - t
 

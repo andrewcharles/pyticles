@@ -1,11 +1,8 @@
 #! /usr/local/bin/python
 
 """ 
-    The is the front end for the python SPH code most similar
-    to what I am doing in the fortran code.
-
-    This is the test bed for new algorithms.
-
+    Optimised smooth particle implementation.
+    Cython.
     Copyright Andrew Charles 2008
     All rights reserved.
 """
@@ -22,25 +19,34 @@ import neighbour_list
 from pyglet.gl import *
 
 # Global variables
-MAX_STEPS = 1000
-NP1 = 10
+MAX_STEPS = 10000
+NP = 125
+XMAX = 20 
+YMAX = 20
+ZMAX = 20
+VMAX = 0.0
+dt = 0.05
+SPACING = 3.0
+SIDE = (5,5,5)
 
-p = particles.SmoothParticleSystem(NP1,maxn=NP1,d=3)
-s = pview.ParticleView()
+p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit='grid',vmax=VMAX
+    ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
+s = pview.ParticleView(p)
 
 cnt = 0
 fps = 0
 tstart = time.time()
 rebuild_nl = 1
 
-def update(dt):
-    global cnt,fps,rebuild_nl 
+def update(t):
+    global cnt,fps,rebuild_nl ,dt
     cnt += 1
-    print 'Step',cnt
     if cnt >= MAX_STEPS:
         pyglet.app.exit()
-    p.update()
+    p.update(dt)
+    p.steps += 1
     pass
+
 
 @s.win.event
 def on_draw():
@@ -56,8 +62,9 @@ def on_key_press(symbol,modifiers):
 def initialise():
     global p,nl_1,nl_2,cnt,buttons
     print "Restarting"
-    p = particles.SmoothParticleSystem(NP1,maxn=NP1,d=3)
-    
+    p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit='grid',vmax=VMAX
+        ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
+
     nl_1 = neighbour_list.VerletList(p,cutoff=2.0)
     nl_2 = neighbour_list.VerletList(p,cutoff=5.0)
     
@@ -74,7 +81,9 @@ def initialise():
 
 def main():
     initialise()
-    pyglet.clock.schedule_interval(update,1/5.0)
+    # call at maximum frequency
+    pyglet.clock.schedule(update)
+    #pyglet.clock.schedule_interval(s.update_eye,1/2.0)
     pyglet.app.run()
 
 if __name__ == "__main__":

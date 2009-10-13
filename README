@@ -50,11 +50,13 @@ front end scripts for pyticles:
 This is the front end for testing algorithms related to my research.
 
 1.1 ospana.py
-This is a front end to the cython optimised version of the code.
+This is a front end to the cython and wrapped fortran optimised version of the
+code.
 
 2. pyticles.py
-This is where the bulk of the work on the interactive gui is going.
-
+This is where the bulk of the work on the interactive gui is going. This doesn't
+use any SPH code at the moment - any work relevant to any particle system goes
+here.
 
 4. particle_man.py
 This is to be an effort to produce a simple game using the pyticles
@@ -89,5 +91,15 @@ stage I just want to get a feel for the amount of difference in the code and
 the amount of speed increase. Later I can think about organising it better.
 
 Having trouble with the modules using objects that reference each other.
+
+build.sh rebuilds the cython modules.
+
+
+Zoom/Pan/Rotate Notes
+=====================
+Zoom and rotation
+
+glScalef(d,d,d)
+
 
 
