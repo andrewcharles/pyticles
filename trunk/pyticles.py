@@ -41,12 +41,13 @@ NP2 = 0
 p = particles.ParticleSystem(NP1,d=3,controllers=[controller.BodyForce()])
 buttons = []
 
-s = pview.ParticleView()
+s = pview.ParticleView(p)
 
 cnt = 0
 fps = 0
 tstart = time.time()
 rebuild_nl = 1
+
 
 cmd_label = pyglet.text.Label("Command",font_name="Arial", \
             font_size=12,color =(240,0,220,244),x=500,y=460 )

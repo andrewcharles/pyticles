@@ -21,29 +21,44 @@ import profile
 import neighbour_list
 from pyglet.gl import *
 import gui
+from controller import BodyForce
 
 # Global variables
 MAX_STEPS = 10000
-NP1 = 10 
+NP1 = 27
 MAXN = 50
-dt = 10.1
+XMAX = 20 #64
+YMAX = 20 #48
+ZMAX = 20
+VMAX = 0.0
+dt = 0.1
+SPACING = 3.0
 
-p = particles.SmoothParticleSystem(NP1,maxn=MAXN)
-s = pview.SmoothParticleView()
+# Model
+p = particles.SmoothParticleSystem(NP1,maxn=MAXN,rinit='grid',side=(3,3,3)
+    ,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
+
+# Views
+s = pview.SmoothParticleView(p)
+#info = pview.ParticleInfo(p)
 
 buttons = []
 cnt = 0
 fps = 0
 tstart = time.time()
 rebuild_nl = 1
+bg_color = (0.3,0.3,0.3,1.0)
 
 act_label = pyglet.text.Label("Command",font_name="Arial", \
             font_size=12,color =(100,100,220,244),x=200,y=20 )
 
+default_group = pyglet.graphics.Group()
+
 def initialise():
     global p,nl_1,nl_2,cnt,buttons
     print "Restarting"
-    p = particles.SmoothParticleSystem(NP1,maxn=MAXN)
+    p = particles.SmoothParticleSystem(NP1,maxn=MAXN,rinit='grid',side=(3,3,3)
+        ,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX,vmax=VMAX)
     nl_1 = neighbour_list.VerletList(p,cutoff=5.0)
     nl_2 = neighbour_list.VerletList(p,cutoff=10.0)
     p.nlists.append(nl_1)
@@ -52,10 +67,11 @@ def initialise():
 
     p.forces.append(forces.SpamForce(p,nl_1))
     p.forces.append(forces.CohesiveSpamForce(p,nl_2))
-    p.forces.append(forces.Gravity(p,nl_1))
+    #p.controllers.append(BodyForce(p,nl_2))
 
     for nl in p.nlists:
         nl.build()
+
     cnt = 0
     create_ui()
 
@@ -79,6 +95,11 @@ def add_spam():
 def add_spam_attract():
     print "Adding smooth particle hydrodynamic force"
     p.forces.append(forces.CohesiveSpamForce(p,nl_2))
+    nl_2.build()
+
+def add_particle():
+    p.create_particle((0.0,YMAX,0.0),v=(0.1,0.0,0.0))
+    nl_1.build()
     nl_2.build()
 
 def inc_dt():
@@ -107,50 +128,85 @@ def create_ui():
     # -------------------------------
     button_height = 32
     button_width = 64
-    bx = [580,580,580,580]
-    by = [140,100,60,20]
+    bx = [580,580,580,580,580,580,580]
+    by = [300,260,220,180,140,100,60,20]
+
+    # add button
+    add_button = gui.Button(
+                    loc =(bx[0],by[0]),
+                    size = (button_width,button_height),
+                    color = (0.5,0.5,0.5),
+                    activate = add_particle,
+                    labeltext = "Add",
+                    group = default_group
+                    #image = pyglet.resource.image('clear_button.png')
+                    )
+    buttons.append(add_button)
 
     # clear forces button
     clear_button = gui.Button(
-                    loc =(bx[0],by[0]),
+                    loc =(bx[1],by[1]),
                     size = (button_width,button_height),
-                    color = (0.1,0.1,0.5),
+                    color = (0.5,0.5,0.5),
                     activate=clear_forces,
-                    labeltext = "clear",
-                    image = pyglet.resource.image('clear_button.png')
+                    labeltext = "Clear",
+                    group = default_group
+                    #image = pyglet.resource.image('clear_button.png')
                     )
     buttons.append(clear_button)
 
     # spam button
     spam_button = gui.Button(
-                    loc = (bx[1],by[1]),
+                    loc = (bx[2],by[2]),
                     size = (button_width,button_height),
-                    color = (0.9,0.3,0.5),
+                    color = (0.5,0.5,0.5),
                     activate = add_spam,
-                    image = pyglet.resource.image('spam_button_yellow.png'),
-                    labeltext = "button"
+                    labeltext = 'Spam'
+                    #image = pyglet.resource.image('spam_button_yellow.png')
                   )
     buttons.append(spam_button)
 
     # increase dt
     dt_up = gui.Button(
-                loc = (bx[2],by[2]),
+                loc = (bx[3],by[3]),
                 size = (button_width,button_height),
-                color = (1.0,0.0,0.0),
+                color = (0.5,0.5,0.5),
                 activate = inc_dt,
                 image = None,
-                labeltext = "dt_up"
+                labeltext = "Faster"
                 )
     buttons.append(dt_up)
 
     # decrease dt
     dt_down = gui.Button(
-                loc = (bx[3],by[3]),
+                loc = (bx[4],by[4]),
                 size = (button_width,button_height),
-                color = (0.0,0.0,1.0),
+                color = (0.5,0.5,0.5),
                 activate = dec_dt,
                 image = None,
-                labeltext = "dt_down"
+                labeltext = "Slower"
+                )
+    buttons.append(dt_down)
+
+    # decrease dt
+    dt_down = gui.Button(
+                loc = (bx[5],by[5]),
+                size = (button_width,button_height),
+                color = (0.5,0.5,0.5),
+                activate = None,
+                image = None,
+                labeltext = "Blank"
+                )
+    buttons.append(dt_down)
+
+    # decrease dt
+    dt_down = gui.Button(
+                loc = (bx[6],by[6]),
+                size = (button_width,button_height),
+                color = (0.5,0.5,0.5),
+                activate = None,
+                image = None,
+                labeltext = "Blank"
                 )
     buttons.append(dt_down)
 
@@ -164,13 +220,15 @@ def update(t):
     p.update(dt)
     if cnt >= MAX_STEPS:
         pyglet.app.exit()
+    p.steps += 1
     pass
 
 @s.win.event
 def on_draw():
     s.fps = pyglet.clock.get_fps()
+    s.clear()
     s.redraw(p)
-
+        
     # Draw UI
     s.set_ortho()
     glPushMatrix()
@@ -178,9 +236,11 @@ def on_draw():
     act_label.draw()
     for b in buttons:
         b.draw()    
+    
     glFlush()
     glPopMatrix()
     s.reset_perspective()
+    glClearColor(*bg_color)
 
 @s.win.event
 def on_key_press(symbol,modifiers):

@@ -20,8 +20,8 @@ import numpy
 import math
 #import forces
 import neighbour_list
-import properties
-#import c_properties as properties
+#import properties
+import c_properties as properties
 import scipy
 import integrator
 import configuration
@@ -36,9 +36,9 @@ dt = 0.1
 # variables for the integrator - put these somewhere cleaver
 verbose = False
 
-XMAX = 50 #64
-YMAX = 50 #48
-ZMAX = 10
+XMAX = 5 #64
+YMAX = 5 #48
+ZMAX = 1
 VMAX = 0.1
 CUTOFF_RADIUS = 6 
 VACUUM_VISCOSITY = 0.1
@@ -55,30 +55,52 @@ class ParticleSystem:
     """ A group of similar particles with basic mechanical properties.
 
     """
-    def __init__(self,n,d=3,maxn=100,controllers=[],simbox=None):
+    def __init__(self,n,
+            d=3,
+            maxn=125,
+            controllers=[],
+            xmax=XMAX,
+            ymax=YMAX,
+            zmax=ZMAX,
+            vmax=VMAX,
+            simbox=None,
+            rinit=None,
+            side=(5,5,5),
+            spacing=0.1):
         """
         DIMENSIONS
         n -- initial number of particles.
         maxn -- maximum number of particles.
         dim -- number of spatial dimensions (1-3).
+        steps -- number of steps taken
         nlists -- neighbour lists associated with this particle system.
         colour -- a 3 tuple giving the particles' RBG color.
         box -- the simulation box. Should replace this with constraint forces.
         nlists -- neighbour lists associated with this system.
         forces -- internal forces associated with this system.
+        configuration -- initial positions.
+        side -- side lengths (only for grid positions)
 
         """
         self.n = n
         self.dim = d
         self.maxn = maxn
         self.dt = 0.0
+        self.steps = 0
 
         # Basic mechanical properties
         if not simbox:
-            self.box = box.MirrorBox(self,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
+            self.box = box.MirrorBox(self,xmax=xmax,ymax=ymax,zmax=zmax)
+        
+        # Start with a random configuration
         self.r = self.box.xmax * numpy.random.random([self.maxn,self.dim])
+
+        if rinit == 'grid':
+           self.r[0:n,:] = configuration.grid3d(n,side,(xmax/2.,ymax/2.,zmax/2.)
+                ,spacing=spacing)
+    
         self.m = numpy.zeros(self.maxn)
-        self.v = VMAX * (numpy.random.random([self.maxn,self.dim]) - 0.5)
+        self.v = vmax * (numpy.random.random([self.maxn,self.dim]) - 0.5)
         self.rdot = numpy.zeros(self.r.shape)
         self.vdot = numpy.zeros(self.v.shape)
         self.mdot = numpy.zeros(self.m.shape)
@@ -102,19 +124,19 @@ class ParticleSystem:
 
         """ Variables for measuring performance. """
         self.timing = {}
-        self.timing['Force time'] = -1
-        self.timing['Deriv time'] = -1
-        self.timing['Sep time'] = -1
+        self.timing['force time'] = -1
+        self.timing['deriv time'] = -1
+        self.timing['pairsep time'] = -1
+        self.timing['update time'] = -1
 
-    def create_particle(self,x,y):
+    def create_particle(self,r,v=(0.0,0.0,0.0)):
         """Adds a new particle to the system.
         """
-        self.r[self.n] = (x, y, 0.0)
+        self.r[self.n] = r
         self.m[self.n] = self.m[self.n-1] 
-        self.v[self.n] = (0.0, 0.0, 0.0)
+        self.v[self.n] = v
         self.n = self.n+1
         self.rebuild_lists()
-
 
     def rebuild_lists(self):
         """ rebuilds all nlists """
@@ -194,8 +216,27 @@ class SmoothParticleSystem(ParticleSystem):
     particle equations of motion.
     """
 
-    def __init__(self,n,d=3,maxn=100):
-        ParticleSystem.__init__(self,n=n,d=d,maxn=maxn)
+    def __init__(self,n,
+            d=3,
+            maxn=100,
+            controllers=[],
+            xmax=XMAX,
+            ymax=YMAX,
+            zmax=ZMAX,
+            vmax=VMAX,
+            rinit=None,
+            side=None,
+            spacing=None,
+            simbox=None):
+        ParticleSystem.__init__(self,n=n,d=d,
+            xmax=xmax,
+            ymax=ymax,
+            zmax=zmax,
+            rinit=rinit,
+            side=side,
+            spacing=spacing,
+            vmax=vmax,
+            maxn=maxn)
         self.V_split = VSPLIT
         self.r_amalg = RAMAL
 
@@ -231,7 +272,6 @@ class SmoothParticleSystem(ParticleSystem):
         n_variables = 10
         self.x = numpy.zeros([n_variables,self.maxn])
         self.xdot = numpy.zeros([n_variables,self.maxn])
-
         self.timing['SPAM time'] = -1
 
 
@@ -327,30 +367,29 @@ class SmoothParticleSystem(ParticleSystem):
         """ Update the particle system, using the
             neighbour list supplied.
         """
-        # how to check that p is of class Particle?
+        t1 = time()
 
         if SPLIT:
             self.check_refine()
         if AMALGAMATE:
             self.check_amalg(self.nl_default)
 
-
         t = time()
         self.rebuild_lists()
-        self.timing['Nlist rebuild time'] = time() - t
+        self.timing['nlist rebuild time'] = time() - t
         
         t = time()
         self.derivatives()
-        self.timing['Deriv time'] = time() - t
+        self.timing['deriv time'] = time() - t
        
         t = time()
         rk4(self.gather_state,self.derivatives, \
             self.gather_derivatives,self.scatter_state,dt)
-        self.timing['Integrate time'] = -1
+        self.timing['integrate time'] = time() - t
         
         self.box.apply(self)
         
-        #self.rebuild_lists()
+        self.timing['update time'] = time() - t1
 
     def gather_state(self):
         """ Maps the particle system to a state vector for integration
@@ -409,8 +448,7 @@ class SmoothParticleSystem(ParticleSystem):
         t = time()
         for nl in self.nlists: 
             nl.separations()
-        self.timing['Sep time'] = 0.2*(time() - t) + self.timing['Sep time']/4. 
-        
+        self.timing['pairsep time'] = (time() - t)
 
         t = time()
         for nl in self.nlists: 
@@ -420,7 +458,7 @@ class SmoothParticleSystem(ParticleSystem):
         t = time()
         for force in self.forces:
             force.apply()
-        self.timing['Force time'] = time() - t
+        self.timing['force time'] = time() - t
         
         if ADVECTIVE:
             self.rdot[:,:] = 0.0

@@ -1,4 +1,7 @@
 """
+
+    NOT COMPLETE NOT EVEN CLOSE
+
     Particle system model. Contains data structures and basic functions
     for a particle system and associated neighbour list.
 

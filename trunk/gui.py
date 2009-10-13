@@ -1,6 +1,13 @@
 """ A very minimal library of graphical user interface elements using simple
 pyglet primitives.
 
+
+References:
+http://www.python-forum.org/pythonforum/viewtopic.php?f=2&t=11160
+Re: Using pyglet to view images
+Postby vegaseat on Sat Feb 07, 2009 11:22 am 
+
+
 """
 
 import pyglet
@@ -14,6 +21,9 @@ class Button:
     """ A button.
 
         __init__() -- create a button with default values
+        color -- button is this color
+        tcolor -- text is this color
+        mcolor -- button goes this color when mousedover?
 
     """
     
@@ -25,6 +35,7 @@ class Button:
                 ,activate = nothing()
                 ,image = None
                 ,labeltext = "button"
+                ,group = None
                 ):
         self.color = color
         self.mcolor = mcolor
@@ -34,11 +45,15 @@ class Button:
         self.height = size[1]
         self.activate = activate
         self.img = image
-        self.label = pyglet.text.Label(labeltext,font_name="Arial", \
-            font_size=12,color =(220,220,220,244),x=self.x,y=self.y )
+        self.group = group
+        self.label = pyglet.text.Label(labeltext,
+            font_name="Arial", 
+            font_size=12,color=(220,220,220,244) ,
+            x=self.x+5,y=self.y+5,group=group)
+
 
     def activate(self):
-            print "Hit the button"
+            print "Hit",self.label.text
 
     def hit(self,x,y):
         """ Checks if the given coords are in the
@@ -55,7 +70,9 @@ class Button:
             back.
         """
 
+        glClearColor(self.color[0],self.color[1],self.color[2],1.0)
         self.label.draw()
+
         if self.img:
             self.img.blit(self.x,self.y)
         else:
@@ -68,4 +85,7 @@ class Button:
             glVertex2f(self.x+self.width,self.y)
             glVertex2f(self.x,self.y)
             glEnd()
+        
+
+
 
