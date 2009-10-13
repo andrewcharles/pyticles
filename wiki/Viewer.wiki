@@ -4,9 +4,7 @@
 
 Fast feedback improves the pace of scientific software development.
 The pyticles interface is designed to provide a game-like level of control
-over the visualisation and control of the particle systems.
-As the priority feature for the python code is 3 dimensions, it seems appropriate that the 3 dimensional view be also a priority. This will simply use Pyglet's interface to OpenGL.
+over the visualisation and control of the particle systems. Some support is provided
+for two dimensional visualisation, however the focus is on three dimensional SPH fluids.
 
-I have now incorporated a simple wireframe particle display.
-
-This is going ok, thanks to a 3d trackball camera module I have obtained, and some OpenGL revision.
+View control is managed through a trackball camera class made available by Roger Allen.
