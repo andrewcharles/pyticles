@@ -16,12 +16,15 @@
 """
 
 import random
-import numpy
+import numpy as np
 import math
 #import forces
 import neighbour_list
 #import properties
-import c_properties as properties
+
+# I don't want to have to select this here!
+#import c_properties as properties
+import f_properties as properties
 import scipy
 import integrator
 import configuration
@@ -93,17 +96,17 @@ class ParticleSystem:
             self.box = box.MirrorBox(self,xmax=xmax,ymax=ymax,zmax=zmax)
         
         # Start with a random configuration
-        self.r = self.box.xmax * numpy.random.random([self.maxn,self.dim])
+        self.r = self.box.xmax * np.random.random([self.maxn,self.dim])
 
         if rinit == 'grid':
            self.r[0:n,:] = configuration.grid3d(n,side,(xmax/2.,ymax/2.,zmax/2.)
                 ,spacing=spacing)
     
-        self.m = numpy.zeros(self.maxn)
-        self.v = vmax * (numpy.random.random([self.maxn,self.dim]) - 0.5)
-        self.rdot = numpy.zeros(self.r.shape)
-        self.vdot = numpy.zeros(self.v.shape)
-        self.mdot = numpy.zeros(self.m.shape)
+        self.m = np.zeros(self.maxn)
+        self.v = vmax * (np.random.random([self.maxn,self.dim]) - 0.5)
+        self.rdot = np.zeros(self.r.shape)
+        self.vdot = np.zeros(self.v.shape)
+        self.mdot = np.zeros(self.m.shape)
 
         # Initialise values
         #self.r[0:self.n]=configuration.grid3d(self.n,5,5,(20,20,20),spacing=0.8)
@@ -112,8 +115,8 @@ class ParticleSystem:
 
         # State vectors to pass to numerical integrators
         n_variables = 7
-        self.x = numpy.zeros([n_variables,self.maxn])
-        self.xdot = numpy.zeros([n_variables,self.maxn])
+        self.x = np.zeros([n_variables,self.maxn])
+        self.xdot = np.zeros([n_variables,self.maxn])
 
         self.nlists = []
         self.forces = []
@@ -248,30 +251,34 @@ class SmoothParticleSystem(ParticleSystem):
         gradv --  spatial gradient of velocity
         t -- temperature
         h -- smoothing length
-        p -- pressure. Just a scalar for now but this will
-        become the full pressure tensor in time.
+        p -- isotropic pressure (repulsive)
+        pco -- isotropic pressure (cohesive)
+
+        P -- pressure tensor
 
         timing -- a dictionary of average execution times for
                   particular subroutines.
 
         """
-        self.rho = numpy.zeros(self.maxn)
-        self.rhodot = numpy.zeros(self.rho.shape)
-        self.gradv = numpy.zeros([self.maxn,self.dim,self.dim])
+        self.rho = np.zeros(self.maxn)
+        self.rhodot = np.zeros(self.rho.shape)
+        self.gradv = np.zeros([self.maxn,self.dim,self.dim])
         #thermal properties
-        self.t = numpy.ones(self.maxn)
+        self.t = np.ones(self.maxn)
         self.t[:] = 0.4
-        self.h = numpy.zeros(self.maxn)
+        self.h = np.zeros(self.maxn)
         self.h[:] = 3.
-        self.p = numpy.zeros([self.maxn])
-        self.pco = numpy.zeros([self.maxn])
+        self.p = np.zeros([self.maxn])
+        self.pco = np.zeros([self.maxn])
+        self.P = np.zeros([self.maxn,self.dim,self.dim])
         
         for nl in self.nlists: 
+            nl.build()
             properties.spam_properties(self,nl,nl.cutoff_radius)
 
         n_variables = 10
-        self.x = numpy.zeros([n_variables,self.maxn])
-        self.xdot = numpy.zeros([n_variables,self.maxn])
+        self.x = np.zeros([n_variables,self.maxn])
+        self.xdot = np.zeros([n_variables,self.maxn])
         self.timing['SPAM time'] = -1
 
 
@@ -301,17 +308,17 @@ class SmoothParticleSystem(ParticleSystem):
         #self.h[i] = self.h[i] * alpha
 
         # Daughter 1
-        self.r[self.n] = self.r[i] + eps*numpy.array([0,1])
+        self.r[self.n] = self.r[i] + eps*np.array([0,1])
         self.m[self.n] = self.m[i] 
         self.v[self.n] = self.v[i]
         
         # Daughter 2
-        self.r[self.n+1] = self.r[i] + eps*numpy.array([0.866025,-0.5])
+        self.r[self.n+1] = self.r[i] + eps*np.array([0.866025,-0.5])
         self.m[self.n+1] = self.m[i] 
         self.v[self.n+1] = self.v[i]
  
         # Daughter 3
-        self.r[self.n+2] = self.r[i] + eps*numpy.array([-0.866025,-0.5])
+        self.r[self.n+2] = self.r[i] + eps*np.array([-0.866025,-0.5])
         self.m[self.n+2] = self.m[i] 
         self.v[self.n+2] = self.v[i]
         
@@ -442,7 +449,7 @@ class SmoothParticleSystem(ParticleSystem):
         """
         self.rdot = self.v
         # random velocity
-        #self.vdot = numpy.random.random(self.v.shape)-0.5
+        #self.vdot = np.random.random(self.v.shape)-0.5
         self.vdot[:,:] = 0.0
 
         t = time()

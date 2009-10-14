@@ -19,7 +19,8 @@ class NeighbourList:
         max_interactions -- self describing
         iap[nip] -- pair indices
         rsq[nip]: squared distance between all list members
-        drij[nip]: displacement between pairs
+        drij[nip,d]: displacement between pairs
+        dv[nip,d]: velocity difference between pairs
         rij[nip]: distance between pairs
         wij[nip]: interpolation kernel between pairs
         dwij[nip]: interpolation kernel gradient between pairs
@@ -29,9 +30,10 @@ class NeighbourList:
         self.particle = particle
         self.max_interactions = (particle.maxn * particle.maxn) / 2 - 1   
         self.iap = np.zeros((self.max_interactions,2),dtype=int)
-        self.rij = np.zeros(self.max_interactions)
+        self.rij = np.zeros(self.max_interactions,dtype=float)
         self.rsq = np.zeros(self.max_interactions)
-        self.drij = np.zeros((self.max_interactions,DIM))
+        self.drij = np.zeros((self.max_interactions,DIM),dtype=float)
+        self.dv = np.zeros((self.max_interactions,DIM))
         self.wij = np.zeros(self.max_interactions)
         self.dwij = np.zeros((self.max_interactions,DIM))
         self.rebuild_list = False
