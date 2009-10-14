@@ -1,6 +1,6 @@
-""" The idea behind this module - it is for calculating sph densities,
-    interparticle distances and any other properties that are
-    needed before computing the rates of change.
+""" Calculates SPH densities, interparticle distances 
+    and any other properties
+    that are needed before computing the rates of change.
     
     Copyright Andrew Charles 2008
     All rights reserved.
@@ -30,7 +30,6 @@ def ideal_isothermal(rho,t):
         Isothermal equation of state
     """
     return (rho * KBDASH)
-
 
 def art_water(rho,t):
     """ Equation of state. Isothermal, with a reference density.
@@ -164,17 +163,30 @@ def spam_properties(p,nl,h):
         _rho[i] += _wij[k] * _m[j]
         _rho[j] += _wij[k] * _m[i]
 
-        # BIG ERROR ALERT
-        # LOOK UP THE 3d EXPRESSION FOR GRADV!!!!
-        # 
+        _gradv[i,0,0] += (_m[j]/_rho[j])*dvk[0]*_dwij[k,0]
+        _gradv[i,0,1] += (_m[j]/_rho[j])*dvk[0]*_dwij[k,1]
+        _gradv[i,0,2] += (_m[j]/_rho[j])*dvk[0]*_dwij[k,2]
 
-        _gradv[i,0] += (_m[j]/_rho[j])*dvk[0]*_dwij[k,0]
-        _gradv[i,1] += (_m[j]/_rho[j])*dvk[1]*_dwij[k,1]
-        _gradv[i,2] += (_m[j]/_rho[j])*dvk[2]*_dwij[k,2]
+        _gradv[i,1,0] += (_m[j]/_rho[j])*dvk[1]*_dwij[k,0]
+        _gradv[i,1,1] += (_m[j]/_rho[j])*dvk[1]*_dwij[k,1]
+        _gradv[i,1,2] += (_m[j]/_rho[j])*dvk[1]*_dwij[k,2]
         
-        _gradv[j,0] -= (_m[i]/_rho[i])*dvk[0]*_dwij[k,0]
-        _gradv[j,1] -= (_m[i]/_rho[i])*dvk[1]*_dwij[k,1]
-        _gradv[j,2] -= (_m[i]/_rho[i])*dvk[2]*_dwij[k,2]
+        _gradv[i,2,0] += (_m[j]/_rho[j])*dvk[2]*_dwij[k,0]
+        _gradv[i,2,1] += (_m[j]/_rho[j])*dvk[2]*_dwij[k,1]
+        _gradv[i,2,2] += (_m[j]/_rho[j])*dvk[2]*_dwij[k,2]
+
+        _gradv[j,0,0] += (_m[i]/_rho[i])*dvk[0]*_dwij[k,0]
+        _gradv[j,0,1] += (_m[i]/_rho[i])*dvk[0]*_dwij[k,1]
+        _gradv[j,0,2] += (_m[i]/_rho[i])*dvk[0]*_dwij[k,2]
+
+        _gradv[j,1,0] += (_m[i]/_rho[i])*dvk[1]*_dwij[k,0]
+        _gradv[j,1,1] += (_m[i]/_rho[i])*dvk[1]*_dwij[k,1]
+        _gradv[j,1,2] += (_m[i]/_rho[i])*dvk[1]*_dwij[k,2]
+        
+        _gradv[j,2,0] += (_m[i]/_rho[i])*dvk[2]*_dwij[k,0]
+        _gradv[j,2,1] += (_m[i]/_rho[i])*dvk[2]*_dwij[k,1]
+        _gradv[j,2,2] += (_m[i]/_rho[i])*dvk[2]*_dwij[k,2]
+        
 
     if ADKE:
         # We are using adaptive density kernel estimation

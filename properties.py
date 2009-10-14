@@ -47,13 +47,11 @@ calc_pressure = vdw
 
 def spam_properties(p,nl,h):
     """ Calculates and assigns:
-        kernel values
-        kernel gradient values
-        and smoothed particle
-        summation densities for the particle data
-        structure
-    
-        todo: move the spam stuff to sp_neighbour list
+
+        * kernel values
+        * kernel gradient values
+        * smoothed particle summation densities
+        * velocity gradient
     
     """
     # self contribution to density
@@ -78,7 +76,6 @@ def spam_properties(p,nl,h):
                 p.gradv[i,a,b] += (p.m[j]/p.rho[i])*dv[a]*nl.dwij[k,b]
                 p.gradv[j,a,b] += (p.m[i]/p.rho[j])*dv[a]*nl.dwij[k,b]
 
-
     if ADKE:
         # We are using adaptive density kernel estimation
         # the density calculated above was just a pilot
@@ -88,7 +85,6 @@ def spam_properties(p,nl,h):
         rhoav = numpy.mean(p.rho)
         p.h = H * KSC * ((p.rho/rhoav)**SENS)
         
-
 
     for i in range(p.n):
         # todo add some logic to determine whether we have a one or two part
