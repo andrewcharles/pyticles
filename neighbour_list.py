@@ -5,7 +5,7 @@
 
     iap[] is always the list of particles for the purposes of interaction.
 
-    todo: add Pd's sophisticated minimum image?
+    todo: add Pd's sophisticated minimum image for non-rectangular boxes?
 
 """
 import numpy as np

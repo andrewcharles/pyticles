@@ -1,9 +1,21 @@
 ========
 Pyticles
 ========
-
 Pyticles is a set of python modules for a low performance physically based
 particle system in python.
+
+The main conceptual objects are particles, neighbour lists, boxes and forces.
+
+Interfaces to optimised cython modules, and wrapped fortran modules are also
+provided. For example:
+
+properties.py -- computes smooth particle properties using only python
+c_properties.py -- cython optimisation of properties.py
+f_properties.py -- calls wrapped Fortran modules
+
+
+Files
+=====
 
 controller.py
 -------------
