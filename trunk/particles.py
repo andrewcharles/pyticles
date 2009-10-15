@@ -131,6 +131,7 @@ class ParticleSystem:
         self.timing['deriv time'] = -1
         self.timing['pairsep time'] = -1
         self.timing['update time'] = -1
+        self.timing['integrate time'] = -1
 
     def create_particle(self,r,v=(0.0,0.0,0.0)):
         """Adds a new particle to the system.

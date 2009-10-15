@@ -57,13 +57,17 @@ def on_draw():
 @s.win.event
 def on_key_press(symbol,modifiers):
     if symbol == pyglet.window.key.R:
+        pyglet.clock.unschedule(update)
         initialise()
+        pyglet.clock.schedule(update)
 
 def initialise():
-    global p,nl_1,nl_2,cnt,buttons
+    global p,nl_1,nl_2,cnt,buttons,s
     print "Restarting"
     p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit='grid',vmax=VMAX
         ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
+
+    s.p = p
 
     nl_1 = neighbour_list.VerletList(p,cutoff=2.0)
     nl_2 = neighbour_list.VerletList(p,cutoff=5.0)
