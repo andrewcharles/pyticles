@@ -147,6 +147,81 @@ class CollisionForce(Force):
             exit()
 
 
+class SpamForce2d(Force):
+    
+    def __init__(self,particles,neighbour_list,cutoff=5.0):
+        Force.__init__(self,particles,neighbour_list,cutoff=cutoff)
+
+    def apply_force(self,k):
+        """ Calculates spam interaction between two particles.
+            The spam density must have already been calculated.
+        """
+        i = self.nl.iap[k,0]
+        j = self.nl.iap[k,1]
+        p = self.p
+        pri = self.p.p[i]
+        prj = self.p.p[j]
+        dwdx = self.nl.dwij[k,:]
+       
+        ps = (pri/p.rho[i]**2 + prj/p.rho[j]**2)
+
+        dvx = ps * dwdx[0] 
+        dvy = ps * dwdx[1] 
+
+        p.vdot[i,0] += dvx
+        p.vdot[i,1] += dvy
+        p.vdot[j,0] += -dvx
+        p.vdot[j,1] += -dvy
+
+        du = 0.5 * (dvx * self.nl.dv[k,0] + dvy * self.nl.dv[k,1]) 
+        p.udot[i] += du * p.m[j]
+        p.udot[j] += du * p.m[i]
+
+
+class CohesiveSpamForce2d(Force):
+   
+    def __init__(self,particles,neighbour_list,cutoff=10.0):
+        Force.__init__(self,particles,neighbour_list,cutoff=cutoff)
+
+    def apply_force(self,k):
+        """ Calculates spam interaction between two particles.
+            The spam density must have already been calculated.
+        """
+        """p = self.p
+        i = self.nl.iap[k,0]
+        j = self.nl.iap[k,1]
+        pri = p.pco[i]
+        prj = p.pco[j]
+        dwdx = self.nl.dwij[k,:]
+        dvx =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[0]
+        dvy =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[1]
+        p.vdot[i,0] += dvx
+        p.vdot[i,1] += dvy
+        p.vdot[j,0] += -dvx
+        p.vdot[j,1] += -dvy"""
+
+        i = self.nl.iap[k,0]
+        j = self.nl.iap[k,1]
+        p = self.p
+        pri = self.p.p[i]
+        prj = self.p.p[j]
+        dwdx = self.nl.dwij[k,:]
+       
+        ps = (pri/p.rho[i]**2 + prj/p.rho[j]**2)
+
+        dvx = ps * dwdx[0] 
+        dvy = ps * dwdx[1] 
+
+        p.vdot[i,0] += dvx
+        p.vdot[i,1] += dvy
+        p.vdot[j,0] += -dvx
+        p.vdot[j,1] += -dvy
+
+        du = 0.5 * (dvx * self.nl.dv[k,0] + dvy * self.nl.dv[k,1]) 
+        p.udot[i] += du * p.m[j]
+        p.udot[j] += du * p.m[i]
+
+
 class SpamForce(Force):
     
     def __init__(self,particles,neighbour_list,cutoff=5.0):
@@ -162,20 +237,24 @@ class SpamForce(Force):
         pri = self.p.p[i]
         prj = self.p.p[j]
         dwdx = self.nl.dwij[k,:]
-        dvx =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[0]
-        dvy =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[1]
-        p.vdot[i,0] += dvx
-        p.vdot[i,1] += dvy
-        p.vdot[j,0] += -dvx
-        p.vdot[j,1] += -dvy
+        dv = self.nl.dv
+       
+        ps = (pri/p.rho[i]**2 + prj/p.rho[j]**2)
 
-        ### derived properties
-        # force accumulator
-        # internal energy
-        # smoothing length
-        # udot accumulator (sphforce(rho,q,p)
-        # Q heat flux tensor
-        # P pressure tensor ( eos(rho,t) )
+        ax = ps * dwdx[0] 
+        ay = ps * dwdx[1] 
+        az = ps * dwdx[2] 
+
+        p.vdot[i,0] += ax
+        p.vdot[i,1] += ay
+        p.vdot[i,2] += az
+        p.vdot[j,0] -= ax
+        p.vdot[j,1] -= ay
+        p.vdot[j,2] -= az
+
+        du = 0.5 * (ax * dv[k,0] + ay * dv[k,1] + az * dv[k,2]) 
+        p.udot[i] += du * p.m[j]
+        p.udot[j] += du * p.m[i]
 
 
 class CohesiveSpamForce(Force):
@@ -187,26 +266,30 @@ class CohesiveSpamForce(Force):
         """ Calculates spam interaction between two particles.
             The spam density must have already been calculated.
         """
-        p = self.p
         i = self.nl.iap[k,0]
         j = self.nl.iap[k,1]
-        pri = p.pco[i]
-        prj = p.pco[j]
+        p = self.p
+        pri = self.p.pco[i]
+        prj = self.p.pco[j]
         dwdx = self.nl.dwij[k,:]
-        dvx =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[0]
-        dvy =  (pri/p.rho[i]**2 + prj/p.rho[j]**2) * dwdx[1]
-        p.vdot[i,0] += dvx
-        p.vdot[i,1] += dvy
-        p.vdot[j,0] += -dvx
-        p.vdot[j,1] += -dvy
+        dv = self.nl.dv
+       
+        ps = (pri/p.rho[i]**2 + prj/p.rho[j]**2)
 
-        ### derived properties
-        # force accumulator
-        # internal energy
-        # smoothing length
-        # udot accumulator (sphforce(rho,q,p)
-        # Q heat flux tensor
-        # P pressure tensor ( eos(rho,t) )
+        ax = ps * dwdx[0] 
+        ay = ps * dwdx[1] 
+        az = ps * dwdx[2] 
+
+        p.vdot[i,0] += ax
+        p.vdot[i,1] += ay
+        p.vdot[i,2] += az
+        p.vdot[j,0] -= ax
+        p.vdot[j,1] -= ay
+        p.vdot[j,2] -= az
+
+        du = 0.5 * (ax * dv[k,0] + ay * dv[k,1] + az * dv[k,2]) 
+        p.udot[i] += du * p.m[j]
+        p.udot[j] += du * p.m[i]
 
 
 class Gravity(Force):

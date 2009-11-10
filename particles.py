@@ -31,10 +31,10 @@ import configuration
 import box
 #from Numeric import *
 #import pdb
-from integrator import rk4, euler
+from integrator import rk4, euler, imp_euler
 from time import time
 
-dt = 0.1
+dt = 0.05
 
 # variables for the integrator - put these somewhere cleaver
 verbose = False
@@ -154,9 +154,10 @@ class ParticleSystem:
             neighbour list supplied.
         """
         self.rebuild_lists()
-        rk4(self.gather_state,self.derivatives, \
+        imp_euler(self.gather_state,self.derivatives, \
                        self.gather_derivatives,self.scatter_state,dt)
         self.box.apply(self)
+        self.steps += 1
 
 # Right now these are hard coded to 3d. I am still mulling over the
 # best approach the being able to do 2 and 1d if I want to.
@@ -218,6 +219,14 @@ class ParticleSystem:
 class SmoothParticleSystem(ParticleSystem):
     """A particle system with additional properties to solve smooth
     particle equations of motion.
+
+    This is actually a long-range/short range smooth particle system.
+    I'd like to make the way this is structured more elegant - would
+    like to have a simple smooth particle system, and have the long-short
+    one inherit from it. Another solution is to have a smooth properties
+    class and let the smooth particle system have multiple instances.
+
+    As I don't know the best solution I am going to think on it.
     """
 
     def __init__(self,n,
@@ -266,18 +275,27 @@ class SmoothParticleSystem(ParticleSystem):
         self.gradv = np.zeros([self.maxn,self.dim,self.dim])
         #thermal properties
         self.t = np.ones(self.maxn)
-        self.t[:] = 0.4
+        self.t[:] = 0.1
+
+        self.u = np.ones(self.maxn)
+        self.udot = np.ones(self.maxn)
+
         self.h = np.zeros(self.maxn)
-        self.h[:] = 3.
+        self.hlr = np.zeros(self.maxn)
+        self.h[:] = 2.
+        self.hlr[:] = 5.
         self.p = np.zeros([self.maxn])
         self.pco = np.zeros([self.maxn])
         self.P = np.zeros([self.maxn,self.dim,self.dim])
         
-        for nl in self.nlists: 
-            nl.build()
-            properties.spam_properties(self,nl,nl.cutoff_radius)
+        #for nl in self.nlists: 
+        #    nl.build()
+        #    properties.spam_properties(self,nl,nl.cutoff_radius)
 
-        n_variables = 10
+        #properties.spam_properties(self,self.nlists[0],self.nlists[1] \
+        #    ,self.h[0:self.n],self.hlr[0:self.n])
+
+        n_variables = 11
         self.x = np.zeros([n_variables,self.maxn])
         self.xdot = np.zeros([n_variables,self.maxn])
         self.timing['SPAM time'] = -1
@@ -391,13 +409,14 @@ class SmoothParticleSystem(ParticleSystem):
         self.timing['deriv time'] = time() - t
        
         t = time()
-        rk4(self.gather_state,self.derivatives, \
+        imp_euler(self.gather_state,self.derivatives, \
             self.gather_derivatives,self.scatter_state,dt)
         self.timing['integrate time'] = time() - t
         
         self.box.apply(self)
         
         self.timing['update time'] = time() - t1
+        self.steps += 1
 
     def gather_state(self):
         """ Maps the particle system to a state vector for integration
@@ -413,6 +432,7 @@ class SmoothParticleSystem(ParticleSystem):
         self.x[8,0:self.n] = self.p[0:self.n]
         # added second component of pressure
         self.x[9,0:self.n] = self.pco[0:self.n]
+        self.x[10,0:self.n] = self.u[0:self.n]
         return(self.x)
 
     def scatter_state(self,x):
@@ -428,6 +448,7 @@ class SmoothParticleSystem(ParticleSystem):
         self.rho[0:self.n] = x[7,0:self.n]
         self.p[0:self.n] = x[8,0:self.n]
         self.pco[0:self.n] = x[9,0:self.n]
+        self.u[0:self.n] = x[10,0:self.n]
 
     def gather_derivatives(self):
         """ Maps particle system's derivatives to a state vector
@@ -442,6 +463,7 @@ class SmoothParticleSystem(ParticleSystem):
         self.xdot[7,0:self.n] = self.rhodot[0:self.n] 
         self.xdot[8,0:self.n] = 0
         self.xdot[9,0:self.n] = 0
+        self.xdot[10,0:self.n] = self.udot[0:self.n]
         return self.xdot
 
     def derivatives(self):
@@ -459,8 +481,11 @@ class SmoothParticleSystem(ParticleSystem):
         self.timing['pairsep time'] = (time() - t)
 
         t = time()
-        for nl in self.nlists: 
-            properties.spam_properties(self,nl,nl.cutoff_radius)
+        #for nl in self.nlists: 
+        
+        properties.spam_properties(self,self.nlists[0],self.nlists[1] \
+            ,self.h[0:self.n],self.hlr[0:self.n])
+        
         self.timing['SPAM time'] = time() - t
         
         t = time()
