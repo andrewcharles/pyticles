@@ -97,7 +97,7 @@ class ParticleView:
                  ,visible=False,caption='Pyticles')
 
         self.sphere = gluNewQuadric()
-        gluQuadricDrawStyle(self.sphere,GLU_LINE)
+        gluQuadricDrawStyle(self.sphere,GLU_FILL)
         glEnable(GL_DEPTH_TEST)
         glDisable(GL_CULL_FACE)
         
@@ -246,7 +246,6 @@ class ParticleView:
     def draw_particles(self,p):
         """ issues the opengl commands to draw the 
             particle system """
-        #glPolygonMode(GL_FRONT_AND_BACK,GL_FILL)
         radius=5
         for i in range(p.n):
             r = p.r[i,0] * self.xmap \
@@ -255,7 +254,7 @@ class ParticleView:
             glColor3f(1.0, 1.0/(i+1), 0)
             glPushMatrix()
             glTranslatef(r[0],r[1],r[2])
-            gluSphere(self.sphere,PSIZE,10,10)
+            gluSphere(self.sphere,PSIZE,12,12)
             glPopMatrix()
 
             #glBegin(GL_POLYGON)
@@ -309,11 +308,11 @@ class ParticleView:
         self.integtimelab.text = "integtime: %5.3f" %(p.timing['integrate time'])
         self.spamtimelab.text = "spamtime: %5.3f" %(p.timing['SPAM time'])
         self.stepslab.text = "steps: %5d" %(p.steps)
+            
         self.updatetimelab.text = "updatetime: %5.3f" %(p.timing['update time'])
 
         for lab in self.labels:
             lab.draw()
-
         glFlush()
         glPopMatrix()
 
