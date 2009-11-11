@@ -33,7 +33,7 @@ class NeighbourList:
         self.rij = np.zeros(self.max_interactions,dtype=float)
         self.rsq = np.zeros(self.max_interactions)
         self.drij = np.zeros((self.max_interactions,DIM),dtype=float)
-        self.dv = np.zeros((self.max_interactions,DIM))
+        self.dv = np.zeros((self.max_interactions,DIM),dtype=float)
         self.wij = np.zeros(self.max_interactions)
         self.dwij = np.zeros((self.max_interactions,DIM))
         self.rebuild_list = False
@@ -70,6 +70,9 @@ class NeighbourList:
             self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
             rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
             self.rij[k] = np.sqrt(rsquared)
+            self.dv[k,0] = self.particle.v[j,0] - self.particle.v[i,0]
+            self.dv[k,1] = self.particle.v[j,1] - self.particle.v[i,1]
+            self.dv[k,2] = self.particle.v[j,2] - self.particle.v[i,2]
 
     def find_pair(self,i,j):
         """ Finds the pair index k for the pair i,j if it exists.
@@ -175,6 +178,9 @@ class VerletList(NeighbourList):
                     self.drij[k,0] = drx
                     self.drij[k,1] = dry
                     self.drij[k,2] = drz
+                    self.dv[k,0] = self.particle.v[j,0] - self.particle.v[i,0]
+                    self.dv[k,1] = self.particle.v[j,1] - self.particle.v[i,1]
+                    self.dv[k,2] = self.particle.v[j,2] - self.particle.v[i,2]
                     self.rsq[k] = rsquared
                     self.iap[self.nip,0] = i
                     self.iap[self.nip,1] = j
@@ -200,6 +206,9 @@ class VerletList(NeighbourList):
                 self.drij[q,0] = drx
                 self.drij[q,1] = dry
                 self.drij[q,2] = drz
+                self.dv[q,0] = self.particle.dv[k,0]
+                self.dv[q,1] = self.particle.dv[k,1]
+                self.dv[q,2] = self.particle.dv[k,2]
                 self.rsq[q] = rsquared
                 self.iap[q,0] = i
                 self.iap[q,1] = j

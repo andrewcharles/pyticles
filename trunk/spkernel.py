@@ -82,7 +82,7 @@ def lucy_w3d(r,h):
 
 def lucy_kernel(r,dx,h):
     """ The Lucy Kernel. Returns W, dwdx"""
-    """ Works for one and two dimensions
+    """ Works for one, two and three dimensions
     """
 
     dx = np.atleast_1d(dx)

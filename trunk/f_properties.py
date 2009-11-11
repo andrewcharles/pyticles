@@ -6,6 +6,7 @@ import sphlib
 import feos
 from eos import vdw_co, vdw_hc
 import numpy as np
+import properties
 
 feos.eos.adash = 2.0
 feos.eos.bdash = 0.5
@@ -74,7 +75,7 @@ def spam_properties(p,nls,nll,hs,hl):
     dwdx_lr = np.zeros((nil,d),order='F') 
 
     rho = np.zeros((n),order='F')
-    u = np.zeros(rho.shape,dtype=float)#,order='F')
+    u = np.reshape(p.u[0:n].copy(),(n,1))#,order='F')
     gradv = np.reshape(p.gradv[0:n,:,:].copy(),(n,d,d))#,order='F')
     grad_rho = np.zeros((n,d))#,order='F')
     mass = np.reshape(p.m[0:n].copy(),(n,1))#,order='F')
@@ -101,16 +102,33 @@ def spam_properties(p,nls,nll,hs,hl):
 
     # Density summation
     fkernel.kernel.density_sum(rho,grad_rho,nlist_short,sml,mass,w,dwdx,1)
+    print rho[0]
 
     # Grad v
     grad_v = np.zeros((n,d,d),order='F')
     sphlib.sphlib.calc_grad_v(grad_v,nlist_short,dwdx,dv,mass,rho)
 
-    # (python implementation)
+    # (Python implementation)
     phc = p.p[0:n]
     pco = p.pco[0:n]
+  
+    print 'b4'
+    print 'frho',rho[0]
+    print u[0]
+    print T[0]
+    feos.eos.calc_vdw_temp(u,T,rho)
+    print 'afta2'
+    print u[0]
+    print T[0]
+    print properties.vdw_temp(rho[0],u[0])
+    print properties.vdw_energy(rho[0],1.2)
+    1/0
+
 
     feos.eos.calc_vdw_energy(u,T,rho)
+    feos.eos.calc_vdw_temp(u,T,rho)
+    feos.eos.calc_vdw_energy(u,T,rho)
+
     feos.eos.calc_vdw_hc_pressure(phc,rho,u)
     feos.eos.calc_vdw_cohesive_pressure(pco,rho,u)
 
@@ -125,6 +143,7 @@ def spam_properties(p,nls,nll,hs,hl):
     nll.dwij[0:nil,:] = dwdx_lr[0:nil,:]
     p.p[0:n] = phc[0:n]
     p.pco[0:n] = pco[0:n]
+    p.t[0:n] = T[0:n]
     
 
 

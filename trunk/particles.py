@@ -25,6 +25,7 @@ import neighbour_list
 # I don't want to have to select this here!
 #import c_properties as properties
 import f_properties as properties
+from properties import vdw_energy,spam_properties,hamiltonian
 import scipy
 import integrator
 import configuration
@@ -34,7 +35,7 @@ import box
 from integrator import rk4, euler, imp_euler
 from time import time
 
-dt = 0.05
+#dt = 0.05
 
 # variables for the integrator - put these somewhere cleaver
 verbose = False
@@ -275,14 +276,14 @@ class SmoothParticleSystem(ParticleSystem):
         self.gradv = np.zeros([self.maxn,self.dim,self.dim])
         #thermal properties
         self.t = np.ones(self.maxn)
-        self.t[:] = 0.1
+        self.t[:] = 1.2
 
-        self.u = np.ones(self.maxn)
-        self.udot = np.ones(self.maxn)
+        self.u = np.ones(self.maxn,dtype=float)
+        self.udot = np.zeros(self.maxn,dtype=float)
 
         self.h = np.zeros(self.maxn)
         self.hlr = np.zeros(self.maxn)
-        self.h[:] = 2.
+        self.h[:] = 2.5
         self.hlr[:] = 5.
         self.p = np.zeros([self.maxn])
         self.pco = np.zeros([self.maxn])
@@ -409,7 +410,7 @@ class SmoothParticleSystem(ParticleSystem):
         self.timing['deriv time'] = time() - t
        
         t = time()
-        imp_euler(self.gather_state,self.derivatives, \
+        rk4(self.gather_state,self.derivatives, \
             self.gather_derivatives,self.scatter_state,dt)
         self.timing['integrate time'] = time() - t
         
@@ -474,6 +475,7 @@ class SmoothParticleSystem(ParticleSystem):
         # random velocity
         #self.vdot = np.random.random(self.v.shape)-0.5
         self.vdot[:,:] = 0.0
+        self.udot[:] = 0.0
 
         t = time()
         for nl in self.nlists: 
@@ -495,4 +497,8 @@ class SmoothParticleSystem(ParticleSystem):
         
         if ADVECTIVE:
             self.rdot[:,:] = 0.0
+
+        print self.p[0],self.pco[0],self.t[0],self.udot[0]
+#        hamiltonian(self)
+#        print np.mean(self.t)
 
