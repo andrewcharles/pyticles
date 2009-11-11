@@ -13,7 +13,7 @@ import sys
 import spdensity
 import spkernel
 import math
-import numpy
+import numpy as np
 
 H = 3.0
 ADASH = 2.0
@@ -42,8 +42,24 @@ def vdw(rho,t):
     return (rho*KBDASH*t)/(1-rho*BDASH), - ADASH*rho*rho
 
 
+def vdw_energy(rho,t):
+    """ Returns van der waals energy. """
+    return t * KBDASH - ADASH * rho
+
+def vdw_temp(rho,u):
+    return (u + ADASH * rho)/KBDASH
+
 #calc_pressure = art_water
 calc_pressure = vdw
+
+
+def hamiltonian(p):
+    H = 0.0
+    for i in range(p.n):
+        H = H + 0.5 * p.m[i] * (p.v[i,0]**2 + p.v[i,1]**2 + p.v[i,2]**2)
+        H = H + p.u[i]
+    print H
+
 
 def spam_properties(p,nl,h):
     """ Calculates and assigns:
@@ -52,10 +68,12 @@ def spam_properties(p,nl,h):
         * kernel gradient values
         * smoothed particle summation densities
         * velocity gradient
+        * pressure
+        * internal energy
     
     """
     # self contribution to density
-    zerokern = spkernel.lucy_kernel(0.0,(0.0,0.0),h)[0]
+    zerokern = spkernel.lucy_kernel(0.0,(0.0,0.0),h[0])[0]
     p.rho[0:p.n] = zerokern
     p.gradv[0:p.n] = 0.0
 
@@ -64,7 +82,7 @@ def spam_properties(p,nl,h):
         i = nl.iap[k,0]
         j = nl.iap[k,1]
 
-        nl.wij[k], nl.dwij[k] = spkernel.lucy_kernel(nl.rij[k],nl.drij[k,:],h)
+        nl.wij[k], nl.dwij[k] = spkernel.lucy_kernel(nl.rij[k],nl.drij[k,:],p.h[i])
 
         p.rho[i] += nl.wij[k] * p.m[j]
         p.rho[j] += nl.wij[k] * p.m[i]
@@ -82,7 +100,7 @@ def spam_properties(p,nl,h):
         # the smoothing length above is the reference length
         KSC = 1.0
         SENS = 0.5
-        rhoav = numpy.mean(p.rho)
+        rhoav = np.mean(p.rho)
         p.h = H * KSC * ((p.rho/rhoav)**SENS)
         
 
@@ -91,7 +109,11 @@ def spam_properties(p,nl,h):
         # pressure
         p.p[i],p.pco[i] = calc_pressure(p.rho[i],p.t[i])
 
-        
+    p.u = vdw_energy(p.rho,p.t)
+    print 'init energy',p.u[0]
+    p.t = vdw_temp(p.rho,p.u)
+    print 'init temp',p.t[0]
+    print 'init rho',p.rho[0]
 
 
 

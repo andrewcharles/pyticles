@@ -237,7 +237,7 @@ class SpamForce(Force):
         pri = self.p.p[i]
         prj = self.p.p[j]
         dwdx = self.nl.dwij[k,:]
-        dv = self.nl.dv
+        dv = self.nl.dv[k,:]
        
         ps = (pri/p.rho[i]**2 + prj/p.rho[j]**2)
 
@@ -252,7 +252,7 @@ class SpamForce(Force):
         p.vdot[j,1] -= ay
         p.vdot[j,2] -= az
 
-        du = 0.5 * (ax * dv[k,0] + ay * dv[k,1] + az * dv[k,2]) 
+        du = 0.5 * (ax * dv[0] + ay * dv[1] + az * dv[2]) 
         p.udot[i] += du * p.m[j]
         p.udot[j] += du * p.m[i]
 
@@ -272,7 +272,7 @@ class CohesiveSpamForce(Force):
         pri = self.p.pco[i]
         prj = self.p.pco[j]
         dwdx = self.nl.dwij[k,:]
-        dv = self.nl.dv
+        dv = self.nl.dv[k,:]
        
         ps = (pri/p.rho[i]**2 + prj/p.rho[j]**2)
 
@@ -287,10 +287,9 @@ class CohesiveSpamForce(Force):
         p.vdot[j,1] -= ay
         p.vdot[j,2] -= az
 
-        du = 0.5 * (ax * dv[k,0] + ay * dv[k,1] + az * dv[k,2]) 
+        du = 0.5 * (ax * dv[0] + ay * dv[1] + az * dv[2]) 
         p.udot[i] += du * p.m[j]
         p.udot[j] += du * p.m[i]
-
 
 class Gravity(Force):
     """Controller that attracts other objects with an inverse square force.
