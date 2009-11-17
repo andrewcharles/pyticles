@@ -258,6 +258,8 @@ class SpamForce(Force):
 
 
 class CohesiveSpamForce(Force):
+    """ Moderately ridiculous that this is a seperate function, there is
+        only one line difference..."""
    
     def __init__(self,particles,neighbour_list,cutoff=10.0):
         Force.__init__(self,particles,neighbour_list,cutoff=cutoff)

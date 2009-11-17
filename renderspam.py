@@ -31,8 +31,10 @@ def get_grid_map(xmin,xmax,ymin,ymax,res):
     #global nx
     #global ny
     #global ngridpts
-    gridx = numpy.arange(0+res/2.0,xmax,res)
-    gridy = numpy.arange(0+res/2.0,ymax,res)
+    gridx = numpy.arange(xmin+res/2.0,xmax,res)
+    gridy = numpy.arange(ymin+res/2.0,ymax,res)
+    #gridx = numpy.arange(0+res/2.0,xmax,res)
+    #gridy = numpy.arange(0+res/2.0,ymax,res)
     #nx = int(((xmax - xmin)/res) )
     #ny = int(((ymax - ymin)/res) )
     #ngridpts = nx*ny

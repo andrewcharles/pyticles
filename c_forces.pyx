@@ -72,33 +72,44 @@ class SpamForce(Force):
         cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _dwdx
         cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _p
         cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _rho
+        cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _m
+        cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _udot
         cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _vdot
+        cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _dv
 
         _iap = self.nl.iap.astype(np.int)
         _dwdx = nl.dwij.astype(np.float)
         _p = p.p.astype(np.float)
         _rho = p.rho.astype(np.float)
+        _m = p.m.astype(np.float)
+        _udot = p.udot.astype(np.float)
         _vdot = p.vdot.astype(np.float)
+        _dv = nl.dv.astype(np.float)
 
         cdef unsigned int nip = self.nl.nip
         cdef unsigned int i,j,k,n
-        cdef float dvx, dvy, dvz
+        cdef float dvx, dvy, dvz, du, ps
 
         n = p.n
 
         for k in xrange(nip):
             i = _iap[k,0]
             j = _iap[k,1]
-            dvx =  (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2) * _dwdx[k,0]
-            dvy =  (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2) * _dwdx[k,1]
-            dvz =  (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2) * _dwdx[k,2]
-            _vdot[i,0] += dvx
-            _vdot[i,1] += dvy
-            _vdot[i,2] += dvz
-            _vdot[j,0] += -dvx
-            _vdot[j,1] += -dvy
-            _vdot[j,2] += -dvz
+            ps = (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2)
+            ax = ps * _dwdx[k,0] 
+            ay = ps * _dwdx[k,1]
+            az = ps * _dwdx[k,2]
+            du = 0.5 * (ax * _dv[k,0] + ay * _dv[k,1] + az * _dv[k,2])
+            _vdot[i,0] += ax
+            _vdot[i,1] += ay
+            _vdot[i,2] += az
+            _vdot[j,0] += -ax
+            _vdot[j,1] += -ay
+            _vdot[j,2] += -az
+            _udot[j] +=  du * _m[i]
+            _udot[i] +=  du * _m[j]
 
+        p.udot[0:n] = _udot[:]
         p.rdot[0:n,:] = p.v[0:n,:]
         p.vdot[0:n,:] = _vdot[:,:]
 
@@ -128,29 +139,44 @@ class CohesiveSpamForce(Force):
         cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _dwdx
         cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _p
         cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _rho
+        cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _m
+        cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _udot
         cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _vdot
+        cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _dv
 
         _iap = self.nl.iap.astype(np.int)
         _dwdx = nl.dwij.astype(np.float)
         _p = p.pco.astype(np.float)
         _rho = p.rho.astype(np.float)
+        _m = p.m.astype(np.float)
+        _udot = p.udot.astype(np.float)
         _vdot = p.vdot.astype(np.float)
+        _dv = nl.dv.astype(np.float)
 
         cdef unsigned int nip = self.nl.nip
         cdef unsigned int i,j,k,n
-        cdef float dvx, dvy, dvz
+        cdef float dvx, dvy, dvz, du, ps
+
         n = p.n
 
         for k in xrange(nip):
             i = _iap[k,0]
             j = _iap[k,1]
-            dvx =  (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2) * _dwdx[k,0]
-            dvy =  (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2) * _dwdx[k,1]
-            _vdot[i,0] += dvx
-            _vdot[i,1] += dvy
-            _vdot[j,0] += -dvx
-            _vdot[j,1] += -dvy
+            ps = (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2)
+            ax = ps * _dwdx[k,0] 
+            ay = ps * _dwdx[k,1]
+            az = ps * _dwdx[k,2]
+            du = 0.5 * (ax * _dv[k,0] + ay * _dv[k,1] + az * _dv[k,2])
+            _vdot[i,0] += ax
+            _vdot[i,1] += ay
+            _vdot[i,2] += az
+            _vdot[j,0] += -ax
+            _vdot[j,1] += -ay
+            _vdot[j,2] += -az
+            _udot[j] +=  du * _m[i]
+            _udot[i] +=  du * _m[j]
 
+        p.udot[0:n] = _udot[:]
         p.rdot[0:n,:] = p.v[0:n,:]
         p.vdot[0:n,:] = _vdot[:,:]
 

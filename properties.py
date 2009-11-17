@@ -73,9 +73,11 @@ def spam_properties(p,nl,h):
     
     """
     # self contribution to density
-    zerokern = spkernel.lucy_kernel(0.0,(0.0,0.0),h[0])[0]
+    zerokern = spkernel.lucy_kernel(0.0,(0.0,0.0,0.0),h[0])[0]
     p.rho[0:p.n] = zerokern
     p.gradv[0:p.n] = 0.0
+    n = p.n
+    ni = nl.nip
 
     # calc the kernels, velocities and densities
     for k in range(nl.nip):
@@ -109,11 +111,12 @@ def spam_properties(p,nl,h):
         # pressure
         p.p[i],p.pco[i] = calc_pressure(p.rho[i],p.t[i])
 
+
+    rho2 = spdensity.sum_density(p.m[0:n],p.h[0:n],nl.iap[0:ni,:]
+        ,nl.rij[0:ni],nl.drij[0:ni,:])
+
     p.u = vdw_energy(p.rho,p.t)
-    print 'init energy',p.u[0]
     p.t = vdw_temp(p.rho,p.u)
-    print 'init temp',p.t[0]
-    print 'init rho',p.rho[0]
 
 
 

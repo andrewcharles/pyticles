@@ -81,12 +81,12 @@ class ParticleInfo:
 
 class plabel(pyglet.text.Label):
     """ Subclass of pyglet label with some defaults selected."""
-    def __init__(self,name,loc=(0,0)):
+    def __init__(self,name,loc=(0,0),col=(255,0,0,255)):
         pyglet.text.Label.__init__(self,
             name,
             font_name="Arial",
             font_size=12,
-            color =(255,0,0,255),x=loc[0],y=loc[1] )
+            color=col,x=loc[0],y=loc[1] )
 
 
 class ParticleView:
@@ -119,13 +119,17 @@ class ParticleView:
         self.dtlab = plabel("dt label",loc=(10,400))
         self.eyelab = plabel("eye label",loc=(10,380) )
         self.drawtimelab = plabel("drawtime label", loc=(10,360) )
-        self.forcetimelab = plabel("forcetime label",loc=(10,340) )
-        self.derivtimelab = plabel("derivtime label",loc=(10,320) )
-        self.pairseptimelab = plabel("pairseptime label",loc=(10,300) )
-        self.integtimelab = plabel("integtime label",loc=(10,280) )
-        self.stepslab = plabel("steps label",loc=(10,260) )
-        self.updatetimelab = plabel("updatetime label",loc=(10,240) )
-        self.spamtimelab = plabel("integtime label",loc=(10,220) )
+        self.derivtimelab = plabel("derivtime label",loc=(10,340) )
+        self.integtimelab = plabel("integtime label",loc=(10,320) )
+        self.stepslab = plabel("steps label",loc=(10,300) )
+        self.updatetimelab = plabel("updatetime label",loc=(10,280) )
+
+        self.pairseptimelab = plabel("pairseptime label",loc=(10,260)
+            ,col=(255,0,255,255) )
+        self.spamtimelab = plabel("spamtime label",loc=(10,240)
+            ,col=(255,0,255,255) )
+        self.forcetimelab = plabel("forcetime label",loc=(10,220)
+            ,col=(255,0,255,255) )
         
         self.labels.append(self.fpslab)
         self.labels.append(self.npartlab)
@@ -300,14 +304,14 @@ class ParticleView:
         nebs = 0
         for nl in p.nlists:
             nebs += nl.nip
-        self.npartlab.text = "pairs: %3d" %(nebs)
-        self.drawtimelab.text = "drawtime: %5.3f" %(self.timing['Draw time'])
-        self.forcetimelab.text = "forcetime: %5.3f" %(p.timing['force time'])
-        self.derivtimelab.text = "derivtime: %5.3f" %(p.timing['deriv time'])
-        self.pairseptimelab.text = "pairtime: %5.3f" %(p.timing['pairsep time'])
-        self.integtimelab.text = "integtime: %5.3f" %(p.timing['integrate time'])
-        self.spamtimelab.text = "spamtime: %5.3f" %(p.timing['SPAM time'])
-        self.stepslab.text = "steps: %5d" %(p.steps)
+        self.npartlab.text =       "pairs: %3d" %(nebs)
+        self.drawtimelab.text =    "drawtime:  %5.3f" %(self.timing['Draw time'])
+        self.forcetimelab.text =   "forcetime:   %7.5f" %(p.timing['force time'])
+        self.derivtimelab.text =   "derivtime: %5.3f" %(p.timing['deriv time'])
+        self.pairseptimelab.text = "pairtime:     %7.5f" %(p.timing['pairsep time'])
+        self.integtimelab.text =   "integtime: %5.3f" %(p.timing['integrate time'])
+        self.spamtimelab.text =    "spamtime:  %7.5f" %(p.timing['SPAM time'])
+        self.stepslab.text =       "steps:     %5d" %(p.steps)
             
         self.updatetimelab.text = "updatetime: %5.3f" %(p.timing['update time'])
 

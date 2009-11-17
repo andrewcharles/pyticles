@@ -9,6 +9,7 @@
 
 """
 import numpy as np
+from pairsep import pairsep
 
 DIM = 3
 
@@ -50,7 +51,7 @@ class NeighbourList:
             for j in range(i+1,self.particle.n):
                 self.iap[self.nip,0] = i
                 self.iap[self.nip,1] = j
-                self.nip=self.nip+1
+                self.nip += 1
 
     def compress(self):
         """There is no concept of compression for a brute force list."""
@@ -73,6 +74,7 @@ class NeighbourList:
             self.dv[k,0] = self.particle.v[j,0] - self.particle.v[i,0]
             self.dv[k,1] = self.particle.v[j,1] - self.particle.v[i,1]
             self.dv[k,2] = self.particle.v[j,2] - self.particle.v[i,2]
+            #print i,j,self.particle.r[i,:],self.particle.r[j,:],self.drij[k,:]
 
     def find_pair(self,i,j):
         """ Finds the pair index k for the pair i,j if it exists.
@@ -182,8 +184,9 @@ class VerletList(NeighbourList):
                     self.dv[k,1] = self.particle.v[j,1] - self.particle.v[i,1]
                     self.dv[k,2] = self.particle.v[j,2] - self.particle.v[i,2]
                     self.rsq[k] = rsquared
-                    self.iap[self.nip,0] = i
-                    self.iap[self.nip,1] = j
+                    self.iap[k,0] = i
+                    self.iap[k,1] = j
+                    k += 1
                     self.nip += 1
 
     def compress(self):
@@ -200,9 +203,8 @@ class VerletList(NeighbourList):
             drx = self.particle.r[j,0] - self.particle.r[i,0]
             dry = self.particle.r[j,1] - self.particle.r[i,1]
             drz = self.particle.r[j,2] - self.particle.r[i,2]
-            rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
+            rsquared = drx**2 + dry[k,1]**2 + drz[k,2]**2
             if (rsquared < self.cutoff_radius_sq + self.tolerance_sq):
-                q += 1
                 self.drij[q,0] = drx
                 self.drij[q,1] = dry
                 self.drij[q,2] = drz
@@ -212,6 +214,7 @@ class VerletList(NeighbourList):
                 self.rsq[q] = rsquared
                 self.iap[q,0] = i
                 self.iap[q,1] = j
+                q += 1
             self.nip = q
         self.ponder_rebuild()
 
@@ -226,6 +229,14 @@ class VerletList(NeighbourList):
         if dsq > self.tolerance_sq:
             self.rebuild_list = True
             
+    def separations(self):
+        """ Computes the distance between pairs in the list and stores
+            the result in the array rij, indexed by the same k that
+            indexes the interacting pairs array iap.
+            #def pairsep(r,pairs,dr,ds):
+            Redefined to just call the cython version!
+        """
+        pairsep(self)
 
 class SmoothVerletList:
     """A Verlet list with smooth particle neighbourly properties,

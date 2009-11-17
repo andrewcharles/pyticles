@@ -47,8 +47,10 @@ def spam_properties(p,nls,nll,hs,hl):
     v = np.reshape(p.v[0:n,:].copy(),(n,d))#,order='F')
     dv =  np.reshape(nls.dv[0:ni,:].copy(),(ni,d))#,order='F')
     #dv = reshape(nl.dv[0:ni,:].copy(),(ni,d),order='F')#.transpose()
-    nlist_short = np.reshape(nls.iap[0:ni,:].copy(),(ni,2))+1
-    nlist_long = np.reshape(nll.iap[0:nil,:].copy(),(nil,2))+1
+    #nlist_short = np.reshape(nls.iap[0:ni,:].copy(),(ni,2))+1
+    #nlist_long = np.reshape(nll.iap[0:nil,:].copy(),(nil,2))+1
+    nlist_short = nls.iap[0:ni,:].copy()+1
+    nlist_long = nll.iap[0:nil,:].copy()+1
     
     #nlist = np.reshape(nlist,(ni,2),order='F')
     #nlist = nlist.transpose()
@@ -74,7 +76,7 @@ def spam_properties(p,nls,nll,hs,hl):
     w_lr = np.zeros((nil),order='F') 
     dwdx_lr = np.zeros((nil,d),order='F') 
 
-    rho = np.zeros((n),order='F')
+    rho = np.zeros((n))#,order='F')
     u = np.reshape(p.u[0:n].copy(),(n,1))#,order='F')
     gradv = np.reshape(p.gradv[0:n,:,:].copy(),(n,d,d))#,order='F')
     grad_rho = np.zeros((n,d))#,order='F')
@@ -96,42 +98,25 @@ def spam_properties(p,nls,nll,hs,hl):
 
     # Kernels and kernel gradients
     w,dwdx = fkernel.kernel.smoothing_kernels(rij[0:ni],drij[0:ni,:] \
-        ,nlist_short,sml,1)
+        ,nlist_short,sml,2)
     w_lr,dwdx_lr = fkernel.kernel.smoothing_kernels(rij_lr,drij_lr \
-        ,nlist_long,sml_lr,1)
-
+        ,nlist_long,sml_lr,2)
+   
     # Density summation
-    fkernel.kernel.density_sum(rho,grad_rho,nlist_short,sml,mass,w,dwdx,1)
-    print rho[0]
+    fkernel.kernel.density_sum(rho,grad_rho,nlist_short,sml,mass,w,dwdx,2)
 
     # Grad v
     grad_v = np.zeros((n,d,d),order='F')
     sphlib.sphlib.calc_grad_v(grad_v,nlist_short,dwdx,dv,mass,rho)
 
-    # (Python implementation)
     phc = p.p[0:n]
     pco = p.pco[0:n]
   
-    print 'b4'
-    print 'frho',rho[0]
-    print u[0]
-    print T[0]
     feos.eos.calc_vdw_temp(u,T,rho)
-    print 'afta2'
-    print u[0]
-    print T[0]
-    print properties.vdw_temp(rho[0],u[0])
-    print properties.vdw_energy(rho[0],1.2)
-    1/0
-
-
-    feos.eos.calc_vdw_energy(u,T,rho)
-    feos.eos.calc_vdw_temp(u,T,rho)
-    feos.eos.calc_vdw_energy(u,T,rho)
-
     feos.eos.calc_vdw_hc_pressure(phc,rho,u)
     feos.eos.calc_vdw_cohesive_pressure(pco,rho,u)
 
+    # Python implementation
     #phc = vdw_hc(rho,T)
     #pco = vdw_co(rho,T)
 
