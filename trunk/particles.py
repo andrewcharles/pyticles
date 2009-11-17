@@ -30,6 +30,7 @@ import scipy
 import integrator
 import configuration
 import box
+import sys
 #from Numeric import *
 #import pdb
 from integrator import rk4, euler, imp_euler
@@ -241,6 +242,7 @@ class SmoothParticleSystem(ParticleSystem):
             rinit=None,
             side=None,
             spacing=None,
+            temperature=1.0,
             simbox=None):
         ParticleSystem.__init__(self,n=n,d=d,
             xmax=xmax,
@@ -276,7 +278,7 @@ class SmoothParticleSystem(ParticleSystem):
         self.gradv = np.zeros([self.maxn,self.dim,self.dim])
         #thermal properties
         self.t = np.ones(self.maxn)
-        self.t[:] = 1.2
+        self.t[:] = temperature
 
         self.u = np.ones(self.maxn,dtype=float)
         self.udot = np.zeros(self.maxn,dtype=float)
@@ -480,11 +482,12 @@ class SmoothParticleSystem(ParticleSystem):
         t = time()
         for nl in self.nlists: 
             nl.separations()
+    
         self.timing['pairsep time'] = (time() - t)
 
         t = time()
         #for nl in self.nlists: 
-        
+
         properties.spam_properties(self,self.nlists[0],self.nlists[1] \
             ,self.h[0:self.n],self.hlr[0:self.n])
         
@@ -498,7 +501,7 @@ class SmoothParticleSystem(ParticleSystem):
         if ADVECTIVE:
             self.rdot[:,:] = 0.0
 
-        print self.p[0],self.pco[0],self.t[0],self.udot[0]
+#        print self.p[0],self.pco[0],self.t[0],self.u[0]
 #        hamiltonian(self)
 #        print np.mean(self.t)
 

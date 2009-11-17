@@ -9,6 +9,7 @@ setup(name = 'pyticles',
       packages=['pyticles'],
       package_dir={'pyticles':'.'},
       ext_modules=[
+         Extension('pairsep', ['pairsep.pyx'],include_dirs=include_dirs),
          Extension('c_test', ['c_test.pyx'],include_dirs=include_dirs),
          Extension('c_forces', ['c_forces.pyx'],include_dirs=include_dirs),
          Extension('c_properties', ['c_properties.pyx'],include_dirs=include_dirs)

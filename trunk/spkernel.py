@@ -93,13 +93,15 @@ def lucy_kernel(r,dx,h):
         q = 5. / (4. * h)
     elif dim == 2:
         q = 5. / (pi * h**2)
-    elif dim ==3:
-        q = 105. / (pi * 16 * (h**3) )
+    elif dim == 3:
+        q = 105. / (pi * 16. * (h**3) )
+    else:
+        print 'ERROR'
 
     if r < 0:
         r = abs(r)
     if( r < h ):
-        w = q * (1 + 3.*r/h)*((1.-r/h))**3
+        w = q * (1 + 3.*r/h) * ((1.-r/h))**3
         if(r == 0):
             dwdx=0.0
         else:
