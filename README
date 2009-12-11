@@ -1,2 +1,8 @@
 This branch is for pure python only. This is where investigation of
 tricky tricks using Numpy may go.
+
+The trunk also has pure python implementations of most algorithms, but the
+design there is dominated by modularity. In this branch I am happy to break
+compatibility to get good efficiency without resorting to cython, fortran 
+or C.
+
