@@ -21,16 +21,16 @@ from properties import spam_properties
 
 # Global variables
 MAX_STEPS = 100000
-NP = 27
+NP = 64 
 XMAX = 20 
 YMAX = 20
 ZMAX = 20
 VMAX = 0.0
 dt = 0.05
-SPACING = 2.0
+SPACING = 1.0
 LIVE_VIEW = False
-SIDE = (3,3,3)
-TEMPERATURE = 0.2
+SIDE = (4,4,4)
+TEMPERATURE = 0.8
 
 p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit='grid',vmax=VMAX
     ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX)

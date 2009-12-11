@@ -1,10 +1,8 @@
 #! /usr/local/bin/python
 
 """ 
-    The is the front end for the python SPH code most similar
-    to what I am doing in the fortran code.
-
-    This is the test bed for new algorithms.
+    A front end for the python SPH code.
+    
 
     Copyright Andrew Charles 2008
     All rights reserved.

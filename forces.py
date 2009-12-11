@@ -42,6 +42,16 @@ class Force:
             if self.nl.rij[k]**2 <= self.cutoffsq:
                 self.apply_force(k)
 
+    def apply_sorted(self):
+        """ Apply the force to all particles in the sorted nlist """
+        """ Todo: check that the list is of type sorted!
+        """
+        for k in range(self.nl.nip):
+            if self.nl.rij[k]**2 <= self.cutoffsq:
+                self.apply_force(k)
+            else:
+                return
+
 
 class HookesForce(Force):
     """

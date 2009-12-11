@@ -41,3 +41,5 @@ I changed the loop variables to cython unsigned ints. This led to
 
 pairtime - 0.002
 
+about an order of magnitude reduction, but still not spectacular. Maybe it's the object references?
+
