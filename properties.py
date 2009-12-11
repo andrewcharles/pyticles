@@ -61,7 +61,7 @@ def hamiltonian(p):
     print H
 
 
-def spam_properties(p,nl,h):
+def spam_properties(p,nl,h,hlong):
     """ Calculates and assigns:
 
         * kernel values
