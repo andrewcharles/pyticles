@@ -46,8 +46,8 @@ WINDOW_DEPTH = 480
 # box dimension to opengl coordinates.
 # self.xmap =  box_width / particles.xmap
 BOX_WIDTH = 500
-BOX_HEIGHT = 500
-BOX_DEPTH = 500
+BOX_HEIGHT = 250
+BOX_DEPTH = 250
 PSIZE = 10.0
 RES = 1.1
 width=WINDOW_WIDTH
@@ -258,15 +258,17 @@ class ParticleView:
             glColor3f(1.0, 1.0/(i+1), 0)
             glPushMatrix()
             glTranslatef(r[0],r[1],r[2])
-            gluSphere(self.sphere,PSIZE,12,12)
-            glPopMatrix()
-
+            gluSphere(self.sphere,PSIZE,4,4)
+            
             #glBegin(GL_POLYGON)
             #glColor3f(p.colour[0],p.colour[1],p.colour[2])
-            #for angle in range(6):
+            #for angle in range(4):
             #    a = radians(angle*60)
             #    glVertex2f(r[0]+sin(a)*radius,r[1]+cos(a)*radius)
             #glEnd()
+            
+            glPopMatrix()
+
 
     def draw_neighbours(self,p):
         """ Issues the opengl commands to draw 
@@ -335,7 +337,7 @@ class ParticleView:
         glClearColor(*self.bg_color)
         #self.win.clear()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        self.draw_neighbours(p)
+        #self.draw_neighbours(p)
         self.draw_particles(p)
         self.draw_box()
         self.hud(p)

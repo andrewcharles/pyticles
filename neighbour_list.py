@@ -4,7 +4,6 @@
     All rights reserved.
 
     iap[] is always the list of particles for the purposes of interaction.
-
     todo: add Pd's sophisticated minimum image for non-rectangular boxes?
 
 """
@@ -36,7 +35,9 @@ class NeighbourList:
         self.drij = np.zeros((self.max_interactions,DIM),dtype=float)
         self.dv = np.zeros((self.max_interactions,DIM),dtype=float)
         self.wij = np.zeros(self.max_interactions)
+        self.wij_lr = np.zeros(self.max_interactions)
         self.dwij = np.zeros((self.max_interactions,DIM))
+        self.dwij_lr = np.zeros((self.max_interactions,DIM))
         self.rebuild_list = False
         self.nforce = 0
         self.forces = []
@@ -101,32 +102,6 @@ class NeighbourList:
             dr[1] = dr[1] - ymax 	
         if (dr[2] > zmax):
             dr[2] = dr[2] - zmax
-
-
-class SortedNeighbourList(NeighbourList):
-    """ A sorted nieghbour list.
-        idx is always an index.
-    """
-
-    def sort_by_r(self):
-        """ Sorts the list by interparticle separation.
-        """
-        idx = np.argsort(self.rij[:,:])
-        self.rij = self.rij[idx] 
-        self.particle = self.particle[idx]
-        self.max_interactions = self.max_interactions[idx]
-        self.iap = self.iap [idx]
-        self.rij = self.rij[idx]
-        self.rsq = self.rsq[idx]
-        self.drij = self.drij[idx]
-        self.wij = self.wij[idx]
-        self.dwij = self.dwij[idx]
-
-    def sort_by_i(self):
-        """ Sorted by i so we can only do say each particle's nearest
-            couple of neighbours.
-        """
-        pass
 
 
 class VerletList(NeighbourList):
@@ -245,6 +220,44 @@ class SmoothVerletList:
 
     def compute():
         pass
+
+class SortedVerletList(VerletList):
+    """ A sorted verlet neighbour list.
+        idx is always an index.
+    """
+
+    def sort_by_r(self):
+        """ Sorts the list by interparticle separation.
+        """
+        idx = np.argsort(self.rsq[:])
+        idx = idx[::-1]
+        self.rij = self.rij[idx] 
+        self.iap = self.iap[idx,:]
+        self.rij = self.rij[idx]
+        self.rsq = self.rsq[idx]
+        self.dv = self.dv[idx]
+        self.drij = self.drij[idx,:]
+        self.wij = self.wij[idx]
+        self.dwij = self.dwij[idx,:]
+        self.wij_lr = self.wij_lr[idx]
+        self.dwij_lr = self.dwij_lr[idx,:]
+
+    def sort_by_i(self):
+        """ Sorted by i so we can only do say each particle's nearest
+            couple of neighbours.
+        """
+        pass
+
+    def build(self):
+        """ Call the parent build, and then sort. """
+        VerletList.build(self)
+        self.sort_by_r()
+
+    def compress(self):
+        """ Call the parent compress, and then sort. """
+        VerletList.compress(self)
+        self.sort_by_r()
+
 
 
 class CouplingList(NeighbourList):

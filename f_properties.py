@@ -12,7 +12,7 @@ feos.eos.adash = 2.0
 feos.eos.bdash = 0.5
 feos.eos.kbdash = 1.0
 
-def spam_properties(p,nls,nll,hs,hl):
+def spam_properties(p,nl,hs,hl):
     """ Calculates and assigns:
 
         * kernel values
@@ -41,16 +41,11 @@ def spam_properties(p,nls,nll,hs,hl):
 
     n = p.n
     d = p.dim
-    ni = nls.nip
-    nil = nll.nip
+    ni = nl.nip
 
     v = np.reshape(p.v[0:n,:].copy(),(n,d))#,order='F')
-    dv =  np.reshape(nls.dv[0:ni,:].copy(),(ni,d))#,order='F')
-    #dv = reshape(nl.dv[0:ni,:].copy(),(ni,d),order='F')#.transpose()
-    #nlist_short = np.reshape(nls.iap[0:ni,:].copy(),(ni,2))+1
-    #nlist_long = np.reshape(nll.iap[0:nil,:].copy(),(nil,2))+1
-    nlist_short = nls.iap[0:ni,:].copy()+1
-    nlist_long = nll.iap[0:nil,:].copy()+1
+    dv =  np.reshape(nl.dv[0:ni,:].copy(),(ni,d))#,order='F')
+    nlist = nl.iap[0:ni,:].copy()+1
     
     #nlist = np.reshape(nlist,(ni,2),order='F')
     #nlist = nlist.transpose()
@@ -62,19 +57,14 @@ def spam_properties(p,nls,nll,hs,hl):
     sml = np.reshape(p.h[0:n].copy(),(n,1))#,order='F')
     sml_lr = np.reshape(p.hlr[0:n].copy(),(n,1))#,order='F')
 
-    # This will not be necessary if the lists are sorted
-    # (having two sets of distances)
-    rij = np.reshape(nls.rij[0:ni].copy(),(ni,1))#,order='F')
-    drij = np.reshape(nls.drij[0:ni,:].copy(),(ni,d))#,order='F')
+    rij = np.reshape(nl.rij[0:ni].copy(),(ni,1))#,order='F')
+    drij = np.reshape(nl.drij[0:ni,:].copy(),(ni,d))#,order='F')
    
-    rij_lr = np.reshape(nll.rij[0:nil].copy(),(nil,1))#,order='F')
-    drij_lr = np.reshape(nll.drij[0:nil,:].copy(),(nil,d))#,order='F')
-
     w = np.zeros((ni),order='F') 
     dwdx = np.zeros((ni,d),order='F') 
    
-    w_lr = np.zeros((nil),order='F') 
-    dwdx_lr = np.zeros((nil,d),order='F') 
+    w_lr = np.zeros((ni),order='F') 
+    dwdx_lr = np.zeros((ni,d),order='F') 
 
     rho = np.zeros((n))#,order='F')
     u = np.reshape(p.u[0:n].copy(),(n,1))#,order='F')
@@ -94,20 +84,20 @@ def spam_properties(p,nls,nll,hs,hl):
     #dv = sphlib.sphlib.calc_dv(dv,nlist,v)
     #print dv.flags
     #print v.flags
-    sphlib.sphlib.calc_dv(dv,nlist_short,v)
+    sphlib.sphlib.calc_dv(dv,nlist,v)
 
     # Kernels and kernel gradients
     w,dwdx = fkernel.kernel.smoothing_kernels(rij[0:ni],drij[0:ni,:] \
-        ,nlist_short,sml,2)
-    w_lr,dwdx_lr = fkernel.kernel.smoothing_kernels(rij_lr,drij_lr \
-        ,nlist_long,sml_lr,2)
+        ,nlist,sml,2)
+    w_lr,dwdx_lr = fkernel.kernel.smoothing_kernels(rij[0:ni],drij[0:ni] \
+        ,nlist,sml_lr,2)
    
     # Density summation
-    fkernel.kernel.density_sum(rho,grad_rho,nlist_short,sml,mass,w,dwdx,2)
+    fkernel.kernel.density_sum(rho,grad_rho,nlist,sml,mass,w,dwdx,2)
 
     # Grad v
     grad_v = np.zeros((n,d,d),order='F')
-    sphlib.sphlib.calc_grad_v(grad_v,nlist_short,dwdx,dv,mass,rho)
+    sphlib.sphlib.calc_grad_v(grad_v,nlist,dwdx,dv,mass,rho)
 
     phc = p.p[0:n]
     pco = p.pco[0:n]
@@ -122,10 +112,10 @@ def spam_properties(p,nls,nll,hs,hl):
 
     # Resend data to python object
     p.rho[0:n] = rho[0:n]
-    nls.wij[0:ni] = w[0:ni]
-    nls.dwij[0:ni,:] = dwdx[0:ni,:]
-    nll.wij[0:nil] = w_lr[0:nil]
-    nll.dwij[0:nil,:] = dwdx_lr[0:nil,:]
+    nl.wij[0:ni] = w[0:ni]
+    nl.dwij[0:ni,:] = dwdx[0:ni,:]
+    nl.wij_lr[0:ni] = w_lr[0:ni]
+    nl.dwij_lr[0:ni,:] = dwdx_lr[0:ni,:]
     p.p[0:n] = phc[0:n]
     p.pco[0:n] = pco[0:n]
     p.t[0:n] = T[0:n]
