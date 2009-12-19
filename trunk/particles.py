@@ -243,6 +243,8 @@ class SmoothParticleSystem(ParticleSystem):
             side=None,
             spacing=None,
             temperature=1.0,
+            hshort=1.0,
+            hlong=3.0,
             simbox=None):
         ParticleSystem.__init__(self,n=n,d=d,
             xmax=xmax,
@@ -285,8 +287,8 @@ class SmoothParticleSystem(ParticleSystem):
 
         self.h = np.zeros(self.maxn)
         self.hlr = np.zeros(self.maxn)
-        self.h[:] = 2.5
-        self.hlr[:] = 5.
+        self.h[:] = hshort
+        self.hlr[:] = hlong
         self.p = np.zeros([self.maxn])
         self.pco = np.zeros([self.maxn])
         self.P = np.zeros([self.maxn,self.dim,self.dim])
@@ -412,7 +414,7 @@ class SmoothParticleSystem(ParticleSystem):
         self.timing['deriv time'] = time() - t
        
         t = time()
-        rk4(self.gather_state,self.derivatives, \
+        imp_euler(self.gather_state,self.derivatives, \
             self.gather_derivatives,self.scatter_state,dt)
         self.timing['integrate time'] = time() - t
         
@@ -486,9 +488,8 @@ class SmoothParticleSystem(ParticleSystem):
         self.timing['pairsep time'] = (time() - t)
 
         t = time()
-        #for nl in self.nlists: 
 
-        properties.spam_properties(self,self.nlists[0],self.nlists[1] \
+        properties.spam_properties(self,self.nlists[0] \
             ,self.h[0:self.n],self.hlr[0:self.n])
         
         self.timing['SPAM time'] = time() - t
