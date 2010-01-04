@@ -119,7 +119,6 @@ def write_step(filename,p):
     ncfile = netCDF4.Dataset(filename,'r+')
     time = ncfile.dimensions['timestep']
     i = len(time)
-    print i,'timesteps'
     timev = ncfile.variables['timestep']
     timev[i] = i+1
 

@@ -50,28 +50,34 @@ The SmoothParticleSystem class.
 
 
 
-
 About
 =====
 
 The main driver is my smooth particle research. There are a number of
 front end scripts for pyticles:
 
-1. spana.py
-This is the front end for testing algorithms related to my research.
+spana.py
+    This is the front end for testing algorithms related to my research.
 
-1.1 ospana.py
-This is a front end to the cython and wrapped fortran optimised version of the
-code.
+ospana.py
+    This is a front end to the cython and wrapped fortran optimised version of
+    the code.
 
-2. pyticles.py
-This is where the bulk of the work on the interactive gui is going. This doesn't
-use any SPH code at the moment - any work relevant to any particle system goes
-here.
+bspana.py
+   Batch front end - no graphics.
+   Writes output to file.
 
-4. particle_man.py
-This is to be an effort to produce a simple game using the pyticles
-modules. It is pretty much nothing at the moment.
+pyticles.py
+    This is where the bulk of the work on the interactive gui is going. This
+    doesn't use any SPH code at the moment - any work relevant to any particle
+    system goes here.
+
+particle_man.py
+    This is to be an effort to produce a simple game using the pyticles
+    modules. It is pretty much nothing at the moment.
+
+vspana.py
+    Opens an output file and views it.
 
 
 Road Map
