@@ -33,7 +33,8 @@ def pairsep(nl):
         
     cdef np.ndarray[np.int_t,ndim=2,mode='c'] _pairs 
     cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _r
-    cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _dr
+    cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _v
+    cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _dr 
     cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _dv
     cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _ds
     cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _rsq
@@ -45,12 +46,12 @@ def pairsep(nl):
     dim = nl.particle.dim
 
     _pairs = nl.iap.astype(np.int)
-    _r = nl.particle.r.astype(np.float)
-    _v = nl.particle.v.astype(np.float)
-    _dr = np.zeros(nk,dim)
+    _r = nl.particle.r.astype(DTYPE)
+    _v = nl.particle.v.astype(DTYPE)
+    _dr = np.zeros((nk,dim))
     _ds = np.zeros(nk)
-    _dv = np.zeros(nk,dim)
-    _rsq = np.zeros(nk)
+    _dv =  np.zeros((nk,dim))
+    _rsq =  np.zeros(nk)
     #_ds = nl.rij.astype(np.float)
     #_dv = nl.dv.astype(np.float)
     #_rsq = nl.rsq.astype(np.float)

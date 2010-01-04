@@ -32,10 +32,12 @@ def spam_properties(p,nl,hs,hl):
         p.gradv -- particle velocity gradient
        
         I'm writing this to work with the long and short smoothing length
-        (although not long range estimates of density, just longer h in 
-        the pco calculation).
 
-        Still no heat flux
+        * Long range density
+        * Heat flux
+        * Full short range reversible and irreversible tensors
+        * Full long range reversible and irreversible tensors
+
 
     """
 
@@ -105,6 +107,10 @@ def spam_properties(p,nl,hs,hl):
     feos.eos.calc_vdw_temp(u,T,rho)
     feos.eos.calc_vdw_hc_pressure(phc,rho,u)
     feos.eos.calc_vdw_cohesive_pressure(pco,rho,u)
+
+    # Capillary pressure
+     
+
 
     # Python implementation
     #phc = vdw_hc(rho,T)
