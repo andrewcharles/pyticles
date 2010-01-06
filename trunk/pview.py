@@ -37,21 +37,7 @@ from PIL import Image as pilmage
 import scipy.misc.pilutil
 from trackball_camera import TrackballCamera
 
-WINDOW_WIDTH = 640
-WINDOW_HEIGHT = 480
-WINDOW_DEPTH = 480
 
-# These are the opengl box dimensions
-# We need a scaling factor to scale the simulation
-# box dimension to opengl coordinates.
-# self.xmap =  box_width / particles.xmap
-BOX_WIDTH = 500
-BOX_HEIGHT = 250
-BOX_DEPTH = 250
-PSIZE = 10.0
-RES = 1.1
-width=WINDOW_WIDTH
-height=WINDOW_HEIGHT
 
 
 class ParticleInfo:
@@ -91,9 +77,24 @@ class plabel(pyglet.text.Label):
 
 class ParticleView:
     " A particle viewer"
-    def __init__(self,p):
+    def __init__(self,p,wsize=(640,480,480),box=(500,250,250)):
         #config = Config(alpha_size=8)
-        self.win = pyglet.window.Window(WINDOW_WIDTH,WINDOW_HEIGHT
+
+        self.WINDOW_WIDTH = wsize[0]
+        self.WINDOW_HEIGHT = wsize[1]
+        self.WINDOW_DEPTH = wsize[2]
+
+        # These are the opengl box dimensions
+        # We need a scaling factor to scale the simulation
+        # box dimension to opengl coordinates.
+        # self.xmap =  box_width / particles.xmap
+        self.BOX_WIDTH = box[0]
+        self.BOX_HEIGHT = box[1]
+        self.BOX_DEPTH = box[2]
+        self.PSIZE = 10.0
+        self.RES = 1.1
+
+        self.win = pyglet.window.Window(self.WINDOW_WIDTH,self.WINDOW_HEIGHT
                  ,visible=False,caption='Pyticles')
 
         self.sphere = gluNewQuadric()
@@ -154,9 +155,9 @@ class ParticleView:
         self.win.set_visible()
         
         # multipliers to map system to opengl box coordinates
-        self.xmap = BOX_WIDTH / float(p.box.xmax)
-        self.ymap = BOX_HEIGHT / float(p.box.ymax)
-        self.zmap = BOX_DEPTH / float(p.box.zmax)
+        self.xmap = self.BOX_WIDTH / float(p.box.xmax)
+        self.ymap = self.BOX_HEIGHT / float(p.box.ymax)
+        self.zmap = self.BOX_DEPTH / float(p.box.zmax)
 
         # Where is the center of the rectangle?
         cx = float(particles.XMAX/2.0) * self.xmap
@@ -165,9 +166,9 @@ class ParticleView:
         self.tbcam.cam_focus = (cx,cy,cz)
 
         # zoom out
-        self.tbcam.cam_eye[0] = 690
-        self.tbcam.cam_eye[1] = 630
-        self.tbcam.cam_eye[2] = 900
+        self.tbcam.cam_eye[0] = 490
+        self.tbcam.cam_eye[1] = 430
+        self.tbcam.cam_eye[2] = 400
         self.tbcam.update_modelview()
 
         self.zoom = 0
@@ -188,9 +189,9 @@ class ParticleView:
         self.eyespeed = [0.0,0.0,0.0]
 
     def draw_box(self):
-        x = BOX_WIDTH
-        y = BOX_HEIGHT
-        z = BOX_DEPTH
+        x = self.BOX_WIDTH
+        y = self.BOX_HEIGHT
+        z = self.BOX_DEPTH
 
         """
     
@@ -350,7 +351,7 @@ class ParticleView:
         glPushMatrix()
         glLoadIdentity()
         #gluOrtho2D(0,width,0,height)
-        glOrtho(0,width,0,height,-1,1)
+        glOrtho(0,self.WINDOW_WIDTH,0,self.WINDOW_HEIGHT,-1,1)
         glMatrixMode(GL_MODELVIEW)
 
     def reset_perspective(self):
@@ -364,8 +365,7 @@ class ParticleView:
 
     def resize(self,width, height):
         """Setup 3D projection for window"""
-        print self,width,height
-        glViewport(0, 0, width,height)
+        glViewport(0, 0, width, height)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         gluPerspective(45, 1.0 * width/height, 0.001, 10000)
@@ -380,25 +380,25 @@ class ParticleView:
     def on_mouse_press(self, x, y, button, modifiers):
         if button == pyglet.window.mouse.LEFT:
             self.tbcam.mouse_roll(
-                self.norm1(x,width),
-                self.norm1(y,height),
+                self.norm1(x,self.WINDOW_WIDTH),
+                self.norm1(y,self.WINDOW_HEIGHT),
                 False)
         elif button == pyglet.window.mouse.RIGHT:
             self.tbcam.mouse_zoom(
-                self.norm1(x,width),
-                self.norm1(y,height),
+                self.norm1(x,self.WINDOW_WIDTH),
+                self.norm1(y,self.WINDOW_HEIGHT),
                 False)
 
     def on_mouse_drag(self,x, y, dx, dy, buttons, modifiers):
         if buttons & pyglet.window.mouse.LEFT:
             if modifiers & pyglet.window.key.MOD_SHIFT:
                 self.tbcam.mouse_roll(
-                    self.norm1(x,width),
-                    self.norm1(y,height))
+                    self.norm1(x,self.WINDOW_WIDTH),
+                    self.norm1(y,self.WINDOW_HEIGHT))
             else:
                 self.tbcam.mouse_zoom(
-                    self.norm1(x,width),
-                    self.norm1(y,height))
+                    self.norm1(x,self.WINDOW_WIDTH),
+                    self.norm1(y,self.WINDOW_HEIGHT))
 
     def update_eye(self,t):
             self.tbcam.cam_eye[0] += self.eyespeed[0]
@@ -457,10 +457,10 @@ class SmoothParticleView(ParticleView):
         # gridx,gridy is a grid at the rendering resolution
         # rx,ry is a pixel grid
         self.gridx,self.gridy = renderspam.get_grid_map(0.0,p.box.xmax, \
-        0.0,p.box.ymax,RES)
-        rx,ry = scipy.mgrid[0:BOX_WIDTH:1,0:BOX_HEIGHT:1]
-        dx = RES*BOX_WIDTH/float(p.box.xmax)
-        dy = RES*BOX_HEIGHT/float(p.box.ymax)
+        0.0,p.box.ymax,self.RES)
+        rx,ry = scipy.mgrid[0:self.BOX_WIDTH:1,0:self.BOX_HEIGHT:1]
+        dx = self.RES*self.BOX_WIDTH/float(p.box.xmax)
+        dy = self.RES*self.BOX_HEIGHT/float(p.box.ymax)
         #xvals = (rx-dx/RES)/dx #(rx-RES?)
         xvals = (rx-dx/2)/dx #(rx-RES?)
         yvals = (ry-dy/2)/dy
@@ -510,6 +510,29 @@ class SmoothParticleView(ParticleView):
         for i in range(p.n):
             self.img.blit(self.xmap*p.r[i,0],self.ymap*p.r[i,1])
 
+    def draw_particles(self,p):
+        """ issues the opengl commands to draw the 
+            particle system """
+        radius=5
+        for i in range(p.n):
+            r = p.r[i,0] * self.xmap \
+              , p.r[i,1] * self.ymap \
+              , p.r[i,2] * self.zmap
+            a = p.t[i]/2.0
+            glColor3f(0, 0, a)
+            glPushMatrix()
+            glTranslatef(r[0],r[1],r[2])
+            gluSphere(self.sphere,self.PSIZE,10,4)
+            
+            #glBegin(GL_POLYGON)
+            #glColor3f(p.colour[0],p.colour[1],p.colour[2])
+            #for angle in range(4):
+            #    a = radians(angle*60)
+            #    glVertex2f(r[0]+sin(a)*radius,r[1]+cos(a)*radius)
+            #glEnd()
+            
+            glPopMatrix()
+
     #def hud(self,p):
     #    """ Draws the heads up display. """
 #
@@ -537,10 +560,10 @@ class SmoothParticleView(ParticleView):
         t = time()
         self.win.dispatch_events()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        self.render_density(p)
+        #self.render_density(p)
         self.hud(p)
-        self.draw_neighbours(p)
+        #self.draw_neighbours(p)
         self.draw_particles(p)
-        self.draw_box()
+        #self.draw_box()
         self.timing['Draw time'] = time() - t
 

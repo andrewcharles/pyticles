@@ -82,8 +82,8 @@ def initialise():
     p.nlists.append(nl)
     p.nl_default = nl
 
-    p.forces.append(forces.SpamForce(p,nl))
-    p.forces.append(forces.CohesiveSpamForce(p,nl))
+    #p.forces.append(forces.SpamForce(p,nl))
+    #p.forces.append(forces.CohesiveSpamForce(p,nl))
     p.forces.append(forces.SpamConduction(p,nl))
     nl.build()
     nl.separations()
