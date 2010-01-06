@@ -181,3 +181,58 @@ class CohesiveSpamForce(Force):
         p.vdot[0:n,:] = _vdot[:,:]
 
 
+class SpamConduction(Force):
+    """ Heat conduction using the full heat flux vector
+        which is probably not as efficient as JM's.
+    """
+
+    #cdef public _particles.SmoothParticleSystem p
+
+    def __init__(self,particles,nl):
+        self.p = particles
+        self.nl = nl
+
+    def apply(self):
+        """Iterate over the neighbour list and apply the force to all
+        particles.
+        """
+
+        p = self.p
+        nl = self.nl
+
+        cdef np.ndarray[np.int_t,ndim=2,mode='c'] _iap 
+        cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _dwdx
+        cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _q
+        cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _rho
+        cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _m
+        cdef np.ndarray[DTYPE_t,ndim=1,mode='c'] _udot
+
+        _iap = self.nl.iap.astype(np.int)
+        _dwdx = nl.dwij.astype(np.float)
+        _q = p.jq.astype(np.float)
+        _rho = p.rho.astype(np.float)
+        _m = p.m.astype(np.float)
+        _udot = p.udot.astype(np.float)
+
+        cdef unsigned int nip = self.nl.nip
+        cdef unsigned int i,j,k,n
+        cdef float dux, duy, duz, du, ps
+
+        n = p.n
+
+        for k in xrange(nip):
+            i = _iap[k,0]
+            j = _iap[k,1]
+           
+            dux = (_q[i,0]/_rho[i]**2 + _q[j,0]/_rho[j]**2) * _dwdx[k,0]
+            duy = (_q[i,1]/_rho[i]**2 + _q[j,1]/_rho[j]**2) * _dwdx[k,1]
+            duz = (_q[i,2]/_rho[i]**2 + _q[j,2]/_rho[j]**2) * _dwdx[k,2]
+
+            _udot[i] -=  dux * _m[j]
+            _udot[i] -=  duy * _m[j]
+            _udot[i] -=  duz * _m[j]
+            _udot[j] +=  dux * _m[i]
+            _udot[j] +=  duy * _m[i]
+            _udot[j] +=  duz * _m[i]
+
+        p.udot[0:n] = _udot[:]

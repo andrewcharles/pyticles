@@ -33,11 +33,13 @@ def spam_properties(p,nl,hs,hl):
        
         I'm writing this to work with the long and short smoothing length
 
-        * Long range density
+        Doing:
         * Heat flux
+
+        To Do:
+        * Long range density
         * Full short range reversible and irreversible tensors
         * Full long range reversible and irreversible tensors
-
 
     """
 
@@ -45,11 +47,13 @@ def spam_properties(p,nl,hs,hl):
     d = p.dim
     ni = nl.nip
 
-    v = np.reshape(p.v[0:n,:].copy(),(n,d))#,order='F')
-    dv =  np.reshape(nl.dv[0:ni,:].copy(),(ni,d))#,order='F')
+    # May want to try setting the array order to fortran, i.e.
+    # v = np.reshape(p.v[0:n,:].copy(),(n,d))#,order='F')
+
+    v = np.reshape(p.v[0:n,:].copy(),(n,d))
+    dv =  np.reshape(nl.dv[0:ni,:].copy(),(ni,d))
     nlist = nl.iap[0:ni,:].copy()+1
     
-    #nlist = np.reshape(nlist,(ni,2),order='F')
     #nlist = nlist.transpose()
     #dv = dv.transpose()
     #v = v.transpose()
@@ -71,6 +75,7 @@ def spam_properties(p,nl,hs,hl):
     rho = np.zeros((n))#,order='F')
     u = np.reshape(p.u[0:n].copy(),(n,1))#,order='F')
     gradv = np.reshape(p.gradv[0:n,:,:].copy(),(n,d,d))#,order='F')
+    jq = np.reshape(p.jq[0:n,:].copy(),(n,d))#,order='F')
     grad_rho = np.zeros((n,d))#,order='F')
     mass = np.reshape(p.m[0:n].copy(),(n,1))#,order='F')
 
@@ -110,7 +115,11 @@ def spam_properties(p,nl,hs,hl):
 
     # Capillary pressure
      
-
+    # Heat Flux
+    # No idea why this needs to be order F, and can't be the copy of the
+    # particle's jq.
+    jq = np.zeros((n,d),order='F')
+    sphlib.sphlib.calc_heat_flux_3d(jq,nlist,rho,mass,T,-dwdx)
 
     # Python implementation
     #phc = vdw_hc(rho,T)
@@ -125,6 +134,7 @@ def spam_properties(p,nl,hs,hl):
     p.p[0:n] = phc[0:n]
     p.pco[0:n] = pco[0:n]
     p.t[0:n] = T[0:n]
+    p.jq[0:n,:] = jq[0:n,:]
     
 
 

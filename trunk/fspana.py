@@ -84,6 +84,7 @@ def initialise():
 
     p.forces.append(forces.SpamForce(p,nl))
     p.forces.append(forces.CohesiveSpamForce(p,nl))
+    p.forces.append(forces.SpamConduction(p,nl))
     nl.build()
     nl.separations()
 

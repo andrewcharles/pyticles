@@ -268,6 +268,7 @@ class SmoothParticleSystem(ParticleSystem):
         h -- smoothing length
         p -- isotropic pressure (repulsive)
         pco -- isotropic pressure (cohesive)
+        jq -- heat flux
 
         P -- pressure tensor
 
@@ -275,9 +276,11 @@ class SmoothParticleSystem(ParticleSystem):
                   particular subroutines.
 
         """
+
         self.rho = np.zeros(self.maxn)
         self.rhodot = np.zeros(self.rho.shape)
         self.gradv = np.zeros([self.maxn,self.dim,self.dim])
+        self.jq = np.zeros([self.maxn,self.dim])
         #thermal properties
         self.t = np.ones(self.maxn)
         self.t[:] = temperature
