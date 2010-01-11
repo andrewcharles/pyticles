@@ -13,6 +13,12 @@ c_properties.py -- cython optimisation of properties.py
 f_properties.py -- calls wrapped Fortran modules
 
 
+TODO
+- write complete sph force and rates of change routine.
+- it can even be in fortran to ease the array copying overhead.
+- write fortran speed render computation.
+
+
 Files
 =====
 

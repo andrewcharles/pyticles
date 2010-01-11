@@ -7,10 +7,16 @@
     All rights reserved.
 """
 
+SPAMCOMPLETE = False
+CFORCES = True
+
 import sys
 from time import time
 import particles
-import c_forces as forces
+if SPAMCOMPLETE:
+    import forces
+elif CFORCES:
+    import c_forces as forces
 import pyglet
 from pyglet.window import mouse
 import pview
@@ -18,25 +24,26 @@ import profile
 import neighbour_list
 from pyglet.gl import *
 from properties import spam_properties
+import numpy as np
 
 # Global variables
 MAX_STEPS = 10000
-NP = 64
 XMAX = 8 
 YMAX = 8
 ZMAX = 8
 VMAX = 0.0
 dt = 0.05
-SPACING = 0.9
+SPACING = 1.5
 LIVE_VIEW = False
-SIDE = (4,4,4)
-TEMPERATURE = 1.8
+SIDE = (5,5,5)
+NP = SIDE[0]*SIDE[1]*SIDE[2]
+TEMPERATURE = 0.4
 HLONG=4.0
 HSHORT=2.0
 
 p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit='grid',vmax=VMAX
     ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
-s = pview.ParticleView(p)
+s = pview.ZPRView(p)
 
 cnt = 0
 fps = 0
@@ -76,15 +83,20 @@ def initialise():
         ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX
         ,temperature=TEMPERATURE,hlong=HLONG,hshort=HSHORT)
 
+    print np.mean(p.t)
     nl = neighbour_list.SortedVerletList(p,cutoff=4.0)
     #nl_2 = neighbour_list.VerletList(p,cutoff=5.0)
     
     p.nlists.append(nl)
     p.nl_default = nl
 
-    #p.forces.append(forces.SpamForce(p,nl))
-    #p.forces.append(forces.CohesiveSpamForce(p,nl))
-    p.forces.append(forces.SpamConduction(p,nl))
+    if SPAMCOMPLETE:
+        p.forces.append(forces.SpamComplete(p,nl))
+    if CFORCES:
+        p.forces.append(forces.SpamForce(p,nl))
+        p.forces.append(forces.CohesiveSpamForce(p,nl))
+        p.forces.append(forces.SpamConduction(p,nl))
+    
     nl.build()
     nl.separations()
 

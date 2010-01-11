@@ -297,10 +297,11 @@ class SmoothParticleSystem(ParticleSystem):
         self.P = np.zeros([self.maxn,self.dim,self.dim])
         
         if rinit == 'grid':
-            self.r[0:n,:],self.t[0:n] = \
-            configuration.hotspotgrid3d(n,side,(xmax/2.,ymax/2.,zmax/2.)
-                ,spacing=spacing)
+            self.r[0:n,:] = \
+            configuration.grid3d(n,side,(xmax/2.,ymax/2.,zmax/2.),spacing=spacing)
 
+            #self.r[0:n,:],self.t[0:n] = \
+            #configuration.hotspotgrid3d(n,side,(xmax/2.,ymax/2.,zmax/2.),spacing=spacing)
         #for nl in self.nlists: 
         #    nl.build()
         #    properties.spam_properties(self,nl,nl.cutoff_radius)
