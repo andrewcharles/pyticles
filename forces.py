@@ -303,6 +303,10 @@ class CohesiveSpamForce(Force):
         p.udot[i] += du * p.m[j]
         p.udot[j] += du * p.m[i]
 
+
+
+
+
 class Gravity(Force):
     """Controller that attracts other objects with an inverse square force.
 

@@ -124,6 +124,7 @@ def spam_properties(p,nl,hs,hl):
     # Python implementation
     #phc = vdw_hc(rho,T)
     #pco = vdw_co(rho,T)
+    # viscosity
 
     # Resend data to python object
     p.rho[0:n] = rho[0:n]

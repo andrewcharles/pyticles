@@ -259,7 +259,7 @@ class ParticleView:
             glColor3f(1.0, 1.0/(i+1), 0)
             glPushMatrix()
             glTranslatef(r[0],r[1],r[2])
-            gluSphere(self.sphere,PSIZE,4,4)
+            gluSphere(self.sphere,self.PSIZE,4,4)
             
             #glBegin(GL_POLYGON)
             #glColor3f(p.colour[0],p.colour[1],p.colour[2])
@@ -432,7 +432,7 @@ class ParticleView:
             self.eyespeed[2] = 0
 
     def wsad_release(self,symbol,modifiers):
-        """ zoom and pan directly with the fps keys.
+        """ zoom, pan and rotate directly with the fps keys.
         """
         if symbol == pyglet.window.key.W:
             pass
@@ -444,11 +444,23 @@ class ParticleView:
             pass
 
 
+            
+
 class SmoothParticleView(ParticleView):
     """ Extends ParticleView to provide specialised visualisation of
         smooth particle systems. """
-    def __init__(self,p):
+    def __init__(self,p,wsize=(640,480,480),box=(250,250,250)):
+        #ParticleView.__init__(self,p,wsize=(640,480,480),box=(250,250,250))
         ParticleView.__init__(self,p)
+        self.WINDOW_WIDTH = wsize[0]
+        self.WINDOW_HEIGHT = wsize[1]
+        self.WINDOW_DEPTH = wsize[2]
+
+        self.BOX_WIDTH = box[0]
+        self.BOX_HEIGHT = box[1]
+        self.BOX_DEPTH = box[2]
+        self.PSIZE = 10.0
+        self.RES = 1.1
 
         self.maxvol = pyglet.text.Label("maxvol label",font_name="Arial", \
             font_size=12,color =(255,0,0,255),x=10,y=100 )
@@ -560,10 +572,275 @@ class SmoothParticleView(ParticleView):
         t = time()
         self.win.dispatch_events()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        self.render_density(p)
+        self.hud(p)
+        #self.draw_neighbours(p)
+        #self.draw_particles(p)
+        #self.draw_box()
+        self.timing['Draw time'] = time() - t
+
+
+class ZPRView(SmoothParticleView):
+    """ Development class for ortho projection and zpr instead of
+        lame trackball.
+    """
+    def __init__(self,p,wsize=(640,480,480),box=(250,250,250)):
+        #ParticleView.__init__(self,p)
+        self.WINDOW_WIDTH = wsize[0]
+        self.WINDOW_HEIGHT = wsize[1]
+        self.WINDOW_DEPTH = wsize[2]
+
+        self.BOX_WIDTH = box[0]
+        self.BOX_HEIGHT = box[1]
+        self.BOX_DEPTH = box[2]
+        self.PSIZE = 10.0
+        self.RES = 1.1
+
+        self.win = pyglet.window.Window(self.WINDOW_WIDTH,self.WINDOW_HEIGHT
+                 ,visible=False,caption='Pyticles')
+
+        self.sphere = gluNewQuadric()
+        gluQuadricDrawStyle(self.sphere,GLU_FILL)
+        glEnable(GL_DEPTH_TEST)
+        glDisable(GL_CULL_FACE)
+        
+        self.bg_color = (0.8,0.8,0.8,1.0)
+
+        self.maxvol = pyglet.text.Label("maxvol label",font_name="Arial", \
+            font_size=12,color =(255,0,0,255),x=10,y=100 )
+
+        # Set up for two dimensional density rendering
+        # gridx,gridy is a grid at the rendering resolution
+        # rx,ry is a pixel grid
+        self.gridx,self.gridy = renderspam.get_grid_map(0.0,p.box.xmax, \
+        0.0,p.box.ymax,self.RES)
+        rx,ry = scipy.mgrid[0:self.BOX_WIDTH:1,0:self.BOX_HEIGHT:1]
+        dx = self.RES*self.BOX_WIDTH/float(p.box.xmax)
+        dy = self.RES*self.BOX_HEIGHT/float(p.box.ymax)
+        #xvals = (rx-dx/RES)/dx #(rx-RES?)
+        xvals = (rx-dx/2)/dx #(rx-RES?)
+        yvals = (ry-dy/2)/dy
+        self.G = numpy.array([xvals,yvals])
+
+        # Set up labels. These labels are pretty tightly coupled to the
+        # gui buttons
+        self.fps = 0
+
+        self.labels=[]
+
+        #for lname in ['fps label','np label','ni label','dt label','eye label',
+        #    'drawtime label','forcetime label','derivtime label',
+        #    'pairseptime label']
+
+        self.fpslab = plabel("fps label",loc=(10,460))
+        self.npartlab = plabel("np label",loc=(10,440))
+        self.nebslab = plabel("ni label",loc=(10,420))
+        self.dtlab = plabel("dt label",loc=(10,400))
+        self.eyelab = plabel("eye label",loc=(10,380) )
+        self.drawtimelab = plabel("drawtime label", loc=(10,360) )
+        self.derivtimelab = plabel("derivtime label",loc=(10,340) )
+        self.integtimelab = plabel("integtime label",loc=(10,320) )
+        self.stepslab = plabel("steps label",loc=(10,300) )
+        self.updatetimelab = plabel("updatetime label",loc=(10,280) )
+
+        self.pairseptimelab = plabel("pairseptime label",loc=(10,260)
+            ,col=(255,0,255,255) )
+        self.spamtimelab = plabel("spamtime label",loc=(10,240)
+            ,col=(255,0,255,255) )
+        self.forcetimelab = plabel("forcetime label",loc=(10,220)
+            ,col=(255,0,255,255) )
+        self.templab = plabel("forcetime label",loc=(10,200)
+            ,col=(255,0,255,255) )
+        
+        self.labels.append(self.fpslab)
+        self.labels.append(self.npartlab)
+        self.labels.append(self.nebslab)
+        self.labels.append(self.dtlab)
+        self.labels.append(self.eyelab)
+        self.labels.append(self.drawtimelab)
+        self.labels.append(self.forcetimelab)
+        self.labels.append(self.derivtimelab)
+        self.labels.append(self.pairseptimelab)
+        self.labels.append(self.integtimelab)
+        self.labels.append(self.stepslab)
+        self.labels.append(self.updatetimelab)
+        self.labels.append(self.spamtimelab)
+        self.labels.append(self.templab)
+
+        self.win.on_resize = self.resize
+        self.win.on_mouse_press = self.on_mouse_press
+        self.win.on_mouse_drag = self.on_mouse_drag
+        self.win.on_key_press = self.wsad_press
+        
+        self.win.set_visible()
+        
+        # multipliers to map system to opengl box coordinates
+        self.xmap = self.BOX_WIDTH / float(p.box.xmax)
+        self.ymap = self.BOX_HEIGHT / float(p.box.ymax)
+        self.zmap = self.BOX_DEPTH / float(p.box.zmax)
+
+        # Where is the center of the rectangle?
+        self.cx = float(particles.XMAX/2.0) * self.xmap
+        self.cy = float(particles.YMAX/2.0) * self.ymap
+        self.cz = float(particles.ZMAX/2.0) * self.zmap
+
+        self.zoom = 0
+        self.rotation = 0
+
+        """ Variables for measuring performance. """
+        self.timing = {}
+        self.timing['Draw time'] = -1
+
+    def center_eye(self):
+        pass
+
+    def hud(self,p):
+        """ Draws the heads up display """
+        k = 20
+        xi = 10
+        yi = 450
+
+        glMatrixMode(GL_PROJECTION)
+        glPushMatrix()
+        glLoadIdentity()
+        glOrtho(0,self.WINDOW_WIDTH,0,self.WINDOW_HEIGHT,0,10)
+        glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
+        glLoadIdentity()
+       
+        self.eyelab.text = 'eyeless in gaza'
+        self.dtlab.text = "dt: %4.2f" %(p.dt)
+        self.fpslab.text = "fps: %4.2f" %(self.fps)
+        self.nebslab.text = "n: %3d" %(p.n)
+        nebs = 0
+        for nl in p.nlists:
+            nebs += nl.nip
+        self.npartlab.text =       "pairs: %3d" %(nebs)
+        self.drawtimelab.text =    "drawtime:  %5.3f" %(self.timing['Draw time'])
+        self.forcetimelab.text =   "forcetime:   %7.5f" %(p.timing['force time'])
+        self.derivtimelab.text =   "derivtime: %5.3f" %(p.timing['deriv time'])
+        self.pairseptimelab.text = "pairtime:     %7.5f" %(p.timing['pairsep time'])
+        self.integtimelab.text =   "integtime: %5.3f" %(p.timing['integrate time'])
+        self.spamtimelab.text =    "spamtime:  %7.5f" %(p.timing['SPAM time'])
+        self.stepslab.text =       "steps:     %5d" %(p.steps)
+        self.templab.text =       "mean temp:     %5.3f" %(np.mean(p.t))
+            
+        self.updatetimelab.text = "updatetime: %5.3f" %(p.timing['update time'])
+
+        for lab in self.labels:
+            lab.draw()
+        glFlush()
+        glPopMatrix()
+        glMatrixMode(GL_PROJECTION)
+        glPopMatrix()
+        glMatrixMode(GL_MODELVIEW)
+
+    def clear(self): 
+        self.win.dispatch_events()
+        glClear(GL_COLOR_BUFFER_BIT)
+        glClearColor(*self.bg_color)
+        self.win.clear()
+        
+    def redraw(self,p):
+        t = time()
+        self.win.dispatch_events()
+        glClearColor(*self.bg_color)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        self.draw_particles(p)
+        self.draw_box()
+        self.hud(p)
+        self.timing['Draw time'] = time() - t
+
+    def resize(self,width, height):
+        """Setup 3D projection for window"""
+        glViewport(0, 0, width, height)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        left = -10
+        right = self.BOX_WIDTH +10
+        top = self.BOX_HEIGHT + 10
+        bottom = -10
+        znear = -100
+        zfar = 10000
+        glOrtho(left,right,bottom,top,znear,zfar)
+        glMatrixMode(GL_MODELVIEW)
+        #glLoadIdentity()
+
+    def norm1(self,x,maxx):
+        """given x within [0,maxx], scale to a range [-1,1]."""
+        return (2.0 * x - float(maxx)) / float(maxx)
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        if button == pyglet.window.mouse.LEFT:
+            print 'rotate'
+        elif button == pyglet.window.mouse.RIGHT:
+            print 'zoom'
+
+    def on_mouse_drag(self,x, y, dx, dy, buttons, modifiers):
+        if buttons & pyglet.window.mouse.LEFT:
+            if modifiers & pyglet.window.key.MOD_SHIFT:
+                print 'shift drag'
+            else:
+                print 'zoom'
+
+    def wsad_press(self,symbol,modifiers):
+        """ zoom and rotate directly with the fps keys.
+        """
+        if symbol == pyglet.window.key.W:
+           glTranslatef(self.cx,self.cy,self.cz)
+           glScalef(1.1,1.1,1.1)
+           glTranslatef(-self.cx,-self.cy,-self.cz)
+        if symbol == pyglet.window.key.S:
+           glTranslatef(self.cx,self.cy,self.cz)
+           glScalef(0.9,0.9,0.9)
+           glTranslatef(-self.cx,-self.cy,-self.cz)
+        if symbol == pyglet.window.key.A:
+            glRotatef(10,0,1.0,0) 
+        if symbol == pyglet.window.key.D:
+            glRotatef(-10,0.0,1.0,0) 
+        if symbol == pyglet.window.key.Q:
+            glRotatef(5,1.0,0.0,0) 
+        if symbol == pyglet.window.key.E:
+            glRotatef(-5,1.0,0.0,0) 
+        if symbol == pyglet.window.key.X:
+            print 'zoom out'
+        if symbol == pyglet.window.key.C:
+            print 'zoom out'
+
+    def wsad_release(self,symbol,modifiers):
+        """ zoom, pan and rotate directly with the fps keys.
+        """
+        if symbol == pyglet.window.key.W:
+            pass
+        if symbol == pyglet.window.key.S:
+            pass
+        if symbol == pyglet.window.key.A:
+            pass
+        if symbol == pyglet.window.key.D:
+            pass
+
+    def draw_particles(self,p):
+        """ issues the opengl commands to draw the 
+            particle system """
+        radius=5
+        for i in range(p.n):
+            r = p.r[i,0] * self.xmap \
+              , p.r[i,1] * self.ymap \
+              , p.r[i,2] * self.zmap
+            a = p.rho[i]/2.0
+            glColor3f(0, 0, a)
+            glPushMatrix()
+            glTranslatef(r[0],r[1],r[2])
+            gluSphere(self.sphere,self.PSIZE,10,4)
+            glPopMatrix()
+
+    def redraw(self,p):
+        t = time()
+        self.win.dispatch_events()
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         #self.render_density(p)
         self.hud(p)
         #self.draw_neighbours(p)
         self.draw_particles(p)
         #self.draw_box()
         self.timing['Draw time'] = time() - t
-

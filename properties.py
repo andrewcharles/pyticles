@@ -15,7 +15,6 @@ import spkernel
 import math
 import numpy as np
 
-H = 3.0
 ADASH = 2.0
 BDASH = 0.5
 KBDASH = 1.0
@@ -118,6 +117,17 @@ def spam_properties(p,nl,h,hlong):
     p.u = vdw_energy(p.rho,p.t)
     p.t = vdw_temp(p.rho,p.u)
 
+
+def test_vdw_energy_and_temp():
+   rho = 1.0
+   t = 1.0
+   u = vdw_energy(rho,t)
+   print u
+   t2 = vdw_temp(rho,u)
+   print t2
+
+if __name__ == '__main__':
+    test_vdw_energy_and_temp()
 
 
 
