@@ -1,0 +1,4 @@
+#summary System requirements to run Pyticles
+
+Korn shell
+Cython (requires [http://pypi.python.org/pypi/setuptools#downloads setuptools] to install, and a C compiler)
