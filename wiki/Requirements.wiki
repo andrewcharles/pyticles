@@ -1,5 +1,5 @@
 #summary System requirements to run Pyticles
 
-* Korn shell
-* Cython (simplest approach is to use [http://pypi.python.org/pypi/setuptools#downloads setuptools] to easy install)
-* Numpy
+  * Korn shell
+  * [http://www.cython.org Cython] (simplest approach is to use [http://pypi.python.org/pypi/setuptools#downloads setuptools] to easy install)
+  * Numpy
