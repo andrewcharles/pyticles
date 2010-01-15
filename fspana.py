@@ -7,14 +7,16 @@
     All rights reserved.
 """
 
-SPAMCOMPLETE = False
-CFORCES = True
+SPAMCOMPLETE = True
+CFORCES = False
+# SPAMCOMPLETE = False
+# CFORCES = True
 
 import sys
 from time import time
 import particles
 if SPAMCOMPLETE:
-    import forces
+    import spam_complete_force
 elif CFORCES:
     import c_forces as forces
 import pyglet
@@ -33,13 +35,13 @@ YMAX = 8
 ZMAX = 8
 VMAX = 0.0
 dt = 0.05
-SPACING = 1.5
+SPACING = 1.0
 LIVE_VIEW = False
-SIDE = (5,5,5)
+SIDE = (8,8,8)
 NP = SIDE[0]*SIDE[1]*SIDE[2]
 TEMPERATURE = 0.4
-HLONG=4.0
-HSHORT=2.0
+HLONG = 4.0
+HSHORT = 2.0
 
 p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit='grid',vmax=VMAX
     ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
@@ -91,7 +93,7 @@ def initialise():
     p.nl_default = nl
 
     if SPAMCOMPLETE:
-        p.forces.append(forces.SpamComplete(p,nl))
+        p.forces.append(spam_complete_force.SpamComplete(p,nl))
     if CFORCES:
         p.forces.append(forces.SpamForce(p,nl))
         p.forces.append(forces.CohesiveSpamForce(p,nl))

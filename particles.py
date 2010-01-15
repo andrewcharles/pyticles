@@ -278,6 +278,7 @@ class SmoothParticleSystem(ParticleSystem):
         """
 
         self.rho = np.zeros(self.maxn)
+        self.rho_lr = np.zeros(self.maxn)
         self.rhodot = np.zeros(self.rho.shape)
         self.gradv = np.zeros([self.maxn,self.dim,self.dim])
         self.jq = np.zeros([self.maxn,self.dim])
@@ -498,8 +499,8 @@ class SmoothParticleSystem(ParticleSystem):
 
         t = time()
 
-        properties.spam_properties(self,self.nlists[0] \
-            ,self.h[0:self.n],self.hlr[0:self.n])
+        #properties.spam_properties(self,self.nlists[0] \
+        #    ,self.h[0:self.n],self.hlr[0:self.n])
         
         self.timing['SPAM time'] = time() - t
         

@@ -11,6 +11,7 @@ import properties
 feos.eos.adash = 2.0
 feos.eos.bdash = 0.5
 feos.eos.kbdash = 1.0
+thermalk = 1.0
 
 def spam_properties(p,nl,hs,hl):
     """ Calculates and assigns:
@@ -119,7 +120,9 @@ def spam_properties(p,nl,hs,hl):
     # No idea why this needs to be order F, and can't be the copy of the
     # particle's jq.
     jq = np.zeros((n,d),order='F')
-    sphlib.sphlib.calc_heat_flux_3d(jq,nlist,rho,mass,T,-dwdx)
+    
+    # subroutine calc_heat_flux_3d(q,ilist,rho,m,tmp,dwdx_jij,thermalk,n,ni)
+    sphlib.sphlib.calc_heat_flux_3d(jq,nlist,rho,mass,T,-dwdx,thermalk)
 
     # Python implementation
     #phc = vdw_hc(rho,T)
