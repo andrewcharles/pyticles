@@ -16,7 +16,6 @@ from spam_nc import create_sph_ncfile, write_step
 
 # Global variables
 MAX_STEPS = 10
-NP = 125
 NDIM = 3
 XMAX = 8 
 YMAX = 8
@@ -26,9 +25,11 @@ dt = 0.05
 SPACING = 0.9
 LIVE_VIEW = False
 SIDE = (5,5,5)
+NP = SIDE[0] * SIDE[1] * SIDE[2]
 TEMPERATURE = 1.8
 HLONG = 4.0
 HSHORT = 2.0
+
 ofname = 'output.nc'
 
 p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit='grid',vmax=VMAX
@@ -40,15 +41,13 @@ def initialise():
     p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit='grid',vmax=VMAX
         ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX
         ,temperature=TEMPERATURE,hlong=HLONG,hshort=HSHORT)
-
     nl = neighbour_list.SortedVerletList(p,cutoff=4.0)
     p.nlists.append(nl)
     p.nl_default = nl
-    p.forces.append(forces.SpamForce(p,nl))
-    p.forces.append(forces.CohesiveSpamForce(p,nl))
+    p.forces.append(spam_complete_force.SpamComplete(p,nl))
     nl.build()
     nl.separations()
-    spam_properties(p,nl,p.h,p.hlr)
+    spam_properties(p,nl)
     cnt = 0
     attribs = {'name':'Andrew', 'age':33}
     create_sph_ncfile(ofname,attribs,NP,NDIM)
@@ -60,11 +59,5 @@ if __name__ == "__main__":
         tstart = time()
         p.update(dt)
         write_step(ofname,p)
-        print "%5.3f  " %(time() - tstart)             \
-             + "%5.3f  " %(p.timing['integrate time']) \
-             + "%5.3f  " %(p.timing['deriv time'])     \
-             + "%5.3f  " %(p.timing['pairsep time'])   \
-             + "%5.3f  " %(p.timing['SPAM time'])     \
-             + "%5.3f  " %(p.timing['force time'])
-    
+
 
