@@ -103,7 +103,7 @@ def initialise():
     nl.separations()
 
     # Use the python spam props to initialise
-    spam_properties(p,nl,p.h,p.hlr)
+    spam_properties(p,nl)
 
     cnt = 0
 

@@ -60,7 +60,7 @@ def hamiltonian(p):
     print H
 
 
-def spam_properties(p,nl,h,hlong):
+def spam_properties(p,nl):
     """ Calculates and assigns:
 
         * kernel values
@@ -72,6 +72,8 @@ def spam_properties(p,nl,h,hlong):
     
     """
     # self contribution to density
+    h = p.h
+    hlong = p.hlr
     zerokern = spkernel.lucy_kernel(0.0,(0.0,0.0,0.0),h[0])[0]
     p.rho[0:p.n] = zerokern
     p.gradv[0:p.n] = 0.0
