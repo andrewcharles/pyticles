@@ -37,8 +37,6 @@ class Force:
         p2: The second particle set
         nl: list of interacting pairs (p1,p2)
 
-        The design is wrong here:
-
     """ 
 
     def __init__(self,particles1,particles2,nl):
