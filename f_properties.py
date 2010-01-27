@@ -4,7 +4,7 @@ sys.path.append('/Users/acharles/masters/active/fsph')
 import fkernel
 import sphlib
 import feos
-from eos import vdw_co, vdw_hc
+#from eos import vdw_co, vdw_hc
 import numpy as np
 import properties
 

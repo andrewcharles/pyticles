@@ -424,7 +424,7 @@ class SmoothParticleSystem(ParticleSystem):
         self.timing['deriv time'] = time() - t
        
         t = time()
-        imp_euler(self.gather_state,self.derivatives, \
+        rk4(self.gather_state,self.derivatives, \
             self.gather_derivatives,self.scatter_state,dt)
         self.timing['integrate time'] = time() - t
         

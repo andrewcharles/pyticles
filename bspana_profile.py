@@ -9,23 +9,21 @@
 import sys
 from time import time
 import particles
-import c_forces as forces
 import neighbour_list
 from properties import spam_properties
-from spam_nc import create_sph_ncfile, write_step
 import spam_complete_force
 
 # Global variables
-MAX_STEPS = 10
+MAX_STEPS = 5
 NDIM = 3
-XMAX = 9 
-YMAX = 9
-ZMAX = 9
+XMAX = 12
+YMAX = 12
+ZMAX = 12
 VMAX = 0.0
 dt = 0.05
 SPACING = 0.9
 LIVE_VIEW = False
-SIDE = (8,8,8)
+SIDE = (12,12,12)
 NP = SIDE[0] * SIDE[1] * SIDE[2]
 TEMPERATURE = 1.8
 HLONG = 4.0
