@@ -2,31 +2,31 @@
 
 """ 
     Batch script for Smooth Particle solver. 
-    Copyright Andrew Charles 2009
+    Copyright Andrew Charles 2010
     All rights reserved.
 """
 
 import sys
 from time import time
 import particles
-#import c_forces as forces
 import forces
 import neighbour_list
 from properties import spam_properties
 from spam_nc import create_sph_ncfile, write_step
 import spam_complete_force
+import numpy as np
 
 # Global variables
-MAX_STEPS = 1000
+MAX_STEPS = 10000
 NDIM = 3
-XMAX = 7 
-YMAX = 7
-ZMAX = 7
+XMAX = 12 
+YMAX = 12
+ZMAX = 12
 VMAX = 0.0
 dt = 0.05
-SPACING = 0.9
+SPACING = 0.8
 LIVE_VIEW = False
-SIDE = (5,5,5)
+SIDE = (10,10,10)
 NP = SIDE[0] * SIDE[1] * SIDE[2]
 TEMPERATURE = 1.0
 HLONG = 4.0
@@ -61,13 +61,9 @@ if __name__ == "__main__":
     for i in range(MAX_STEPS):
         tstart = time()
         p.update(dt)
-        write_step(ofname,p)
-        print "%5.3f  " %(time() - tstart)             \
-             + "%5.3f  " %(p.timing['integrate time']) \
-             + "%5.3f  " %(p.timing['deriv time'])     \
-             + "%5.3f  " %(p.timing['pairsep time'])   \
-             + "%5.3f  " %(p.timing['SPAM time'])     \
-             + "%5.3f  " %(p.timing['force time'])
-    
-
-
+	if np.isnan(p.r).any():
+            print 'stopping due to nan'
+            break
+	if i % 10 == 0:
+            write_step(ofname,p)
+    print 'Completed',i,'steps'
