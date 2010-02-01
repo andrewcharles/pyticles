@@ -17,6 +17,9 @@ from time import time
 feos.eos.adash = 2.0
 feos.eos.bdash = 0.5
 feos.eos.kbdash = 1.0
+sphforce3d.sigma = 1.0
+sphforce3d.rcoef = 0.5
+sphforce3d.cgrad = 0.0
 
 class SpamComplete(Force):
     """ Compute all the smooth particle properties and forces
@@ -68,12 +71,12 @@ class SpamComplete(Force):
         sphlib.sphlib.calc_dv(dv,ilist,v)
 
         # Kernels and kernel gradients
-        w,dwdx = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml,1)
-        w_lr,dwdx_lr = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml_lr,1)
+        w,dwdx = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml,2)
+        w_lr,dwdx_lr = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml_lr,2)
 
         # Density summation
-        fkernel.kernel.density_sum(rho,grad_rho,ilist,sml,mass,w,dwdx,1)
-        fkernel.kernel.density_sum(rho_lr,grad_rho_lr,ilist,sml*2,mass,w_lr,dwdx_lr,1)
+        fkernel.kernel.density_sum(rho,grad_rho,ilist,sml,mass,w,dwdx,2)
+        fkernel.kernel.density_sum(rho_lr,grad_rho_lr,ilist,sml_lr,mass,w_lr,dwdx_lr,2)
 
         # Pressure tensor components
         p_rev = np.zeros((n,d,d),order='F')
@@ -84,17 +87,16 @@ class SpamComplete(Force):
         c = np.ones([n],dtype=float,order='F')
         
         # Constants
-        cgrad = 1.0 #np.ones([n],dtype=float,order='F')
         eta = np.zeros([n],order='F')
-        zeta = np.ones([n],order='F')
+        zeta = np.zeros([n],order='F')
+        eta[:] = 1.0
+        zeta[:] = 0.1
 
         dedt = np.zeros([n],dtype=float,order='F')
         
-        feos.eos.adash = 2.0
-        feos.eos.bdash = 0.5
-        feos.eos.kbdash = 1.0
-
-        feos.eos.calc_vdw_energy(u,T,rho)
+        feos.eos.calc_vdw_temp(u,T,rho)
+        #feos.eos.calc_vdw_energy(u,T,rho)
+        T [T < 0.0] = 0.0
         # print a.flags.f_contiguous
 
         # Call the force subroutine
@@ -104,11 +106,12 @@ class SpamComplete(Force):
             p_rev,p_rev_lr,pi_irr,          
             grad_rho_lr,grad_v,               
             u,dedt,mass,rho,rho_lr,T,jq,     
-            c,cgrad,eta,zeta,               
+            c,eta,zeta,               
             dv,rij,drij,  
             sml,sml_lr,w,dwdx,dwdx_lr)#,n,ni)
 
         #np.set_printoptions(precision=5,suppress=True)
+        feos.eos.calc_vdw_temp(u,T,rho)
 
         # Resend data to python object
         p.rho[0:n] = rho[0:n]
@@ -125,5 +128,4 @@ class SpamComplete(Force):
         #p.pco[0:n] = pco[0:n]
         p.t[0:n] = T[0:n,0]
         p.jq[0:n,:] = jq[0:n,:]
-        #print p.vdot[0]
 

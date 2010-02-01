@@ -74,11 +74,13 @@ def spam_properties(p,nl,hs,hl):
     dwdx_lr = np.zeros((ni,d),order='F') 
 
     rho = np.zeros((n))#,order='F')
+    rho_lr = np.zeros((n))#,order='F')
     u = np.reshape(p.u[0:n].copy(),(n,1))#,order='F')
     gradv = np.reshape(p.gradv[0:n,:,:].copy(),(n,d,d))#,order='F')
     jq = np.reshape(p.jq[0:n,:].copy(),(n,d))#,order='F')
-    grad_rho = np.zeros((n,d))#,order='F')
-    mass = np.reshape(p.m[0:n].copy(),(n,1))#,order='F')
+    grad_rho = np.zeros((n,d))
+    grad_rho_lr = np.zeros((n,d))
+    mass = np.reshape(p.m[0:n].copy(),(n,1))
 
     if ni == 0:
         # set values to isolated particle values
@@ -102,6 +104,7 @@ def spam_properties(p,nl,hs,hl):
    
     # Density summation
     fkernel.kernel.density_sum(rho,grad_rho,nlist,sml,mass,w,dwdx,2)
+    fkernel.kernel.density_sum(rho_lr,grad_rho_lr,nlist,sml_lr,mass,w_lr,dwdx_lr,2)
 
     # Grad v
     grad_v = np.zeros((n,d,d),order='F')
@@ -111,8 +114,9 @@ def spam_properties(p,nl,hs,hl):
     pco = p.pco[0:n]
   
     feos.eos.calc_vdw_temp(u,T,rho)
+    T [T < 0.0] = 0.0
     feos.eos.calc_vdw_hc_pressure(phc,rho,u)
-    feos.eos.calc_vdw_cohesive_pressure(pco,rho,u)
+    feos.eos.calc_vdw_cohesive_pressure(pco,rho_lr,u)
 
     # Capillary pressure
      
@@ -131,6 +135,7 @@ def spam_properties(p,nl,hs,hl):
 
     # Resend data to python object
     p.rho[0:n] = rho[0:n]
+    p.rho_lr[0:n] = rho_lr[0:n]
     nl.wij[0:ni] = w[0:ni]
     nl.dwij[0:ni,:] = dwdx[0:ni,:]
     nl.wij_lr[0:ni] = w_lr[0:ni]

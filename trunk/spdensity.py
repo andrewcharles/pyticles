@@ -35,7 +35,7 @@ def summation_density(w,m):
     rho = 0.0
     for i in range(n):
         rho += m[i] * w[i]
-    return rho 
+    return rho
 
 def sum_density(m,h,nl,rij,drij):
     zdist = np.zeros(drij[0,:].shape)

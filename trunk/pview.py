@@ -38,8 +38,6 @@ import scipy.misc.pilutil
 from trackball_camera import TrackballCamera
 
 
-
-
 class ParticleInfo:
     """ Display particle system information."""
     """ The motivation for this class is to make information like
@@ -77,7 +75,7 @@ class plabel(pyglet.text.Label):
 
 class ParticleView:
     " A particle viewer"
-    def __init__(self,p,wsize=(640,480,480),box=(500,250,250)):
+    def __init__(self,p,wsize=(640,480,480),box=(250,250,250)):
         #config = Config(alpha_size=8)
 
         self.WINDOW_WIDTH = wsize[0]
@@ -97,8 +95,8 @@ class ParticleView:
         self.win = pyglet.window.Window(self.WINDOW_WIDTH,self.WINDOW_HEIGHT
                  ,visible=False,caption='Pyticles')
 
-        self.sphere = gluNewQuadric()
-        gluQuadricDrawStyle(self.sphere,GLU_FILL)
+        self.quadric = gluNewQuadric()
+        gluQuadricDrawStyle(self.quadric,GLU_FILL)
         glEnable(GL_DEPTH_TEST)
         glDisable(GL_CULL_FACE)
         
@@ -131,6 +129,8 @@ class ParticleView:
             ,col=(255,0,255,255) )
         self.forcetimelab = plabel("forcetime label",loc=(10,220)
             ,col=(255,0,255,255) )
+        self.energylab = plabel("kinetic energy",loc=(10,200)
+            ,col=(255,0,255,255) )
         
         self.labels.append(self.fpslab)
         self.labels.append(self.npartlab)
@@ -145,6 +145,7 @@ class ParticleView:
         self.labels.append(self.stepslab)
         self.labels.append(self.updatetimelab)
         self.labels.append(self.spamtimelab)
+        self.labels.append(self.energylab)
 
         self.tbcam  = TrackballCamera(200.0) 
         self.win.on_resize = self.resize
@@ -259,7 +260,7 @@ class ParticleView:
             glColor3f(1.0, 1.0/(i+1), 0)
             glPushMatrix()
             glTranslatef(r[0],r[1],r[2])
-            gluSphere(self.sphere,self.PSIZE,4,4)
+            gluSphere(self.quadric,self.PSIZE,4,4)
             
             #glBegin(GL_POLYGON)
             #glColor3f(p.colour[0],p.colour[1],p.colour[2])
@@ -317,6 +318,7 @@ class ParticleView:
         self.stepslab.text =       "steps:     %5d" %(p.steps)
             
         self.updatetimelab.text = "updatetime: %5.3f" %(p.timing['update time'])
+        self.energylab.text = "EK: %5.3f" %( np.mean(0.5*(np.linalg.norm(p.v)**2)*p.m) )
 
         for lab in self.labels:
             lab.draw()
@@ -534,7 +536,7 @@ class SmoothParticleView(ParticleView):
             glColor3f(0, 0, a)
             glPushMatrix()
             glTranslatef(r[0],r[1],r[2])
-            gluSphere(self.sphere,self.PSIZE,10,4)
+            gluSphere(self.quadric,self.PSIZE,10,4)
             
             #glBegin(GL_POLYGON)
             #glColor3f(p.colour[0],p.colour[1],p.colour[2])
@@ -601,8 +603,15 @@ class ZPRView(SmoothParticleView):
 
         self.sphere = gluNewQuadric()
         gluQuadricDrawStyle(self.sphere,GLU_FILL)
+        #gluQuadricDrawStyle(self.sphere,GLU_LINE)
         glEnable(GL_DEPTH_TEST)
         glDisable(GL_CULL_FACE)
+        col = [1.0,1.0,1.0]
+        color = (GLfloat * 3)(*col)
+
+        glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0);
+        glLightfv(GL_LIGHT0, GL_AMBIENT,color);
         
         self.bg_color = (0.8,0.8,0.8,1.0)
 
@@ -649,7 +658,9 @@ class ZPRView(SmoothParticleView):
             ,col=(255,0,255,255) )
         self.forcetimelab = plabel("forcetime label",loc=(10,220)
             ,col=(255,0,255,255) )
-        self.templab = plabel("forcetime label",loc=(10,200)
+        self.templab = plabel("energy label",loc=(10,200)
+            ,col=(255,0,255,255) )
+        self.energylab = plabel("energy label",loc=(10,180)
             ,col=(255,0,255,255) )
         
         self.labels.append(self.fpslab)
@@ -666,6 +677,7 @@ class ZPRView(SmoothParticleView):
         self.labels.append(self.updatetimelab)
         self.labels.append(self.spamtimelab)
         self.labels.append(self.templab)
+        self.labels.append(self.energylab)
 
         self.win.on_resize = self.resize
         self.win.on_mouse_press = self.on_mouse_press
@@ -720,12 +732,13 @@ class ZPRView(SmoothParticleView):
         self.forcetimelab.text =   "forcetime:   %7.5f" %(p.timing['force time'])
         self.derivtimelab.text =   "derivtime: %5.3f" %(p.timing['deriv time'])
         self.pairseptimelab.text = "pairtime:     %7.5f" %(p.timing['pairsep time'])
-        self.integtimelab.text =   "integtime: %5.3f" %(p.timing['integrate time'])
+        self.integtimelab.text =   \
+            "integtime: %5.3f" %(p.timing['integrate time'])
         self.spamtimelab.text =    "spamtime:  %7.5f" %(p.timing['SPAM time'])
         self.stepslab.text =       "steps:     %5d" %(p.steps)
         self.templab.text =       "mean temp:     %5.3f" %(np.mean(p.t))
-            
         self.updatetimelab.text = "updatetime: %5.3f" %(p.timing['update time'])
+        self.energylab.text = "EK: %5.3f" %( np.mean(0.5*(np.linalg.norm(p.v)**2)*p.m) )
 
         for lab in self.labels:
             lab.draw()
@@ -823,6 +836,7 @@ class ZPRView(SmoothParticleView):
         """ issues the opengl commands to draw the 
             particle system """
         radius=5
+        scale = 1.0
         for i in range(p.n):
             r = p.r[i,0] * self.xmap \
               , p.r[i,1] * self.ymap \
@@ -832,6 +846,15 @@ class ZPRView(SmoothParticleView):
             glPushMatrix()
             glTranslatef(r[0],r[1],r[2])
             gluSphere(self.sphere,self.PSIZE,10,4)
+            glBegin(GL_LINES);
+            glColor3f(1.0,0.0,1.0);
+            #glVertex3f(r[0],r[1],r[2]);
+            glVertex3f(0,0,0);
+            a = p.vdot[i,0] * self.xmap * scale\
+              , p.vdot[i,1] * self.ymap * scale\
+              , p.vdot[i,2] * self.zmap * scale
+            glVertex3f(a[0],a[1],a[2])
+            glEnd()
             glPopMatrix()
 
     def redraw(self,p):
