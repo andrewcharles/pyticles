@@ -178,14 +178,14 @@ class VerletList(NeighbourList):
             drx = self.particle.r[j,0] - self.particle.r[i,0]
             dry = self.particle.r[j,1] - self.particle.r[i,1]
             drz = self.particle.r[j,2] - self.particle.r[i,2]
-            rsquared = drx**2 + dry[k,1]**2 + drz[k,2]**2
+            rsquared = drx**2 + dry**2 + drz**2
             if (rsquared < self.cutoff_radius_sq + self.tolerance_sq):
                 self.drij[q,0] = drx
                 self.drij[q,1] = dry
                 self.drij[q,2] = drz
-                self.dv[q,0] = self.particle.dv[k,0]
-                self.dv[q,1] = self.particle.dv[k,1]
-                self.dv[q,2] = self.particle.dv[k,2]
+                self.dv[q,0] = self.dv[k,0]
+                self.dv[q,1] = self.dv[k,1]
+                self.dv[q,2] = self.dv[k,2]
                 self.rsq[q] = rsquared
                 self.iap[q,0] = i
                 self.iap[q,1] = j
@@ -225,6 +225,10 @@ class SortedVerletList(VerletList):
     """ A sorted verlet neighbour list.
         idx is always an index.
     """
+
+    def separations(self):
+       pairsep(self)
+       self.sort_by_r()
 
     def sort_by_r(self):
         """ Sorts the list by interparticle separation.

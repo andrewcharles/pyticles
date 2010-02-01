@@ -105,7 +105,7 @@ def spam_properties(p,nl):
         SENS = 0.5
         rhoav = np.mean(p.rho)
         p.h = H * KSC * ((p.rho/rhoav)**SENS)
-        
+       
 
     for i in range(p.n):
         # todo add some logic to determine whether we have a one or two part
@@ -119,10 +119,16 @@ def spam_properties(p,nl):
     p.u = vdw_energy(p.rho,p.t)
     p.t = vdw_temp(p.rho,p.u)
 
+    print 'initial density',np.mean(rho2)
+    print 'initial energy', np.mean(p.u)
+    print 'initial temperature',np.mean(p.t)
+
+
+
 
 def test_vdw_energy_and_temp():
    rho = 1.0
-   t = 1.0
+   t = 5.0
    u = vdw_energy(rho,t)
    print u
    t2 = vdw_temp(rho,u)

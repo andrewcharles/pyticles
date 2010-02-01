@@ -21,6 +21,7 @@ import math
 #import forces
 import neighbour_list
 #import properties
+from eos import get_vdw_u
 
 # I don't want to have to select this here!
 #import c_properties as properties
@@ -102,6 +103,9 @@ class ParticleSystem:
 
         if rinit == 'grid':
            self.r[0:n,:] = configuration.grid3d(n,side,(xmax/2.,ymax/2.,zmax/2.)
+                ,spacing=spacing)
+        elif rinit == 'fcc':
+           self.r[0:n,:] = configuration.fcc3d(n,side,(xmax/2.,ymax/2.,zmax/2.)
                 ,spacing=spacing)
     
         self.m = np.zeros(self.maxn)
@@ -243,6 +247,7 @@ class SmoothParticleSystem(ParticleSystem):
             side=None,
             spacing=None,
             temperature=1.0,
+            thermostat_temp=1.0,
             hshort=1.0,
             hlong=3.0,
             simbox=None):
@@ -296,7 +301,8 @@ class SmoothParticleSystem(ParticleSystem):
         self.p = np.zeros([self.maxn])
         self.pco = np.zeros([self.maxn])
         self.P = np.zeros([self.maxn,self.dim,self.dim])
-        
+        self.thermostat_temp = thermostat_temp
+
         if rinit == 'grid':
             self.r[0:n,:] = \
             configuration.grid3d(n,side,(xmax/2.,ymax/2.,zmax/2.),spacing=spacing)
@@ -404,6 +410,15 @@ class SmoothParticleSystem(ParticleSystem):
             if nl.rebuild_list:
                 nl.build()
 
+    def thermostat(self,target_temp):
+        """ Apply a scaling thermostat. """
+        u_old =  self.u
+        tav = self.t.mean()
+        scale_factor = target_temp / tav
+        self.t = self.t * scale_factor
+        self.u =  get_vdw_u(self.t,self.rho)
+        uenv = self.u.sum() - u_old.sum()
+
     def update(self,dt):
         """ Update the particle system, using the
             neighbour list supplied.
@@ -429,6 +444,7 @@ class SmoothParticleSystem(ParticleSystem):
         self.timing['integrate time'] = time() - t
         
         self.box.apply(self)
+        self.thermostat(self.thermostat_temp)
         
         self.timing['update time'] = time() - t1
         self.steps += 1

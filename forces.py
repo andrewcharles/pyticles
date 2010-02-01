@@ -1,7 +1,5 @@
 """ 
     A generic force class ,and several force objects that operate on particle
-    systems.
-
     Force -- A generic pairwise force that can be instantiated but
             does nothing.
 
@@ -11,7 +9,7 @@
     Andrew Charles
 """
 
-import numpy
+import numpy as np
 import math
 import scipy
 import neighbour_list
@@ -91,9 +89,8 @@ class CollisionForce(Force):
         Force.__init__(self,particles,neighbour_list,cutoff=cutoff)
 
     def apply_force(self,k):
-        """ A hard collision is just an instantanous force. More
-            like an impulse maybe. Anyhow, it changes v directly.
-            TODO: rollback and roll forward to get rid of sticky balls.
+        """ A hard collision is just an instantanous force.
+
         """
         debug = False
         i = self.nl.iap[k,0]
@@ -146,7 +143,7 @@ class CollisionForce(Force):
         p.v[i,1] = vtiy + vniy
         p.v[j,0] = vtjx + vnjx
         p.v[j,1] = vtjy + vnjy
-        
+
         if debug:
             vmagsqi = p.v[i,0]**2 + p.v[i,1]**2
             vmagsqj = p.v[j,0]**2 + p.v[j,1]**2
@@ -155,6 +152,94 @@ class CollisionForce(Force):
             print "After"
             print mom_i,mom_j,mom_i+mom_j
             exit()
+
+
+class CollisionForce3d(Force):
+   
+    def __init__(self,particles,neighbour_list,cutoff=5.0):
+        Force.__init__(self,particles,neighbour_list,cutoff=cutoff)
+
+    def apply_force(self,k):
+        """ A hard collision is just an instantanous force.
+            rollback and roll forward to get rid of sticky balls.
+            Also implemented is a 'pushback' that ensures particles
+            are no closer than the cutoff (collision) range.
+            This has not been well tested, and there are other
+            ways to implement this rollback that are more
+            dynamically consistent.
+            In fact when used on top of an sph force the pushback seems to 
+            increase the instability.
+        """
+        debug = False
+        i = self.nl.iap[k,0]
+        j = self.nl.iap[k,1]
+        p = self.p
+        
+        dr = self.nl.drij[k]
+        drsq = dr[0]**2 + dr[1]**2 + dr[2]**2
+      
+        # Divergence
+        vidotr = p.v[i,0]*dr[0] + p.v[i,1]*dr[1] + p.v[i,2]*dr[2]
+        vjdotr = p.v[j,0]*dr[0] + p.v[j,1]*dr[1] + p.v[j,2]*dr[2]
+
+        # If the particles are moving away from each other do nothing
+        if (vidotr < 0) and (vjdotr >  0):
+            return
+
+        # Calculate tangential and normal components
+        # of velocity
+        vtix = (vidotr/drsq) * dr[0] 
+        vtiy = (vidotr/drsq) * dr[1]
+        vtiz = (vidotr/drsq) * dr[2]
+        vnix = p.v[i,0] - vtix
+        vniy = p.v[i,1] - vtiy
+        vniz = p.v[i,2] - vtiz
+
+        vtjx = (vjdotr/drsq) * dr[0] 
+        vtjy = (vjdotr/drsq) * dr[1]
+        vtjz = (vjdotr/drsq) * dr[2]
+        vnjx = p.v[j,0] - vtjx
+        vnjy = p.v[j,1] - vtjy
+        vnjz = p.v[j,2] - vtjz
+
+        # Transfer tangential component of momentum
+        tmp = vtix
+        vtix = vtjx * (p.m[j]/p.m[i])
+        vtjx = tmp * (p.m[i]/p.m[j])
+        
+        tmp = vtiy
+        vtiy = vtjy * (p.m[j]/p.m[i])
+        vtjy = tmp * (p.m[i]/p.m[j])
+
+        tmp = vtiz
+        vtiz = vtjz * (p.m[j]/p.m[i])
+        vtjz = tmp * (p.m[i]/p.m[j])
+
+        # Convert back to xy frame
+        p.v[i,0] = vtix + vnix 
+        p.v[i,1] = vtiy + vniy
+        p.v[i,2] = vtiz + vniz
+        p.v[j,0] = vtjx + vnjx
+        p.v[j,1] = vtjy + vnjy
+        p.v[j,2] = vtjz + vnjz
+
+        if drsq < (self.cutoff*self.cutoff):
+            print 'separating',self.nl.rij[k]
+            ro = (self.cutoff + 0.01 - self.nl.rij[k])/2.0
+            dro = (dr/self.nl.rij[k]) * ro
+            p.r[i,0] -= dro[0]
+            p.r[i,1] -= dro[1]
+            p.r[i,2] -= dro[2]
+            p.r[j,0] += dro[0]
+            p.r[j,1] += dro[1]
+            p.r[j,2] += dro[2]
+            self.nl.drij[k] = p.r[j,:] - p.r[i,:]
+            self.nl.rij[k] = np.linalg.norm(self.nl.drij[k,:])
+            print 'separated',self.nl.rij[k],ro,np.linalg.norm(dro)
+            if self.nl.rij[k] < self.cutoff:
+                print 'wtf'
+                print ro
+
 
 
 class SpamForce2d(Force):
@@ -357,6 +442,10 @@ class FortranCollisionForce(Force):
     def __init__(self,particles,neighbour_list,cutoff=1.0):
         Force.__init__(self,particles,neighbour_list,cutoff=cutoff)
         self.nl = neighbour_list
+
+
+    #def apply(self):
+    #    self.apply_sorted()
 
     def apply_force(self,k):
         """ A hard collision is just an instantanous force.

@@ -145,7 +145,7 @@ class CohesiveSpamForce(Force):
         _iap = self.nl.iap.astype(np.int)
         _dwdx = nl.dwij.astype(np.float)
         _p = p.pco.astype(np.float)
-        _rho = p.rho.astype(np.float)
+        _rho = p.rho_lr.astype(np.float)
         _m = p.m.astype(np.float)
         _udot = p.udot.astype(np.float)
         _vdot = p.vdot.astype(np.float)
