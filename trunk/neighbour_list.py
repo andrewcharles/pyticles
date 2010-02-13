@@ -91,17 +91,27 @@ class NeighbourList:
         return -1
 
 
+    def apply_minimum_image(self):
+        for k in range(self.nip):
+            self.minimum_image(self.drij[k,:],self.particle.box.xmax,
+                self.particle.box.ymax,
+                self.particle.box.zmax)
+
+
     def minimum_image(self,dr,xmax,ymax,zmax):
         """ Applies the minimum image convention to the distance
-            between two particles.
+            between all particles.
             # --- a permutation of dimensions --- #
         """
+        drx,dry,drz = dr
         if (dr[0] > xmax):
-            dr[0] = dr[0] - xmax
+            drx = dr[0] - xmax
         if (dr[1] > ymax):
-            dr[1] = dr[1] - ymax 	
+            dry = dr[1] - ymax 	
         if (dr[2] > zmax):
-            dr[2] = dr[2] - zmax
+            drz = dr[2] - zmax
+
+        dr = (drx,dry,drz)
 
 
 class VerletList(NeighbourList):
@@ -150,8 +160,13 @@ class VerletList(NeighbourList):
                 drx = self.particle.r[j,0] - self.particle.r[i,0]
                 dry = self.particle.r[j,1] - self.particle.r[i,1]
                 drz = self.particle.r[j,2] - self.particle.r[i,2]
+                #print drx
+                self.minimum_image((drx,dry,drz),self.particle.box.xmax,
+                    self.particle.box.ymax,
+                    self.particle.box.zmax)
+                #print drx
                 rsquared = drx**2 + dry**2 + drz**2
-                if (rsquared < self.cutoff_radius_sq + self.tolerance_sq):
+                if (rsquared < (self.cutoff_radius_sq + self.tolerance_sq)):
                     self.drij[k,0] = drx
                     self.drij[k,1] = dry
                     self.drij[k,2] = drz
@@ -172,12 +187,16 @@ class VerletList(NeighbourList):
             q -- new running total of pairs
         """
         q = 0
+        #separations(self)
         for k in range(self.nip):
             i = self.iap[k,0]
             j = self.iap[k,1]
             drx = self.particle.r[j,0] - self.particle.r[i,0]
             dry = self.particle.r[j,1] - self.particle.r[i,1]
             drz = self.particle.r[j,2] - self.particle.r[i,2]
+            self.minimum_image((drx,dry,drz),self.particle.box.xmax,
+                self.particle.box.ymax,
+                self.particle.box.zmax)
             rsquared = drx**2 + dry**2 + drz**2
             if (rsquared < self.cutoff_radius_sq + self.tolerance_sq):
                 self.drij[q,0] = drx
@@ -212,6 +231,15 @@ class VerletList(NeighbourList):
             Redefined to just call the cython version!
         """
         pairsep(self)
+        for k in range(self.nip):
+            #i = self.iap[k,0]
+            #j = self.iap[k,1]
+            drx = self.drij[k,0]
+            dry = self.drij[k,1]
+            drz = self.drij[k,2]
+            self.minimum_image((drx,dry,drz),self.particle.box.xmax,
+                self.particle.box.ymax,
+                self.particle.box.zmax)
 
 class SmoothVerletList:
     """A Verlet list with smooth particle neighbourly properties,

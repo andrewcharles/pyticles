@@ -8,7 +8,7 @@ from forces import Force
 import sys
 sys.path.append('/Users/acharles/masters/active/fsph')
 import fkernel
-import sphlib
+import splib
 import feos
 import numpy as np
 import sphforce3d
@@ -17,9 +17,12 @@ from time import time
 feos.eos.adash = 2.0
 feos.eos.bdash = 0.5
 feos.eos.kbdash = 1.0
-sphforce3d.sigma = 1.0
-sphforce3d.rcoef = 0.5
-sphforce3d.cgrad = 0.0
+sphforce3d.sigma = 0.0
+sphforce3d.rcoef = 0.0
+sphforce3d.cgrad = 1.0
+ETA = 1.0
+ZETA = 0.1
+kernel_type = 3 
 
 class SpamComplete(Force):
     """ Compute all the smooth particle properties and forces
@@ -44,7 +47,7 @@ class SpamComplete(Force):
         x = np.reshape(p.r[0:n,:].copy(),(n,d),order='F')
         v = np.reshape(p.v[0:n,:].copy(),(n,d),order='F')
         a = np.zeros([n,d],order='F')
-        T = p.t[0:n].reshape((n,1),order='F')
+        T = np.reshape(p.t[0:n].copy(),(n),order='F')
         rho = np.zeros((n),order='F')
         rho_lr = np.zeros((n),order='F')
         u = np.reshape(p.u[0:n].copy(),(n,1),order='F')
@@ -68,15 +71,21 @@ class SpamComplete(Force):
         #dwdx_lr = np.zeros((ni,d),order='F') 
       
         # Velocity diff
-        sphlib.sphlib.calc_dv(dv,ilist,v)
+        splib.splib.calc_dv(dv,ilist,v)
 
         # Kernels and kernel gradients
-        w,dwdx = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml,2)
-        w_lr,dwdx_lr = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml_lr,2)
+        w,dwdx = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml,kernel_type)
+        w_lr,dwdx_lr = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml_lr,
+            kernel_type)
 
         # Density summation
-        fkernel.kernel.density_sum(rho,grad_rho,ilist,sml,mass,w,dwdx,2)
-        fkernel.kernel.density_sum(rho_lr,grad_rho_lr,ilist,sml_lr,mass,w_lr,dwdx_lr,2)
+        fkernel.kernel.density_sum(rho,grad_rho,ilist,sml,mass,w,dwdx,
+            kernel_type)
+        fkernel.kernel.density_sum(rho_lr,grad_rho_lr,ilist,sml_lr,mass,w_lr,
+            dwdx_lr,kernel_type)
+
+
+        feos.eos.calc_vdw_temp(u,T,rho)
 
         # Pressure tensor components
         p_rev = np.zeros((n,d,d),order='F')
@@ -89,11 +98,10 @@ class SpamComplete(Force):
         # Constants
         eta = np.zeros([n],order='F')
         zeta = np.zeros([n],order='F')
-        eta[:] = 1.0
-        zeta[:] = 0.1
+        eta[:] = ETA 
+        zeta[:] = ZETA 
 
         dedt = np.zeros([n],dtype=float,order='F')
-        
         feos.eos.calc_vdw_temp(u,T,rho)
         #feos.eos.calc_vdw_energy(u,T,rho)
         T [T < 0.0] = 0.0
@@ -109,7 +117,7 @@ class SpamComplete(Force):
             c,eta,zeta,               
             dv,rij,drij,  
             sml,sml_lr,w,dwdx,dwdx_lr)#,n,ni)
-
+        
         #np.set_printoptions(precision=5,suppress=True)
         feos.eos.calc_vdw_temp(u,T,rho)
 
@@ -126,6 +134,6 @@ class SpamComplete(Force):
         #p.pco = 
         p.vdot[0:n,:] = a[0:n,:]
         #p.pco[0:n] = pco[0:n]
-        p.t[0:n] = T[0:n,0]
+        p.t[0:n] = T[0:n]
         p.jq[0:n,:] = jq[0:n,:]
 

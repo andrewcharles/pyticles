@@ -62,6 +62,8 @@ class SpamForce(Force):
         """Iterate over the neighbour list and apply the force to all
         particles.
         """
+        properties.spam_properties(self.p,self.nl \
+            ,self.p.h[0:self.p.n],self.p.hlr[0:self.p.n])
 
         p = self.p
         nl = self.nl
@@ -168,9 +170,9 @@ class CohesiveSpamForce(Force):
             _vdot[i,0] += ax
             _vdot[i,1] += ay
             _vdot[i,2] += az
-            _vdot[j,0] += -ax
-            _vdot[j,1] += -ay
-            _vdot[j,2] += -az
+            _vdot[j,0] -= ax
+            _vdot[j,1] -= ay
+            _vdot[j,2] -= az
             _udot[j] +=  du * _m[i]
             _udot[i] +=  du * _m[j]
 

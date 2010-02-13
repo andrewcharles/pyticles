@@ -2,7 +2,7 @@
 import sys
 sys.path.append('/Users/acharles/masters/active/fsph')
 import fkernel
-import sphlib
+import splib
 import feos
 #from eos import vdw_co, vdw_hc
 import numpy as np
@@ -94,7 +94,7 @@ def spam_properties(p,nl,hs,hl):
     #dv = sphlib.sphlib.calc_dv(dv,nlist,v)
     #print dv.flags
     #print v.flags
-    sphlib.sphlib.calc_dv(dv,nlist,v)
+    splib.splib.calc_dv(dv,nlist,v)
 
     # Kernels and kernel gradients
     w,dwdx = fkernel.kernel.smoothing_kernels(rij[0:ni],drij[0:ni,:] \
@@ -108,7 +108,7 @@ def spam_properties(p,nl,hs,hl):
 
     # Grad v
     grad_v = np.zeros((n,d,d),order='F')
-    sphlib.sphlib.calc_grad_v(grad_v,nlist,dwdx,dv,mass,rho)
+    splib.splib.calc_grad_v(grad_v,nlist,dwdx,dv,mass,rho)
 
     phc = p.p[0:n]
     pco = p.pco[0:n]
@@ -126,7 +126,7 @@ def spam_properties(p,nl,hs,hl):
     jq = np.zeros((n,d),order='F')
     
     # subroutine calc_heat_flux_3d(q,ilist,rho,m,tmp,dwdx_jij,thermalk,n,ni)
-    sphlib.sphlib.calc_heat_flux_3d(jq,nlist,rho,mass,T,-dwdx,thermalk)
+    splib.splib.calc_heat_flux_3d(jq,nlist,rho,mass,T,-dwdx,thermalk)
 
     # Python implementation
     #phc = vdw_hc(rho,T)

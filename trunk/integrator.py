@@ -88,7 +88,7 @@ def rk4(get_state,calc_derivs,get_derivs,set_state,dt):
     c4 = xdot * dt
 
     # Final step
-    x = x_start + (1.0/6.0) * (c1 + 2*c2 + 2*c3 + c4) 
+    x = x_start + (1.0/6.0) * (c1 + 2.*c2 + 2.*c3 + c4) 
     set_state(x) 
     
     del x_start

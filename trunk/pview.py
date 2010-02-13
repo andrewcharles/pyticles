@@ -586,7 +586,7 @@ class ZPRView(SmoothParticleView):
     """ Development class for ortho projection and zpr instead of
         lame trackball.
     """
-    def __init__(self,p,wsize=(640,480,480),box=(250,250,250)):
+    def __init__(self,p,wsize=(640,480,480),box=(250,250,250),lighting=True):
         #ParticleView.__init__(self,p)
         self.WINDOW_WIDTH = wsize[0]
         self.WINDOW_HEIGHT = wsize[1]
@@ -602,16 +602,18 @@ class ZPRView(SmoothParticleView):
                  ,visible=False,caption='Pyticles')
 
         self.sphere = gluNewQuadric()
-        gluQuadricDrawStyle(self.sphere,GLU_FILL)
-        #gluQuadricDrawStyle(self.sphere,GLU_LINE)
         glEnable(GL_DEPTH_TEST)
-        glDisable(GL_CULL_FACE)
+        glEnable(GL_CULL_FACE)
         col = [1.0,1.0,1.0]
         color = (GLfloat * 3)(*col)
 
-        glEnable(GL_LIGHTING);
-        glEnable(GL_LIGHT0);
-        glLightfv(GL_LIGHT0, GL_AMBIENT,color);
+        if lighting:
+            glEnable(GL_LIGHTING)
+            glEnable(GL_LIGHT0)
+            glLightfv(GL_LIGHT0, GL_AMBIENT,color)
+            gluQuadricDrawStyle(self.sphere,GLU_FILL)
+        else:
+            gluQuadricDrawStyle(self.sphere,GLU_LINE)
         
         self.bg_color = (0.8,0.8,0.8,1.0)
 
@@ -662,7 +664,9 @@ class ZPRView(SmoothParticleView):
             ,col=(255,0,255,255) )
         self.energylab = plabel("energy label",loc=(10,180)
             ,col=(255,0,255,255) )
-        
+        self.densitylab = plabel("density label",loc=(10,160)
+            ,col=(255,0,255,255) )
+
         self.labels.append(self.fpslab)
         self.labels.append(self.npartlab)
         self.labels.append(self.nebslab)
@@ -678,6 +682,7 @@ class ZPRView(SmoothParticleView):
         self.labels.append(self.spamtimelab)
         self.labels.append(self.templab)
         self.labels.append(self.energylab)
+        self.labels.append(self.densitylab)
 
         self.win.on_resize = self.resize
         self.win.on_mouse_press = self.on_mouse_press
@@ -739,7 +744,7 @@ class ZPRView(SmoothParticleView):
         self.templab.text =       "mean temp:     %5.3f" %(np.mean(p.t))
         self.updatetimelab.text = "updatetime: %5.3f" %(p.timing['update time'])
         self.energylab.text = "EK: %5.3f" %( np.mean(0.5*(np.linalg.norm(p.v)**2)*p.m) )
-
+        self.densitylab.text = "rhomax: %5.3f" %(p.rho.max())
         for lab in self.labels:
             lab.draw()
         glFlush()
@@ -773,7 +778,7 @@ class ZPRView(SmoothParticleView):
         right = self.BOX_WIDTH +10
         top = self.BOX_HEIGHT + 10
         bottom = -10
-        znear = -100
+        znear = -1000
         zfar = 10000
         glOrtho(left,right,bottom,top,znear,zfar)
         glMatrixMode(GL_MODELVIEW)
@@ -857,6 +862,60 @@ class ZPRView(SmoothParticleView):
             glEnd()
             glPopMatrix()
 
+    def density_histogram(self,p):
+        """ Draws the heads up display """
+        hx = (0,200)
+        hy = (0,100)
+        hdx = 10.
+        hdy = 10.
+
+        glDisable(GL_LIGHTING)
+        glDisable(GL_CULL_FACE)
+        glMatrixMode(GL_PROJECTION)
+        glPushMatrix()
+        glLoadIdentity()
+        glOrtho(0,hx[1],0,hy[1],0,10)
+        glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
+        glLoadIdentity()
+     
+        # Just bin the density
+        nbin = 10 
+        dhist = np.zeros([nbin])
+        binl = [0.0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8]
+        binu = [0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0]
+        #p.rho
+        # Draw a histogram
+        # Compute non-normalised hist
+        for i in range(p.n):
+            idx = np.where( (p.rho[i] > binl) & (p.rho[i] < binu) )
+            dhist[idx] += 1
+
+        for i in range(nbin):
+            dhist[i] = (dhist[i] * (binu[i] - binl[i])) / p.n
+        glTranslatef(0.0,0.0,-5)
+        glColor3f(1.0,0.0,0.5)
+        for i in range(nbin):
+            glBegin(GL_POLYGON)
+            glVertex3f(0.0, 0.0, 0.0)
+            glVertex3f(0.0, dhist[i]*hdy, 0.0)
+            glVertex3f(hdx, dhist[i]*hdy, 0.0)
+            glVertex3f(hdx, 0.0, 0.0)
+            glEnd()
+            glTranslatef(hdx, 0.0, 0.0)
+            #lab = plabel("energy label",loc=(10,10),col=(255,0,255,255) )
+            #lab.draw()
+  
+        glFlush()
+        glPopMatrix()
+        glMatrixMode(GL_PROJECTION)
+        glPopMatrix()
+        glMatrixMode(GL_MODELVIEW)
+        glEnable(GL_LIGHTING)
+        glEnable(GL_CULL_FACE)
+
+
+
     def redraw(self,p):
         t = time()
         self.win.dispatch_events()
@@ -865,5 +924,6 @@ class ZPRView(SmoothParticleView):
         self.hud(p)
         #self.draw_neighbours(p)
         self.draw_particles(p)
-        #self.draw_box()
+        self.density_histogram(p)
+        self.draw_box()
         self.timing['Draw time'] = time() - t
