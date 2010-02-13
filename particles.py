@@ -70,8 +70,10 @@ class ParticleSystem:
             zmax=ZMAX,
             vmax=VMAX,
             simbox=None,
+            mass=1.0,
             rinit=None,
             side=(5,5,5),
+            integrator='rk4',
             spacing=0.1):
         """
         DIMENSIONS
@@ -96,8 +98,18 @@ class ParticleSystem:
 
         # Basic mechanical properties
         if not simbox:
-            self.box = box.MirrorBox(self,xmax=xmax,ymax=ymax,zmax=zmax)
-        
+            self.box = box.MirrorBox(p=self,xmax=xmax,ymax=ymax,zmax=zmax)
+        else:
+            self.box = simbox
+       
+        # Select integrator
+        integrator_mapping = {'euler':euler,
+                              'ieuler':imp_euler,
+                              'rk4':rk4}
+
+        self.step = integrator_mapping[integrator]
+
+
         # Start with a random configuration
         self.r = self.box.xmax * np.random.random([self.maxn,self.dim])
 
@@ -108,7 +120,7 @@ class ParticleSystem:
            self.r[0:n,:] = configuration.fcc3d(n,side,(xmax/2.,ymax/2.,zmax/2.)
                 ,spacing=spacing)
     
-        self.m = np.zeros(self.maxn)
+        self.m = np.zeros(self.maxn,dtype=float)
         self.v = vmax * (np.random.random([self.maxn,self.dim]) - 0.5)
         self.rdot = np.zeros(self.r.shape)
         self.vdot = np.zeros(self.v.shape)
@@ -116,7 +128,7 @@ class ParticleSystem:
 
         # Initialise values
         #self.r[0:self.n]=configuration.grid3d(self.n,5,5,(20,20,20),spacing=0.8)
-        self.m[:] = 1.
+        self.m[:] = mass 
         self.colour = 1.0,0.0,0.0 
 
         # State vectors to pass to numerical integrators
@@ -160,7 +172,7 @@ class ParticleSystem:
             neighbour list supplied.
         """
         self.rebuild_lists()
-        imp_euler(self.gather_state,self.derivatives, \
+        self.step(self.gather_state,self.derivatives, \
                        self.gather_derivatives,self.scatter_state,dt)
         self.box.apply(self)
         self.steps += 1
@@ -245,11 +257,13 @@ class SmoothParticleSystem(ParticleSystem):
             vmax=VMAX,
             rinit=None,
             side=None,
+            mass=1.0,
             spacing=None,
             temperature=1.0,
             thermostat_temp=1.0,
             hshort=1.0,
             hlong=3.0,
+            integrator='rk4',
             simbox=None):
         ParticleSystem.__init__(self,n=n,d=d,
             xmax=xmax,
@@ -257,7 +271,9 @@ class SmoothParticleSystem(ParticleSystem):
             zmax=zmax,
             rinit=rinit,
             side=side,
+            mass=mass,
             spacing=spacing,
+            integrator=integrator,
             vmax=vmax,
             maxn=maxn)
         self.V_split = VSPLIT
@@ -302,10 +318,6 @@ class SmoothParticleSystem(ParticleSystem):
         self.pco = np.zeros([self.maxn])
         self.P = np.zeros([self.maxn,self.dim,self.dim])
         self.thermostat_temp = thermostat_temp
-
-        if rinit == 'grid':
-            self.r[0:n,:] = \
-            configuration.grid3d(n,side,(xmax/2.,ymax/2.,zmax/2.),spacing=spacing)
 
             #self.r[0:n,:],self.t[0:n] = \
             #configuration.hotspotgrid3d(n,side,(xmax/2.,ymax/2.,zmax/2.),spacing=spacing)
@@ -439,12 +451,12 @@ class SmoothParticleSystem(ParticleSystem):
         self.timing['deriv time'] = time() - t
        
         t = time()
-        rk4(self.gather_state,self.derivatives, \
+        self.step(self.gather_state,self.derivatives, \
             self.gather_derivatives,self.scatter_state,dt)
         self.timing['integrate time'] = time() - t
         
         self.box.apply(self)
-        self.thermostat(self.thermostat_temp)
+        #self.thermostat(self.thermostat_temp)
         
         self.timing['update time'] = time() - t1
         self.steps += 1
@@ -502,21 +514,18 @@ class SmoothParticleSystem(ParticleSystem):
             for every particle 
         """
         self.rdot = self.v
-        # random velocity
-        #self.vdot = np.random.random(self.v.shape)-0.5
         self.vdot[:,:] = 0.0
         self.udot[:] = 0.0
 
         t = time()
         for nl in self.nlists: 
             nl.separations()
+            #nl.apply_minimum_image()
     
         self.timing['pairsep time'] = (time() - t)
 
         t = time()
 
-        #properties.spam_properties(self,self.nlists[0] \
-        #    ,self.h[0:self.n],self.hlr[0:self.n])
         
         self.timing['SPAM time'] = time() - t
         

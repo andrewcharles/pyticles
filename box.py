@@ -15,7 +15,7 @@ import controller
 
 class Box(controller.Controller):
     
-    def __init__(self,p,xmax=64,ymax=48,zmax=100):
+    def __init__(self,p='none',xmax=64,ymax=48,zmax=100):
         self.p = p
         self.xmax = xmax
         self.ymax = ymax
