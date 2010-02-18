@@ -1,7 +1,9 @@
 from forces import Force
 
 """ A wrapper around the fortran sphforce3d routine.
-    Computes some sph properties first.
+    Computes some smooth particle properties first.
+
+    #np.set_printoptions(precision=5,suppress=True)
 
 """
 
@@ -14,23 +16,50 @@ import numpy as np
 import sphforce3d
 from time import time
 
-feos.eos.adash = 2.0
-feos.eos.bdash = 0.5
-feos.eos.kbdash = 1.0
-sphforce3d.sigma = 0.0
-sphforce3d.rcoef = 0.0
-sphforce3d.cgrad = 1.0
-ETA = 1.0
-ZETA = 0.1
-kernel_type = 3 
 
 class SpamComplete(Force):
     """ Compute all the smooth particle properties and forces
         in a single function that uses the fortran routines.
+
+        Parameters:
+            adash -- van der Waals attraction (sets in feos module)
+            bdash -- van der Waals repulsion (sets in feos module)
+            kbdash -- van der Waals k (sets in feos module)
+            sigma -- repulsive core size (fortran module variable)
+            rcoef -- repulsive core strength (fortran module variable)
+            cgrad -- density gradient coefficient
+            eta -- shear viscosity
+            zeta -- bulk viscosity
+            kernel_type -- 1: Gauss, 2: Lucy, 3: Debrun
+
     """
 
-    def __init__(self,particles,neighbour_list,cutoff=5.0):
+    def __init__(self,particles,neighbour_list,
+        adash=2.0,
+        bdash=0.5,
+        kbdash=1.0,
+        sigma=0.0,
+        rcoef=0.0,
+        cgrad=1.0,
+        eta=1.0,
+        zeta=0.1,
+        kernel_type=2,
+        cutoff=5.0):
+
+        # Call the generic Force init method
         Force.__init__(self,particles,neighbour_list,cutoff=cutoff)
+
+        # Set the parameters in this module and imported modules
+        feos.eos.adash = adash
+        feos.eos.bdash = bdash
+        feos.eos.kbdash = kbdash
+        sphforce3d.sigma = sigma
+        sphforce3d.rcoef = rcoef
+        sphforce3d.cgrad = cgrad
+        self.eta = eta
+        self.zeta = zeta
+        self.kernel_type = 2 
+
 
     def apply(self):
         """ Calculates spam interaction between all particles.
@@ -53,7 +82,6 @@ class SpamComplete(Force):
         u = np.reshape(p.u[0:n].copy(),(n,1),order='F')
         sml = np.reshape(p.h[0:n].copy(),(n,1),order='F')
         sml_lr = np.reshape(p.hlr[0:n].copy(),(n,1),order='F')
-        #jq = np.reshape(p.jq[0:n,:].copy(),(n,d)),order='F')
         jq = np.zeros([n,d],order='F')
         grad_rho = np.zeros((n,d),order='F')
         grad_v = np.zeros((n,d,d),order='F')
@@ -65,25 +93,21 @@ class SpamComplete(Force):
         dv =  np.reshape(nl.dv[0:ni,:].copy(),(ni,d),order='F')
         rij = np.reshape(nl.rij[0:ni].copy(),(ni,1),order='F')
         drij = np.reshape(nl.drij[0:ni,:].copy(),(ni,d),order='F')
-        #w = np.zeros((ni),order='F') 
-        #dwdx = np.zeros((ni,d),order='F') 
-        #w_lr = np.zeros((ni),order='F') 
-        #dwdx_lr = np.zeros((ni,d),order='F') 
       
         # Velocity diff
         splib.splib.calc_dv(dv,ilist,v)
 
         # Kernels and kernel gradients
-        w,dwdx = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml,kernel_type)
+        w,dwdx = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml,
+            self.kernel_type)
         w_lr,dwdx_lr = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml_lr,
-            kernel_type)
+            self.kernel_type)
 
         # Density summation
         fkernel.kernel.density_sum(rho,grad_rho,ilist,sml,mass,w,dwdx,
-            kernel_type)
+            self.kernel_type)
         fkernel.kernel.density_sum(rho_lr,grad_rho_lr,ilist,sml_lr,mass,w_lr,
-            dwdx_lr,kernel_type)
-
+            dwdx_lr,self.kernel_type)
 
         feos.eos.calc_vdw_temp(u,T,rho)
 
@@ -98,17 +122,15 @@ class SpamComplete(Force):
         # Constants
         eta = np.zeros([n],order='F')
         zeta = np.zeros([n],order='F')
-        eta[:] = ETA 
-        zeta[:] = ZETA 
+        eta[:] = self.eta 
+        zeta[:] = self.zeta
 
         dedt = np.zeros([n],dtype=float,order='F')
         feos.eos.calc_vdw_temp(u,T,rho)
-        #feos.eos.calc_vdw_energy(u,T,rho)
         T [T < 0.0] = 0.0
         # print a.flags.f_contiguous
 
         # Call the force subroutine
-        t1 = time()
         sphforce3d.sphforce3d.calc_sphforce3d( 
             ilist,x,v,a,  
             p_rev,p_rev_lr,pi_irr,          
@@ -116,9 +138,8 @@ class SpamComplete(Force):
             u,dedt,mass,rho,rho_lr,T,jq,     
             c,eta,zeta,               
             dv,rij,drij,  
-            sml,sml_lr,w,dwdx,dwdx_lr)#,n,ni)
+            sml,sml_lr,w,dwdx,dwdx_lr)
         
-        #np.set_printoptions(precision=5,suppress=True)
         feos.eos.calc_vdw_temp(u,T,rho)
 
         # Resend data to python object
@@ -130,10 +151,9 @@ class SpamComplete(Force):
         nl.wij_lr[0:ni] = w_lr[0:ni]
         nl.dwij_lr[0:ni,:] = dwdx_lr[0:ni,:]
         p.P[0:n] = p_rev + p_rev_lr + pi_irr
-        #p.p = 
-        #p.pco = 
+        p.p[0:n] = p_rev[:,0,0]
+        p.pco[0:n] = p_rev_lr[:,0,0]
         p.vdot[0:n,:] = a[0:n,:]
-        #p.pco[0:n] = pco[0:n]
         p.t[0:n] = T[0:n]
         p.jq[0:n,:] = jq[0:n,:]
 

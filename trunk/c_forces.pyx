@@ -16,6 +16,7 @@ import math
 import scipy
 import neighbour_list
 import particles
+import f_properties as properties
 #cimport _particles
 
 # CONSTANTS
@@ -95,7 +96,7 @@ class SpamForce(Force):
         for k in xrange(nip):
             i = _iap[k,0]
             j = _iap[k,1]
-            ps = (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2)
+            ps = (_p[i]/(_rho[i]**2) + _p[j]/(_rho[j]**2))
             ax = ps * _dwdx[k,0] 
             ay = ps * _dwdx[k,1]
             az = ps * _dwdx[k,2]
@@ -145,7 +146,7 @@ class CohesiveSpamForce(Force):
         cdef np.ndarray[DTYPE_t,ndim=2,mode='c'] _dv
 
         _iap = self.nl.iap.astype(np.int)
-        _dwdx = nl.dwij.astype(np.float)
+        _dwdx = nl.dwij_lr.astype(np.float)
         _p = p.pco.astype(np.float)
         _rho = p.rho_lr.astype(np.float)
         _m = p.m.astype(np.float)
@@ -162,7 +163,7 @@ class CohesiveSpamForce(Force):
         for k in xrange(nip):
             i = _iap[k,0]
             j = _iap[k,1]
-            ps = (_p[i]/_rho[i]**2 + _p[j]/_rho[j]**2)
+            ps = (_p[i]/(_rho[i]**2) + _p[j]/(_rho[j]**2))
             ax = ps * _dwdx[k,0] 
             ay = ps * _dwdx[k,1]
             az = ps * _dwdx[k,2]

@@ -14,7 +14,10 @@
 
 from math import *
 import numpy as np
-import fkernel 
+import fkernel
+
+# Numbers to name mapping
+ktable = {1:'gaussian',2:'lucy',3:'debrun'}
 
 def kernel(r,dx,h,type):
     """ Calculates the kernel and kernel gradient for one pair of particles """

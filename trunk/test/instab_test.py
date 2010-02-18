@@ -5,16 +5,35 @@
 
     I will work through, eliminating each step in the calculation.
 
+    Using cython forces, we don't get an instability that as a
+    preferred direction, the way we do with the fortran code.
+
+    There is either:
+        1. a bug in sphlib
+        2. a bug in the python interface
+        3. a bug in the code that uses the python interface.
+
+
+    Definitely having high viscosity introduces anisotropy.
+    Core sigma doesn't seem to make much difference.
+    The fsph run is subject to much more clumping.
+    Even with the core, gradient and viscosity coeffs all set to zero
+
+    Solved - the heat flux was the wrong sign. (Feb 2010)
+    Seems it needs dwdx_iij after all.
+
 """
 
-SPAMCOMPLETE = True
 CFORCES = False
+#CFORCES = True
 
 import sys
 from time import time
 import particles
 import spam_complete_force
 import forces
+if CFORCES:
+    import c_forces as forces
 import pyglet
 from pyglet.window import mouse
 import pview
@@ -33,16 +52,16 @@ VMAX = 0.0
 MASS = 1.0
 dt = 0.05
 SPACING = 2.0
-SIDE = (2,2,2) 
+SIDE = (3,3,3) 
 NP = (SIDE[0]*SIDE[1]*SIDE[2])
 TEMPERATURE = 0.2
-HLONG = 10.0
-HSHORT = 5.0
+HLONG = 4.0
+HSHORT = 2.0
 RINIT = 'grid'
 
 p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX,
     side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX,
-    integrator='ieuler')
+    integrator='rk4')
 s = pview.ZPRView(p)
 nl = neighbour_list.VerletList(p,cutoff=5.0)
 
@@ -73,7 +92,6 @@ def update(t):
             print 'isclose'
             #pyglet.clock.unschedule(update)
             print nl.rij[0:nl.nip].min()
-    #s.redraw(p)
     print 'update',time() - t
 
 def redraw(t):
@@ -83,7 +101,6 @@ def redraw(t):
 def on_draw():
     s.clear()
     s.redraw(p)
-    #print 'draw',time() - t
 
 @s.win.event
 def on_key_press(symbol,modifiers):
@@ -96,20 +113,26 @@ def initialise():
     p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX
         ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX
         ,temperature=TEMPERATURE,hlong=HLONG,hshort=HSHORT,mass=MASS
-        ,thermostat_temp=TEMPERATURE)
-
-    #p.v = (np.random.random([NP,3]) - 0.5) * 2
+        ,thermostat_temp=TEMPERATURE,thermostat=False)
 
     print np.mean(p.t)
-    #nl = neighbour_list.SortedVerletList(p,cutoff=5.0)
-    nl = neighbour_list.VerletList(p,cutoff=HLONG)
-    #nl_2 = neighbour_list.VerletList(p,cutoff=5.0)
+    nl = neighbour_list.NeighbourList(p)#,cutoff=HLONG)
     
     p.nlists.append(nl)
     p.nl_default = nl
 
-    p.forces.append(spam_complete_force.SpamComplete(p,nl))
-    #p.forces.append(forces.FortranCollisionForce(p,nl,cutoff=0.65))
+
+    if CFORCES:
+        p.forces.append(forces.SpamForce(p,nl))
+        p.forces.append(forces.CohesiveSpamForce(p,nl))
+        p.forces.append(forces.SpamConduction(p,nl))
+        particles.SPROPS = True
+    else:
+        p.forces.append(spam_complete_force.SpamComplete(p,nl,
+            eta=0.0,zeta=0.0,cgrad=0.0,
+            sigma=0.0,rcoef=0.0))
+
+    #p.forces.append(forces.FortranCollisionForce(p,nl,cutoff=0.5))
 
     nl.build()
     nl.separations()
@@ -125,7 +148,6 @@ def main():
     initialise()
     pyglet.clock.schedule_interval(update,0.05)
     pyglet.clock.schedule_interval(redraw,0.2)
-    #pyglet.clock.schedule_interval(s.update_eye,1/2.0)
     pyglet.app.run()
 
 if __name__ == "__main__":

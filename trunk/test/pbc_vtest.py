@@ -1,25 +1,21 @@
 #! /usr/local/bin/python
 
 """ 
-    Optimised smooth particle implementation.
-    Fortran
+    Visually test periodic boundary conditions using the
+    optimised smooth particle implementation written in 
+    Fortran.
     Copyright Andrew Charles 2009
     All rights reserved.
 """
 
 SPAMCOMPLETE = True
-CFORCES = False
-#SPAMCOMPLETE = False
-#CFORCES = True
 
 import sys
+import box
 from time import time
 import particles
-if SPAMCOMPLETE:
-    import spam_complete_force
-    import forces
-elif CFORCES:
-    import c_forces as forces
+import spam_complete_force
+import forces
 import pyglet
 from pyglet.window import mouse
 import pview
@@ -31,23 +27,26 @@ import numpy as np
 
 # Global variables
 MAX_STEPS = 100000
-XMAX = 20 
-YMAX = 20 
-ZMAX = 20 
+XMAX = 10 
+YMAX = 10 
+ZMAX = 10 
 VMAX = 0.0
 dt = 0.01
-SPACING = 2.0
-SIDE = (4,4,4)
+SPACING = 5.0
+SIDE = (2,2,2)
 NP = SIDE[0]*SIDE[1]*SIDE[2]
-TEMPERATURE = 0.2
-HLONG = 5.0
-HSHORT = 2.5
+TEMPERATURE = 0.3
+HLONG = 4.0
+HSHORT = 2.0
 RINIT = 'grid'
 
+# The particle, neighbour list and box are global in scope
+box = box.PeriodicBox(xmax=XMAX,ymax=YMAX,zmax=ZMAX)
 p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX
-    ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
+    ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX,simbox=box)
+box.p = p
 s = pview.ZPRView(p)
-nl = neighbour_list.VerletList(p,cutoff=5.0)
+nl = neighbour_list.SortedVerletList(p,cutoff=4.0)
 
 cnt = 0
 fps = 0
@@ -62,10 +61,7 @@ def update(t):
         pyglet.app.exit()
     else:
         p.update(dt)
-        print 'rhomin',p.rho[0:p.n].min()
-        print 'rhomean',p.rho[0:p.n].mean()
-        print 'rhomax',p.rho[0:p.n].max()
-        # Trying to find the cause of instability
+        # Any of these conditions indicates numerical instability
         if (p.vdot > 1000000).any():
             print 'isbig'
             pyglet.clock.unschedule(update)
@@ -79,7 +75,6 @@ def update(t):
             print 'isclose'
             pyglet.clock.unschedule(update)
             print nl.rij[0:nl.nip].min()
-    #s.redraw(p)
     print 'update',time() - t
 
 def redraw(t):
@@ -102,32 +97,23 @@ def initialise():
     p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX
         ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX
         ,temperature=TEMPERATURE,hlong=HLONG,hshort=HSHORT
-        ,thermostat_temp=TEMPERATURE,thermostat=True)
+        ,thermostat_temp=TEMPERATURE,simbox=box)
 
-    #p.v = (np.random.random([NP,3]) - 0.5) * 2
+    p.v[:] = 0.0
 
     print np.mean(p.t)
-    nl = neighbour_list.SortedVerletList(p,cutoff=5.0)
-    #nl = neighbour_list.VerletList(p,cutoff=1.0)
-    #nl_2 = neighbour_list.VerletList(p,cutoff=5.0)
+    nl = neighbour_list.SortedVerletList(p,cutoff=4.0)
     
     p.nlists.append(nl)
     p.nl_default = nl
 
-    if SPAMCOMPLETE:
-        p.forces.append(spam_complete_force.SpamComplete(p,nl))
-        #p.forces.append(forces.CollisionForce3d(p,nl,cutoff=0.6))
-        p.forces.append(forces.FortranCollisionForce(p,nl,cutoff=0.6))
-    if CFORCES:
-        p.forces.append(forces.SpamForce(p,nl))
-        p.forces.append(forces.CohesiveSpamForce(p,nl))
-        p.forces.append(forces.SpamConduction(p,nl))
+    p.forces.append(spam_complete_force.SpamComplete(p,nl))
+    p.forces.append(forces.CollisionForce3d(p,nl,cutoff=0.6))
 
     nl.build()
     nl.separations()
 
-    # Use the python spam props to initialise
-    #spam_properties(p,nl)
+    spam_properties(p,nl)
     print 'initial mean temperature',np.mean(p.t)
     print 'initial mean density',np.mean(p.rho)
 
@@ -137,7 +123,6 @@ def main():
     initialise()
     pyglet.clock.schedule_interval(update,0.05)
     pyglet.clock.schedule_interval(redraw,0.2)
-    #pyglet.clock.schedule_interval(s.update_eye,1/2.0)
     pyglet.app.run()
 
 if __name__ == "__main__":

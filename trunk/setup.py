@@ -3,7 +3,7 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext as build_pyx
 import numpy as np
 
-include_dirs = ['/usr/local/python/2.6.2-gcc/lib/python2.6/site-packages/numpy/core/include/','/home/acharles/pyticles',np.get_include(),'.']
+include_dirs = ['/Users/acharles/masters/active/pyticles/trunk/',np.get_include(),'.']
 
 
 setup(name = 'pyticles',

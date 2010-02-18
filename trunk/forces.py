@@ -16,6 +16,7 @@ import neighbour_list
 import sys
 sys.path.append('/Users/acharles/masters/active/fsph')
 from collision import collision
+import f_properties as properties
 
 
 class Force:
@@ -322,13 +323,28 @@ class SpamForce(Force):
     def __init__(self,particles,neighbour_list,cutoff=5.0):
         Force.__init__(self,particles,neighbour_list,cutoff=cutoff)
 
+
+    def apply(self):
+        """ Apply the force to all particles in the nlist """
+        #properties.spam_properties(self.p,self.nl \
+        #    ,self.p.h[0:self.p.n],self.p.hlr[0:self.p.n])
+        #print self.p.rho
+        #1/0
+        for k in range(self.nl.nip):
+            if self.nl.rij[k]**2 <= self.cutoffsq:
+                self.apply_force(k)
+
+
     def apply_force(self,k):
         """ Calculates spam interaction between two particles.
             The spam density must have already been calculated.
         """
+
         i = self.nl.iap[k,0]
         j = self.nl.iap[k,1]
         p = self.p
+
+
         pri = self.p.p[i]
         prj = self.p.p[j]
         dwdx = self.nl.dwij[k,:]
@@ -368,10 +384,10 @@ class CohesiveSpamForce(Force):
         p = self.p
         pri = self.p.pco[i]
         prj = self.p.pco[j]
-        dwdx = self.nl.dwij[k,:]
+        dwdx = self.nl.dwij_lr[k,:]
         dv = self.nl.dv[k,:]
        
-        ps = (pri/p.rho[i]**2 + prj/p.rho[j]**2)
+        ps = (pri/p.rho_lr[i]**2 + prj/p.rho_lr[j]**2)
 
         ax = ps * dwdx[0] 
         ay = ps * dwdx[1] 

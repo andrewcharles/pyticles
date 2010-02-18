@@ -48,7 +48,7 @@ def spam_properties(p,nl,hs,hl):
     d = p.dim
     ni = nl.nip
 
-    # May want to try setting the array order to fortran, i.e.
+    # If an array is input/output, it should have the array order set to fortran
     # v = np.reshape(p.v[0:n,:].copy(),(n,d))#,order='F')
 
     v = np.reshape(p.v[0:n,:].copy(),(n,d))
@@ -110,13 +110,14 @@ def spam_properties(p,nl,hs,hl):
     grad_v = np.zeros((n,d,d),order='F')
     splib.splib.calc_grad_v(grad_v,nlist,dwdx,dv,mass,rho)
 
-    phc = p.p[0:n]
-    pco = p.pco[0:n]
+    phc = np.reshape(p.p[0:n].copy(),(n),order='F')
+    pco = np.reshape(p.pco[0:n].copy(),(n),order='F')
   
-    feos.eos.calc_vdw_temp(u,T,rho)
+    feos.eos.calc_vdw_energy(u,T,rho)
     T [T < 0.0] = 0.0
     feos.eos.calc_vdw_hc_pressure(phc,rho,u)
     feos.eos.calc_vdw_cohesive_pressure(pco,rho_lr,u)
+    feos.eos.calc_vdw_temp(u,T,rho)
 
     # Capillary pressure
      
