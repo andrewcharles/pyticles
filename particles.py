@@ -55,7 +55,7 @@ ADKE = True # Sigalotti style adaptive density kernel estimation
 AMALGAMATE = False
 SPLIT = False
 ADVECTIVE = False
-
+SPROPS = False
 
 class ParticleSystem:
     """ A group of similar particles with basic mechanical properties.
@@ -261,6 +261,7 @@ class SmoothParticleSystem(ParticleSystem):
             spacing=None,
             temperature=1.0,
             thermostat_temp=1.0,
+            thermostat=False,
             hshort=1.0,
             hlong=3.0,
             integrator='rk4',
@@ -306,6 +307,7 @@ class SmoothParticleSystem(ParticleSystem):
         #thermal properties
         self.t = np.ones(self.maxn)
         self.t[:] = temperature
+        self.thermostat=thermostat
 
         self.u = np.ones(self.maxn,dtype=float)
         self.udot = np.zeros(self.maxn,dtype=float)
@@ -422,7 +424,7 @@ class SmoothParticleSystem(ParticleSystem):
             if nl.rebuild_list:
                 nl.build()
 
-    def thermostat(self,target_temp):
+    def apply_thermostat(self,target_temp):
         """ Apply a scaling thermostat. """
         u_old =  self.u
         tav = self.t.mean()
@@ -456,7 +458,9 @@ class SmoothParticleSystem(ParticleSystem):
         self.timing['integrate time'] = time() - t
         
         self.box.apply(self)
-        #self.thermostat(self.thermostat_temp)
+
+        if self.thermostat:
+            self.apply_thermostat(self.thermostat_temp)
         
         self.timing['update time'] = time() - t1
         self.steps += 1
@@ -526,8 +530,11 @@ class SmoothParticleSystem(ParticleSystem):
 
         t = time()
 
-        
         self.timing['SPAM time'] = time() - t
+
+        if SPROPS:
+            properties.spam_properties(self,self.nl_default \
+                ,self.h[0:self.n],self.hlr[0:self.n])
         
         t = time()
         for force in self.forces:
