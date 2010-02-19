@@ -17,7 +17,7 @@ import spam_complete_force
 import numpy as np
 
 # Global variables
-MAX_STEPS = 10000
+MAX_STEPS = 2
 NDIM = 3
 XMAX = 12 
 YMAX = 12
@@ -29,8 +29,8 @@ LIVE_VIEW = False
 SIDE = (10,10,10)
 NP = SIDE[0] * SIDE[1] * SIDE[2]
 TEMPERATURE = 1.0
-HLONG = 4.0
-HSHORT = 2.0
+HLONG = 5.0
+HSHORT = 2.5
 
 ofname = 'output.nc'
 
@@ -43,11 +43,11 @@ def initialise():
     p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit='grid',vmax=VMAX
         ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX
         ,temperature=TEMPERATURE,hlong=HLONG,hshort=HSHORT)
-    nl = neighbour_list.SortedVerletList(p,cutoff=4.0)
+    nl = neighbour_list.VerletList(p,cutoff=5.0)
     p.nlists.append(nl)
     p.nl_default = nl
     p.forces.append(spam_complete_force.SpamComplete(p,nl))
-    p.forces.append(forces.FortranCollisionForce(p,nl))
+    p.forces.append(forces.FortranCollisionForce(p,nl,cutoff=0.5))
     nl.build()
     nl.separations()
     spam_properties(p,nl)
