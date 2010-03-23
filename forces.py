@@ -25,8 +25,7 @@ class Force:
         p1: The first particle set
         nl: list of interacting pairs (p1,p2)
 
-        This will become a subclass of Controller
-
+        This will become a subclass of Controller.
     """ 
 
     def __init__(self,particles,nl,cutoff=100.0):
@@ -50,6 +49,24 @@ class Force:
                 self.apply_force(k)
             else:
                 return
+
+
+class MasterSlaveCouplingForce(Force):
+    """ A boundary interaction where one particle system is
+        responsible for advancing the other.
+    """
+    def __init__(self,master_particle,slave_particle,nl,cutoff=5.0):
+        self.master = master_particle
+        self.slave = slave_particle
+        self.nl = nl
+        self.cutoff = cutoff
+        self.cutoffsq = cutoff * cutoff
+
+    def apply(self):
+        """ Apply the force to all particles in the nlist """
+        for k in range(self.nl.nip):
+            if self.nl.rij[k]**2 <= self.cutoffsq:
+                self.apply_force(k)
 
 
 class HookesForce(Force):

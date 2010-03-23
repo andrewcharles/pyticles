@@ -44,7 +44,26 @@ class PeriodicBox(Box):
             if p.r[i,2] > self.zmax:
                 p.r[i,2] = 0
             if p.r[i,2] < 0:
-                p.r[i,2] =self.zmax 
+                p.r[i,2] =self.zmax
+
+
+class PeriodicYZBox(Box):
+
+    def min_image(r):
+        print "does not exist yet"
+
+    def apply(self,p):
+         """ applies periodic boundaries """
+         for i in range(p.n):
+            if p.r[i,1] > self.ymax:
+                p.r[i,1] = 0
+            if p.r[i,1] < 0:
+                p.r[i,1] =self.ymax 
+            if p.r[i,2] > self.zmax:
+                p.r[i,2] = 0
+            if p.r[i,2] < 0:
+                p.r[i,2] =self.zmax
+
 
 class MirrorBox(Box):
 

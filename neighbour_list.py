@@ -90,13 +90,11 @@ class NeighbourList:
                 return k
         return -1
 
-
     def apply_minimum_image(self):
         for k in range(self.nip):
             self.minimum_image(self.drij[k,:],self.particle.box.xmax,
                 self.particle.box.ymax,
                 self.particle.box.zmax)
-
 
     def minimum_image(self,dr,xmax,ymax,zmax):
         """ Applies the minimum image convention to the distance
@@ -106,6 +104,19 @@ class NeighbourList:
         drx,dry,drz = dr
         if (dr[0] > xmax):
             drx = dr[0] - xmax
+        if (dr[1] > ymax):
+            dry = dr[1] - ymax 	
+        if (dr[2] > zmax):
+            drz = dr[2] - zmax
+
+        dr = (drx,dry,drz)
+
+    def minimum_image_yz(self,dr,ymax,zmax):
+        """ Applies the minimum image convention to the distance
+            between all particles in only the y and z dimensions.
+            # --- a permutation of dimensions --- #
+        """
+        drx,dry,drz = dr
         if (dr[1] > ymax):
             dry = dr[1] - ymax 	
         if (dr[2] > zmax):
@@ -291,66 +302,79 @@ class SortedVerletList(VerletList):
         self.sort_by_r()
 
 
-
 class CouplingList(NeighbourList):
     """ An nlist for two particle systems."""
-    def __init__(self,particle,cutoff,particle2=None):
+    """ iap is the interaction list
+        iap is an integer array of size [maximum interactions,2]
+        The first index is the pair index, the second is the
+        indices of the interacting particles from particle1 and
+        particle2 respectively.
+    """
+    def __init__(self,particle1,particle2,cutoff,tolerance=1.0):
+        # Declare
         self.nip = 0
-        self.particle = particle
-        if particle2 is not None:
-            self.particle2 = particle2
-        else:
-            self.particle2 = None
+        self.particle1 = particle1
+        self.particle2 = particle2
         self.cutoff_radius = cutoff 
         self.cutoff_radius_sq = cutoff**2
-        
-        if particle2 is not None:
-            self.max_interactions = (particle.maxn * particle2.maxn) / 2 - 1   
-        self.max_interactions = (particle.maxn * particle.maxn) / 2 - 1   
-        
+        self.max_interactions = (particle1.maxn * particle2.maxn)
+       
+        # Allocate
         self.iap = np.zeros((self.max_interactions,2),dtype=int)
-        self.rij = np.zeros(self.max_interactions)
-        self.drij = np.zeros((self.max_interactions,DIM))
-        self.wij = np.zeros(self.max_interactions)
-        self.dwij = np.zeros((self.max_interactions,DIM))
+        self.rij = np.zeros(self.max_interactions,dtype=float)
+        self.rsq = np.zeros(self.max_interactions,dtype=float)
+        self.drij = np.zeros((self.max_interactions,DIM),dtype=float)
+        self.wij = np.zeros(self.max_interactions,dtype=float)
+        self.wij_lr = np.zeros(self.max_interactions,dtype=float)
+        self.dwij = np.zeros((self.max_interactions,DIM),dtype=float)
+        self.dwij_lr = np.zeros((self.max_interactions,DIM),dtype=float)
+        self.dv = np.zeros((self.max_interactions,DIM),dtype=float)
+        
+        self.rebuild_list = False
+        self.nforce = 0
+        self.forces = []
+        self.tolerance_sq = tolerance * tolerance
+
         self.rebuild_list = False
         self.nforce = 0
         self.forces = []
 
-    def old_verlet_build_with_two_system_code(self):
-        """ Not sure if verlet is the right term. We build a brute
-            force list, and then eliminate pairs outside the
+    def build(self):
+        """ We build a brute force list, and then eliminate pairs outside the
             interaction radius.
-            Avoid function call overhead by just repeating the
-            distance calculation code.
         """
         cutsq = self.cutoff_radius_sq
         self.rebuild_list = True 
-        k = 0
-        if self.particle2 is None:
-            for i in range(self.particle.n):
-                for j in range(i+1,self.particle.n):
-                    self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
-                    self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
-                    self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
-                    #self.minimum_image(self.drij[k,:],XMAX/2,YMAX/2)
-                    rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
-                    if (rsquared < cutsq):
-                        self.iap[k,0] = i
-                        self.iap[k,1] = j
-                        self.rij[k] = np.sqrt(rsquared)
-                        k += 1
+        
+        i,j,k = 0,0,0
+        self.nip = 0
+        self.rebuild_list = False
+        
+        self.r_old[:,:] = self.particle.r[:,:]
+        
+        for i in range(self.particle1.n):
+            for j in range(self.particle2.n):
+                drx = self.particle2.r[j,0] - self.particle1.r[i,0]
+                dry = self.particle2.r[j,1] - self.particle1.r[i,1]
+                drz = self.particle2.r[j,2] - self.particle1.r[i,2]
+                # Apply the minimum image based on the second particle's
+                # y and z dimensions.
+                # This is a bit of a hack for our specific purposes.
+                self.minimum_image_yz((drx,dry,drz),
+                    self.particle1.box.ymax,
+                    self.particle1.box.zmax)
+                rsquared = drx**2 + dry**2 + drz**2
+                if (rsquared < cutsq + self.tolerance_sq):
+                    self.iap[k,0] = i
+                    self.iap[k,1] = j
+                    self.rij[k] = np.sqrt(rsquared)
+                    self.drij[k,0] = drx
+                    self.drij[k,1] = dry
+                    self.drij[k,2] = drz
+                    self.dv[k,0] = self.particle.v[j,0] - self.particle.v[i,0]
+                    self.dv[k,1] = self.particle.v[j,1] - self.particle.v[i,1]
+                    self.dv[k,2] = self.particle.v[j,2] - self.particle.v[i,2]
+                    self.rsq[k] = rsquared
+                    k += 1
+                    self.nip += 1
 
-        else:
-            for i in range(self.particle.n):
-                for j in range(self.particle2.n):
-                    self.drij[k,0] = self.particle2.r[j,0] - self.particle.r[i,0]
-                    self.drij[k,1] = self.particle2.r[j,1] - self.particle.r[i,1]
-                    self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
-                    #self.minimum_image(self.drij[k,:],XMAX/2,YMAX/2)
-                    rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
-                    if (rsquared < cutsq + tolerance):
-                        self.iap[k,0] = i
-                        self.iap[k,1] = j
-                        self.rij[k] = np.sqrt(rsquared)
-                        k += 1
