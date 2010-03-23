@@ -198,7 +198,7 @@ class VerletList(NeighbourList):
                 self.particle.box.ymax,
                 self.particle.box.zmax)
             rsquared = drx**2 + dry**2 + drz**2
-            if (rsquared < self.cutoff_radius_sq + self.tolerance_sq):
+            if (rsquared < (self.cutoff_radius_sq + self.tolerance_sq)):
                 self.drij[q,0] = drx
                 self.drij[q,1] = dry
                 self.drij[q,2] = drz
@@ -293,21 +293,15 @@ class SortedVerletList(VerletList):
 
 
 class CouplingList(NeighbourList):
-    """ An nlist for two particle systems."""
-    def __init__(self,particle,cutoff,particle2=None):
+    """ A neighbour list for interactions between two particle systems."""
+    def __init__(self,particle_a,particle_b,cutoff):
         self.nip = 0
-        self.particle = particle
-        if particle2 is not None:
-            self.particle2 = particle2
-        else:
-            self.particle2 = None
+        self.particle_a = particle_a
+        self.particle_b = particle_b
         self.cutoff_radius = cutoff 
         self.cutoff_radius_sq = cutoff**2
-        
-        if particle2 is not None:
-            self.max_interactions = (particle.maxn * particle2.maxn) / 2 - 1   
-        self.max_interactions = (particle.maxn * particle.maxn) / 2 - 1   
-        
+        # Compute brute force maximum interactions
+        self.max_interactions = (particle_a.maxn * particle_b.maxn) / 2. - 1   
         self.iap = np.zeros((self.max_interactions,2),dtype=int)
         self.rij = np.zeros(self.max_interactions)
         self.drij = np.zeros((self.max_interactions,DIM))
@@ -317,7 +311,7 @@ class CouplingList(NeighbourList):
         self.nforce = 0
         self.forces = []
 
-    def old_verlet_build_with_two_system_code(self):
+    def build(self):
         """ Not sure if verlet is the right term. We build a brute
             force list, and then eliminate pairs outside the
             interaction radius.
@@ -327,30 +321,21 @@ class CouplingList(NeighbourList):
         cutsq = self.cutoff_radius_sq
         self.rebuild_list = True 
         k = 0
-        if self.particle2 is None:
-            for i in range(self.particle.n):
-                for j in range(i+1,self.particle.n):
-                    self.drij[k,0] = self.particle.r[j,0] - self.particle.r[i,0]
-                    self.drij[k,1] = self.particle.r[j,1] - self.particle.r[i,1]
-                    self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
-                    #self.minimum_image(self.drij[k,:],XMAX/2,YMAX/2)
-                    rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
-                    if (rsquared < cutsq):
-                        self.iap[k,0] = i
-                        self.iap[k,1] = j
-                        self.rij[k] = np.sqrt(rsquared)
-                        k += 1
-
-        else:
-            for i in range(self.particle.n):
-                for j in range(self.particle2.n):
-                    self.drij[k,0] = self.particle2.r[j,0] - self.particle.r[i,0]
-                    self.drij[k,1] = self.particle2.r[j,1] - self.particle.r[i,1]
-                    self.drij[k,2] = self.particle.r[j,2] - self.particle.r[i,2]
-                    #self.minimum_image(self.drij[k,:],XMAX/2,YMAX/2)
-                    rsquared = self.drij[k,0]**2 + self.drij[k,1]**2 + self.drij[k,2]**2
-                    if (rsquared < cutsq + tolerance):
-                        self.iap[k,0] = i
-                        self.iap[k,1] = j
-                        self.rij[k] = np.sqrt(rsquared)
-                        k += 1
+        for i in range(self.particle.n):
+            for j in range(self.particle2.n):
+                drx = self.particle2.r[j,0] - self.particle.r[i,0]
+                dry = self.particle2.r[j,1] - self.particle.r[i,1]
+                drz = self.particle.r[j,2] - self.particle.r[i,2]
+                rsquared = drx**2 + dry**2 + drz**2
+                self.minimum_image((drx,dry,drz),self.particle.box.xmax,
+                    self.particle.box.ymax,
+                    self.particle.box.zmax) 
+                
+                if (rsquared < (cutsq + tolerance)):
+                    self.drij[k,0] = drx
+                    self.drij[k,1] = dry
+                    self.drij[k,2] = drz
+                    self.iap[k,0] = i
+                    self.iap[k,1] = j
+                    self.rij[k] = np.sqrt(rsquared)
+                    k += 1

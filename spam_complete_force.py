@@ -73,22 +73,20 @@ class SpamComplete(Force):
         ni = nl.nip
        
         # Copy / reference particle properties
-        x = np.reshape(p.r[0:n,:].copy(),(n,d),order='F')
-        v = np.reshape(p.v[0:n,:].copy(),(n,d),order='F')
-        T = np.reshape(p.t[0:n].copy(),(n),order='F')
-        mass = np.reshape(p.m[0:n].copy(),(n,1),order='F')
+        x = np.asfortranarray(p.r[0:n,:])
+        v = np.asfortranarray(p.v[0:n,:])
+        T = np.asfortranarray(p.t[0:n])
+        mass = np.asfortranarray(p.m[0:n])
         rho = np.zeros((n),order='F')
         rho_lr = np.zeros((n),order='F')
-        u = np.reshape(p.u[0:n].copy(),(n,1),order='F')
-        sml = np.reshape(p.h[0:n].copy(),(n,1),order='F')
-        sml_lr = np.reshape(p.hlr[0:n].copy(),(n,1),order='F')
+        u = np.asfortranarray(p.u[0:n])
+        sml = np.asfortranarray(p.h[0:n])
+        sml_lr = np.asfortranarray(p.hlr[0:n])
         
         # Copy / reference Neighbourly properties
-        ilist = np.reshape((nl.iap[0:ni,:]+1).copy(),(ni,2),order='F')
-        dv =  np.reshape(nl.dv[0:ni,:].copy(),(ni,d),order='F')
-        rij = np.reshape(nl.rij[0:ni].copy(),(ni,1),order='F')
+        ilist = np.asfortranarray((nl.iap[0:ni,:]+1))
+        dv =  np.asfortranarray(nl.dv[0:ni,:])
         rij = np.asfortranarray(nl.rij[0:ni])
-        drij = np.reshape(nl.drij[0:ni,:].copy(),(ni,d),order='F')
         drij = np.asfortranarray(nl.drij[0:ni,:])
         
         # New allocations
@@ -100,18 +98,14 @@ class SpamComplete(Force):
         grad_rho_lr = np.zeros((n,d),order='F')
 
         # Velocity diff
-        print 'calling dv'
         splib.splib.calc_dv(dv,ilist,v)
 
-        print 'calling kernel'
         # Kernels and kernel gradients
         w,dwdx = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml,
             self.kernel_type)
-        print 'calling kernel_lr'
         w_lr,dwdx_lr = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml_lr,
             self.kernel_type)
 
-        print 'calling density'
         # Density summation
         fkernel.kernel.density_sum(rho,grad_rho,ilist,sml,mass,w,dwdx,
             self.kernel_type)
@@ -139,7 +133,6 @@ class SpamComplete(Force):
         T [T < 0.0] = 0.0
         # print a.flags.f_contiguous
 
-        print 'calling force'
         # Call the force subroutine
         sphforce3d.sphforce3d.calc_sphforce3d( 
             ilist,x,v,a,  
@@ -150,7 +143,6 @@ class SpamComplete(Force):
             dv,rij,drij,  
             sml,sml_lr,w,dwdx,dwdx_lr)
         
-        print 'calling temp'
         feos.eos.calc_vdw_temp(u,T,rho)
 
         # Resend data to python object
