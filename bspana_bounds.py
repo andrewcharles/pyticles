@@ -1,8 +1,7 @@
 #! /usr/local/bin/python
 
 """ 
-    Batch script for Smooth Particle solver. 
-
+    Batch script for Smooth Particle solver with constraint boundaries.
 
         oooooooooo|              |..........|
         oo      oo|              |..      ..|
@@ -11,10 +10,9 @@
         oooooooooo|              |..........|
    liquid boundary|              |vapour boundary
 
-
-
     Copyright Andrew Charles 2009
     All rights reserved.
+
 """
 
 import sys
@@ -27,9 +25,9 @@ import spam_complete_force
 # Global variables
 MAX_STEPS = 5
 NDIM = 3
-XMAX = 12
-YMAX = 12
-ZMAX = 12
+XMAX = 24
+YMAX = 8
+ZMAX = 8 
 VMAX = 0.0
 dt = 0.05
 SPACING = 0.9
@@ -52,10 +50,22 @@ nl.build()
 nl.separations()
 spam_properties(p,nl)
 
+
+# Indices of particles in the liquid boundary
+liquid_indices = p.r[:,0] >= 8
+vapour_indices = p.r[:,0] <= 16
+
+
 print "STEP   INT  DERIV =  PAIR + SPAM +  FORCE   "
 for i in range(MAX_STEPS):
     tstart = time()
     p.update(dt)
+
+    # Apply the constraint at the level of the main loop
+    # This only works in python
+    
+
+
     print "%5.3f  " %(time() - tstart)             \
          + "%5.3f  " %(p.timing['integrate time']) \
          + "%5.3f  " %(p.timing['deriv time'])     \
