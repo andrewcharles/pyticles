@@ -24,8 +24,6 @@
     of which one 6 x 12 x 12 end is constrained to liquid and
     one 6 x 12 x 12 end is constrained to vapour.
 
-    
-    
     Copyright Andrew Charles 2009
     All rights reserved.
 """
@@ -69,7 +67,7 @@ LIQX = 3.0
 VAPX = 6.0
 
 VMAX = 0.0
-dt = 0.1
+dt = 0.05
 SPACING = 1.0
 NP = SIDE[0]*SIDE[1]*SIDE[2]
 TEMPERATURE = 1.0
@@ -83,10 +81,9 @@ RHO_GAS = 0.2
 p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX
     ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
 s = pview.ZPRView(p)
-nl = neighbour_list.VerletList(p,cutoff=5.0)
+nl = neighbour_list.VerletList(p,cutoff=4.0)
 liquid_indices = p.r[:,0] <= LIQX
 vapour_indices = p.r[:,0] >= VAPX
-
 
 lr = p.r[liquid_indices,:].copy()
 vr = p.r[vapour_indices,:].copy()
@@ -115,11 +112,10 @@ def update(t):
     else:
 
         #save the positions of the liquid particles
-        #lr = p.r[liquid_indices,:].copy()
-        #vr = p.r[vapour_indices,:].copy()
-        
         #liquid_indices = p.r[:,0] <= LIQX
         #vapour_indices = p.r[:,0] >= VAPX
+        #lr = p.r[liquid_indices,:].copy()
+        #vr = p.r[vapour_indices,:].copy()
         p.update(dt)
         p.r[liquid_indices,:] = lr
         p.r[vapour_indices,:] = vr
@@ -131,7 +127,14 @@ def update(t):
             idx = vapour_indices[i]
             set_mass(p.rho[idx],RHO_GAS,p.m[idx])
 
-    
+        # Now keep any new particles out of
+        # the liquid area
+        #new_liquid_indices = (p.r[:,0] <= LIQX ) & - liquid_indices 
+        #new_vapour_indices = (p.r[:,0] >= VAPX ) & - vapour_indices
+        #p.r[new_liquid_indices,0] = LIQX
+        #p.r[new_vapour_indices,0] = VAPX
+
+
         #print 'rhomin',p.rho[0:p.n].min()
         #print 'rhomean',p.rho[0:p.n].mean()
         #print 'rhomax',p.rho[0:p.n].max()
@@ -166,15 +169,13 @@ def initialise():
     p.m[vapour_indices] = 0.5
 
     print np.mean(p.t)
-    nl = neighbour_list.SortedVerletList(p,cutoff=5.0)
-    #nl = neighbour_list.VerletList(p,cutoff=1.0)
-    #nl_2 = neighbour_list.VerletList(p,cutoff=5.0)
+    nl = neighbour_list.SortedVerletList(p,cutoff=4.0)
     
     p.nlists.append(nl)
     p.nl_default = nl
 
     p.forces.append(spam_complete_force.SpamComplete(p,nl))
-    p.forces.append(forces.FortranCollisionForce(p,nl,cutoff=0.6))
+    #p.forces.append(forces.FortranCollisionForce(p,nl,cutoff=0.6))
 
     nl.build()
     nl.separations()
