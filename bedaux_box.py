@@ -21,8 +21,9 @@
 
     36 x 12 x 12
 
-    of which one 6 x 12 x 12 end is constrained to liquid and
-    one 6 x 12 x 12 end is constrained to vapour.
+    The initial plan was to have one 6 x 12 x 12 end 
+    constrained to liquid and one 6 x 12 x 12 end 
+    constrained to vapour. I am no longer doing this.
 
     Copyright Andrew Charles 2009
     All rights reserved.
