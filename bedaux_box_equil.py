@@ -15,11 +15,14 @@
     rho_molar_liq = 3.1 x 10^4 molm^-3
     rho_molar_gas = 0.6
     
-    Molar mass of water is 18.0153 gmol-1
+    Molar mass of water is 18.0153 gmol-1:w
+
+    What mass is each SPH particle?
+
 
     Box size is
 
-    36 x 12 x 12
+    36 x 12 x 12 in scaling lengths x_s
 
     The initial plan was to have one 6 x 12 x 12 end 
     constrained to liquid and one 6 x 12 x 12 end 
@@ -37,15 +40,17 @@ import profile
 import neighbour_list
 from pyglet.gl import *
 from properties import spam_properties
+from spam_nc import create_sph_ncfile, write_step
 import numpy as np
 import spkernel, spdensity
 
 # Global variables
-MAX_STEPS = 1000
+MAX_STEPS = 10
 
 XMAX = 36 
 YMAX = 12
 ZMAX = 12 
+NDIM = 3
 SIDE = (18,6,6)
 VMAX = 0.0
 dt = 0.05
@@ -55,11 +60,6 @@ TEMPERATURE = 1.0
 HLONG = 4.0
 HSHORT = 2.0
 RINIT = 'grid'
-
-p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX
-    ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
-s = pview.ZPRView(p)
-nl = neighbour_list.VerletList(p,cutoff=4.0)
 
 cnt = 0
 fps = 0
@@ -81,7 +81,6 @@ spam_properties(p,nl)
 cnt = 0
 attribs = {'name':'Andrew', 'age':33}
 create_sph_ncfile(ofname,attribs,NP,NDIM)
-initialise()
 print "STEP   INT  DERIV =  PAIR + SPAM +  FORCE   "
 for i in range(MAX_STEPS):
     tstart = time()
