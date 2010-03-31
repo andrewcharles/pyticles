@@ -52,6 +52,7 @@ from pyglet.gl import *
 from properties import spam_properties
 import numpy as np
 import spkernel, spdensity
+import box
 
 # Global variables
 MAX_STEPS = 1000
@@ -72,12 +73,12 @@ VMAX = 0.0
 dt = 0.1
 SPACING = 1.0
 NP = SIDE[0]*SIDE[1]*SIDE[2]
-TEMPERATURE = 1.0
+TEMPERATURE = 0.5
 HLONG = 4.0
 HSHORT = 2.0
 RINIT = 'grid'
 
-RHO_LIQ = 1.0
+RHO_LIQ = 2.0
 RHO_GAS = 0.2
 
 p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX
@@ -154,9 +155,10 @@ def on_key_press(symbol,modifiers):
 def initialise():
     global p,nl,cnt,buttons,liquid_indices,vapour_indices
     print "Restarting"
+    pbox = box.PeriodicBox(p=p,xmax=XMAX,ymax=YMAX,zmax=ZMAX)
     p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX
         ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX
-        ,temperature=TEMPERATURE,hlong=HLONG,hshort=HSHORT
+        ,temperature=TEMPERATURE,hlong=HLONG,hshort=HSHORT,simbox=pbox
         ,thermostat_temp=TEMPERATURE,thermostat=True)
 
     #p.v = (np.random.random([NP,3]) - 0.5) * 2
@@ -166,7 +168,7 @@ def initialise():
     p.m[vapour_indices] = 0.5
 
     print np.mean(p.t)
-    nl = neighbour_list.SortedVerletList(p,cutoff=5.0)
+    nl = neighbour_list.VerletList(p,cutoff=5.0)
     #nl = neighbour_list.VerletList(p,cutoff=1.0)
     #nl_2 = neighbour_list.VerletList(p,cutoff=5.0)
     
