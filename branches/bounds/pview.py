@@ -914,8 +914,6 @@ class ZPRView(SmoothParticleView):
         glEnable(GL_LIGHTING)
         glEnable(GL_CULL_FACE)
 
-
-
     def redraw(self,p):
         t = time()
         self.win.dispatch_events()
@@ -927,3 +925,20 @@ class ZPRView(SmoothParticleView):
         self.density_histogram(p)
         self.draw_box()
         self.timing['Draw time'] = time() - t
+
+
+class ZPRMultiView(ZPRView):
+    def redraw(self,p1,p2,p3):
+        t = time()
+        self.win.dispatch_events()
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        #self.render_density(p)
+        self.hud(p1)
+        #self.draw_neighbours(p)
+        self.draw_particles(p1)
+        self.draw_particles(p2)
+        self.draw_particles(p3)
+        self.density_histogram(p1)
+        self.draw_box()
+        self.timing['Draw time'] = time() - t
+

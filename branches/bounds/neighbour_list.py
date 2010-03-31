@@ -322,6 +322,7 @@ class CouplingList(NeighbourList):
         # Allocate
         self.iap = np.zeros((self.max_interactions,2),dtype=int)
         self.rij = np.zeros(self.max_interactions,dtype=float)
+        self.rij_old = np.zeros(self.max_interactions,dtype=float)
         self.rsq = np.zeros(self.max_interactions,dtype=float)
         self.drij = np.zeros((self.max_interactions,DIM),dtype=float)
         self.wij = np.zeros(self.max_interactions,dtype=float)
@@ -350,7 +351,7 @@ class CouplingList(NeighbourList):
         self.nip = 0
         self.rebuild_list = False
         
-        self.r_old[:,:] = self.particle.r[:,:]
+        self.rij_old[:] = self.rij[:]
         
         for i in range(self.particle1.n):
             for j in range(self.particle2.n):
@@ -371,10 +372,35 @@ class CouplingList(NeighbourList):
                     self.drij[k,0] = drx
                     self.drij[k,1] = dry
                     self.drij[k,2] = drz
-                    self.dv[k,0] = self.particle.v[j,0] - self.particle.v[i,0]
-                    self.dv[k,1] = self.particle.v[j,1] - self.particle.v[i,1]
-                    self.dv[k,2] = self.particle.v[j,2] - self.particle.v[i,2]
+                    self.dv[k,0] = self.particle2.v[j,0] - self.particle1.v[i,0]
+                    self.dv[k,1] = self.particle2.v[j,1] - self.particle1.v[i,1]
+                    self.dv[k,2] = self.particle2.v[j,2] - self.particle1.v[i,2]
                     self.rsq[k] = rsquared
                     k += 1
                     self.nip += 1
+
+    def separations(self):
+        """ Computes the distance between pairs in the list and stores
+            the result in the array rij, indexed by the same k that
+            indexes the interacting pairs array iap.
+        """
+        for k in range(self.nip):
+            i = self.iap[k,0]
+            j = self.iap[k,1]
+            drx = self.particle2.r[j,0] - self.particle1.r[i,0]
+            dry = self.particle2.r[j,1] - self.particle1.r[i,1]
+            drz = self.particle2.r[j,2] - self.particle1.r[i,2]
+            self.minimum_image_yz((drx,dry,drz),
+                self.particle1.box.ymax,
+                self.particle1.box.zmax)
+            rsquared = drx**2 + dry**2 + drz**2
+            self.rij[k] = np.sqrt(rsquared)
+            self.drij[k,0] = drx
+            self.drij[k,1] = dry
+            self.drij[k,2] = drz
+            self.dv[k,0] = self.particle2.v[j,0] - self.particle1.v[i,0]
+            self.dv[k,1] = self.particle2.v[j,1] - self.particle1.v[i,1]
+            self.dv[k,2] = self.particle2.v[j,2] - self.particle1.v[i,2]
+            self.rsq[k] = rsquared
+
 
