@@ -15,11 +15,12 @@ import controller
 
 class Box(controller.Controller):
     
-    def __init__(self,p='none',xmax=64,ymax=48,zmax=100):
+    def __init__(self,p='none',dimensions=((0,64),(0,64),(0,64)),
+        xmax=64,ymax=48,zmax=100):
         self.p = p
-        self.xmax = xmax
-        self.ymax = ymax
-        self.zmax = zmax
+        self.xmax = dimensions[0][1]
+        self.ymax = dimensions[1][1]
+        self.zmax = dimensions[2][1]
 
     def apply(self):
         print "Do nothing"

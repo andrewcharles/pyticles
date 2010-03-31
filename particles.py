@@ -65,9 +65,7 @@ class ParticleSystem:
             d=3,
             maxn=125,
             controllers=[],
-            xmax=XMAX,
-            ymax=YMAX,
-            zmax=ZMAX,
+            dimensions=((0,XMAX),(0,YMAX),(0,ZMAX)) ,
             vmax=VMAX,
             simbox=None,
             mass=1.0,
@@ -98,7 +96,7 @@ class ParticleSystem:
 
         # Basic mechanical properties
         if not simbox:
-            self.box = box.MirrorBox(p=self,xmax=xmax,ymax=ymax,zmax=zmax)
+            self.box = box.MirrorBox(p=self,dimensions=dimensions)
         else:
             self.box = simbox
        
@@ -109,6 +107,9 @@ class ParticleSystem:
 
         self.step = integrator_mapping[integrator]
 
+        xmax = self.box.xmax
+        ymax = self.box.ymax
+        zmax = self.box.zmax
 
         # Start with a random configuration
         self.r = self.box.xmax * np.random.random([self.maxn,self.dim])
@@ -251,9 +252,7 @@ class SmoothParticleSystem(ParticleSystem):
             d=3,
             maxn=100,
             controllers=[],
-            xmax=XMAX,
-            ymax=YMAX,
-            zmax=ZMAX,
+            dimensions=((0,XMAX),(0,YMAX),(0,ZMAX)) ,
             vmax=VMAX,
             rinit=None,
             side=None,
@@ -267,9 +266,7 @@ class SmoothParticleSystem(ParticleSystem):
             integrator='rk4',
             simbox=None):
         ParticleSystem.__init__(self,n=n,d=d,
-            xmax=xmax,
-            ymax=ymax,
-            zmax=zmax,
+            dimensions=dimensions,
             rinit=rinit,
             side=side,
             mass=mass,
