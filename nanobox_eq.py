@@ -9,7 +9,7 @@
     a = 7.45e+04
     b = 5.84e-01
     kb = 3.29e+04
-    Particle mass 7.21
+    Particle mass 0.1386
     Temperature 0.95
 
     ## Copyright Andrew Charles, RMIT 2010                ###
@@ -36,7 +36,8 @@ XMAX = 10
 YMAX = 10
 ZMAX = 10 
 NDIM = 3
-SIDE = (10,10,10)
+#SIDE = (10,10,10)
+SIDE = (3,3,3)
 VMAX = 0.0
 dt = 0.05
 SPACING = 1.0
@@ -48,7 +49,7 @@ RINIT = 'grid'
 ascl = 7.45e+04
 bscl = 5.84e-01
 kbscl = 3.29e+04
-pmass = 7.21
+pmass = 1.386e-01
 
 cnt = 0
 fps = 0
