@@ -8,7 +8,6 @@ from forces import Force
 """
 
 import sys
-sys.path.append('/Users/acharles/masters/active/fsph')
 import fkernel
 import splib
 import feos
@@ -63,6 +62,20 @@ class SpamComplete(Force):
 
     def apply(self):
         """ Calculates spam interaction between all particles.
+
+            2010-07-31
+            Performance may be impacted by array copies. Currently
+            the only copy in the fortran calls is the ilist.
+            Having to copy the particle variables is a tiny fraction
+            of the cost of this function call.
+            For 8^3 particles we have (roughly)
+            0.05 s for kernels
+            0.01 s for density
+            0.17 s for force
+
+            print is 10 microseconds
+
+            So there is some
         """
         p = self.p
         nl = self.nl
@@ -71,9 +84,10 @@ class SpamComplete(Force):
         n = p.n
         d = p.dim
         ni = nl.nip
-       
+
+        t = time()
         # Copy / reference particle properties
-        x = np.asfortranarray(p.r[0:n,:])
+        x = np.asfortranarray(p.r[0:n,:])   
         v = np.asfortranarray(p.v[0:n,:])
         T = np.asfortranarray(p.t[0:n])
         mass = np.asfortranarray(p.m[0:n])
@@ -96,21 +110,26 @@ class SpamComplete(Force):
         grad_rho = np.zeros((n,d),order='F')
         grad_v = np.zeros((n,d,d),order='F')
         grad_rho_lr = np.zeros((n,d),order='F')
+        print time()-t,'init'
 
         # Velocity diff
         splib.splib.calc_dv(dv,ilist,v)
 
+        t = time()
         # Kernels and kernel gradients
         w,dwdx = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml,
             self.kernel_type)
         w_lr,dwdx_lr = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml_lr,
             self.kernel_type)
+        print time()-t,'kernels'
 
+        t = time()
         # Density summation
         fkernel.kernel.density_sum(rho,grad_rho,ilist,sml,mass,w,dwdx,
             self.kernel_type)
         fkernel.kernel.density_sum(rho_lr,grad_rho_lr,ilist,sml_lr,mass,w_lr,
             dwdx_lr,self.kernel_type)
+        print time()-t,'density'
 
         feos.eos.calc_vdw_temp(u,T,rho)
 
@@ -133,6 +152,7 @@ class SpamComplete(Force):
         T [T < 0.0] = 0.0
         # print a.flags.f_contiguous
 
+        t = time()
         # Call the force subroutine
         sphforce3d.sphforce3d.calc_sphforce3d( 
             ilist,x,v,a,  
@@ -142,6 +162,7 @@ class SpamComplete(Force):
             c,eta,zeta,               
             dv,rij,drij,  
             sml,sml_lr,w,dwdx,dwdx_lr)
+        print time()-t,'force'
         
         feos.eos.calc_vdw_temp(u,T,rho)
 

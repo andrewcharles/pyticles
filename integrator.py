@@ -38,12 +38,15 @@ def euler(get_state,calc_derivs,get_derivs,set_state,dt):
     x = x+xdot*dt
     set_state(x)
 
+from time import time
 def imp_euler(get_state,calc_derivs,get_derivs,set_state,dt):
     """ Improved euler integration (two step predictor-corrector
     """
-    # First guess 
+    # First guess
     calc_derivs()
+    t = time()
     x_start = get_state()
+    print t - time(),'getstate'
     xdot = get_derivs()
     c1 = xdot*dt
     # Take Euler step and get the second term
