@@ -5,10 +5,10 @@
     Designed so that the neighbour list and force
     modules are accessed through here.
 
-    I have a particle system class and a smooth particle system
-    class because I am interested in the bits that are needed
-    for a minimal particle system, and the bits that are added to
-    make it an sph system.
+    Classes
+    -------
+    ParticleSystem
+    SmoothParticleSystem (inherits from ParticleSystem)
 
     Copyright Andrew Charles 2008
     All rights reserved.
@@ -238,13 +238,15 @@ class SmoothParticleSystem(ParticleSystem):
     """A particle system with additional properties to solve smooth
     particle equations of motion.
 
-    This is actually a long-range/short range smooth particle system.
+    A long-range/short range smooth particle system.
     I'd like to make the way this is structured more elegant - would
     like to have a simple smooth particle system, and have the long-short
     one inherit from it. Another solution is to have a smooth properties
     class and let the smooth particle system have multiple instances.
 
     As I don't know the best solution I am going to think on it.
+
+
     """
 
     def __init__(self,n,
@@ -264,7 +266,7 @@ class SmoothParticleSystem(ParticleSystem):
             thermostat=False,
             hshort=1.0,
             hlong=3.0,
-            integrator='rk4',
+            integrator='ieuler',
             simbox=None):
         ParticleSystem.__init__(self,n=n,d=d,
             xmax=xmax,
@@ -434,8 +436,12 @@ class SmoothParticleSystem(ParticleSystem):
         uenv = self.u.sum() - u_old.sum()
 
     def update(self,dt):
-        """ Update the particle system, using the
-            neighbour list supplied.
+        """ Update the particle system.
+
+            The time() command seems to take about
+            10e-6 seconds to 
+            print is 10 microseconds
+            
         """
         t1 = time()
 
