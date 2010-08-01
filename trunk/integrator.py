@@ -1,6 +1,8 @@
 """ This module contains generic numerical integration methods.
     Copyright (C) Andrew Charles 2008
     BSD License
+
+    Most time is taken up in calc_derivs
     
 """
 # scipy integrators have the interface
@@ -44,9 +46,7 @@ def imp_euler(get_state,calc_derivs,get_derivs,set_state,dt):
     """
     # First guess
     calc_derivs()
-    t = time()
     x_start = get_state()
-    print t - time(),'getstate'
     xdot = get_derivs()
     c1 = xdot*dt
     # Take Euler step and get the second term

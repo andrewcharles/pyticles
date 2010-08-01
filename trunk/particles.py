@@ -51,7 +51,7 @@ VACUUM_VISCOSITY = 0.1
 RAMAL = 0.5  #Amalgamation radius
 VSPLIT = 10.0 
 rhosplit = 0.0
-ADKE = True # Sigalotti style adaptive density kernel estimation
+ADKE = False # Sigalotti style adaptive density kernel estimation
 AMALGAMATE = False
 SPLIT = False
 ADVECTIVE = False
@@ -219,6 +219,8 @@ class ParticleSystem:
         """ Compute the rate of change of each variable 
             for every particle. The force.apply() call
             accumulates the forces.
+            This is the expensive part of the program.
+            
         """
         self.rdot = self.v
         self.vdot[:,:] = 0.0
@@ -452,23 +454,23 @@ class SmoothParticleSystem(ParticleSystem):
 
         t = time()
         self.rebuild_lists()
-        self.timing['nlist rebuild time'] = time() - t
+        self.timing['1. nlist rebuild time'] = time() - t
         
         t = time()
         self.derivatives()
-        self.timing['deriv time'] = time() - t
+        self.timing['2. deriv time'] = time() - t
        
         t = time()
         self.step(self.gather_state,self.derivatives, \
             self.gather_derivatives,self.scatter_state,dt)
-        self.timing['integrate time'] = time() - t
+        self.timing['3. integrate time'] = time() - t
         
         self.box.apply(self)
 
         if self.thermostat:
             self.apply_thermostat(self.thermostat_temp)
         
-        self.timing['update time'] = time() - t1
+        self.timing['4.update time'] = time() - t1
         self.steps += 1
 
     def gather_state(self):
@@ -531,7 +533,8 @@ class SmoothParticleSystem(ParticleSystem):
         for nl in self.nlists: 
             nl.separations()
             #nl.apply_minimum_image()
-    
+
+        print 'DERIVATIVES TIMING'
         self.timing['pairsep time'] = (time() - t)
 
         t = time()
