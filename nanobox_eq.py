@@ -82,9 +82,11 @@ for i in range(MAX_STEPS):
     if i % 10 == 0:
         write_step(ofname,p)
     print 'Step',i,time()-tstart
-    print p.timing
+    g = p.timing.keys()
+    g.sort()
+    for k in g:
+        print k,p.timing[k]
 print 'Completed',i,'steps'
-
 
 
 
