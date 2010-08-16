@@ -454,23 +454,24 @@ class SmoothParticleSystem(ParticleSystem):
 
         t = time()
         self.rebuild_lists()
-        self.timing['1. nlist rebuild time'] = time() - t
-        
+        self.timing['nlist rebuild time'] = time() - t
+
+        # Is this derivative step required?
         t = time()
         self.derivatives()
-        self.timing['2. deriv time'] = time() - t
+        self.timing['deriv time'] = time() - t
        
         t = time()
         self.step(self.gather_state,self.derivatives, \
             self.gather_derivatives,self.scatter_state,dt)
-        self.timing['3. integrate time'] = time() - t
+        self.timing['integrate time'] = time() - t
         
         self.box.apply(self)
 
         if self.thermostat:
             self.apply_thermostat(self.thermostat_temp)
         
-        self.timing['4.update time'] = time() - t1
+        self.timing['update time'] = time() - t1
         self.steps += 1
 
     def gather_state(self):
@@ -533,17 +534,13 @@ class SmoothParticleSystem(ParticleSystem):
         for nl in self.nlists: 
             nl.separations()
             #nl.apply_minimum_image()
-
-        print 'DERIVATIVES TIMING'
         self.timing['pairsep time'] = (time() - t)
 
         t = time()
-
-        self.timing['SPAM time'] = time() - t
-
         if SPROPS:
             properties.spam_properties(self,self.nl_default \
                 ,self.h[0:self.n],self.hlr[0:self.n])
+        self.timing['SPAM time'] = time() - t
         
         t = time()
         for force in self.forces:

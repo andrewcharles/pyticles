@@ -43,3 +43,16 @@ pairtime - 0.002
 
 about an order of magnitude reduction, but still not spectacular. Maybe it's the object references?
 
+2010-August
+
+Still it's too slow for sytems of thousands of particles.
+The most time now is spent on force computation, although pair seperation is
+also major, at about half the time of force compute. Weighing up whether to write
+a fortran front end (sp3d) to get the optimisation going, or work with python.
+
+One place to look at is the wraptest.py script (consider changing the name to
+something more descriptive... )
+
+
+
+

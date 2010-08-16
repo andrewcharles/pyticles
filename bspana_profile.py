@@ -4,6 +4,13 @@
     Batch script for Smooth Particle solver. 
     Copyright Andrew Charles 2009
     All rights reserved.
+
+    Results go here.
+    2010-08-15
+    5x5x5 seperated by .9
+
+
+
 """
 
 import sys
@@ -23,7 +30,7 @@ VMAX = 0.0
 dt = 0.05
 SPACING = 0.9
 LIVE_VIEW = False
-SIDE = (5,5,5)
+SIDE = (6,6,6)
 NP = SIDE[0] * SIDE[1] * SIDE[2]
 TEMPERATURE = 1.8
 HLONG = 4.0
@@ -51,5 +58,6 @@ for i in range(MAX_STEPS):
          + "%5.3f  " %(p.timing['pairsep time'])   \
          + "%5.3f  " %(p.timing['SPAM time'])     \
          + "%5.3f  " %(p.timing['force time'])
+    print nl.nip
 
 
