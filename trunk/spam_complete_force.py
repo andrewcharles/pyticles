@@ -64,10 +64,10 @@ class SpamComplete(Force):
         """ Calculates spam interaction between all particles.
 
             2010-07-31
-            Performance may be impacted by array copies. Currently
-            the only copy in the fortran calls is the ilist.
-            Having to copy the particle variables is a tiny fraction
-            of the cost of this function call.
+            Performance may be impacted by array copies? Not likely. 
+            Currently the only copy in the fortran calls is the ilist.  Having
+            to copy the particle variables is a tiny fraction of the cost of
+            this function call.
             For 8^3 particles we have (roughly)
             0.05 s for kernels
             0.01 s for density
@@ -75,7 +75,7 @@ class SpamComplete(Force):
 
             print is 10 microseconds
 
-            So there is some
+            So the bulk of the expense is in the fortran 3d force subroutine.
         """
         p = self.p
         nl = self.nl
@@ -110,7 +110,7 @@ class SpamComplete(Force):
         grad_rho = np.zeros((n,d),order='F')
         grad_v = np.zeros((n,d,d),order='F')
         grad_rho_lr = np.zeros((n,d),order='F')
-        print time()-t,'init'
+        #print time()-t,'init'
 
         # Velocity diff
         splib.splib.calc_dv(dv,ilist,v)
@@ -121,7 +121,7 @@ class SpamComplete(Force):
             self.kernel_type)
         w_lr,dwdx_lr = fkernel.kernel.smoothing_kernels(rij,drij,ilist,sml_lr,
             self.kernel_type)
-        print time()-t,'kernels'
+        #print time()-t,'kernels'
 
         t = time()
         # Density summation
@@ -129,7 +129,7 @@ class SpamComplete(Force):
             self.kernel_type)
         fkernel.kernel.density_sum(rho_lr,grad_rho_lr,ilist,sml_lr,mass,w_lr,
             dwdx_lr,self.kernel_type)
-        print time()-t,'density'
+        #print time()-t,'density'
 
         feos.eos.calc_vdw_temp(u,T,rho)
 
@@ -154,6 +154,7 @@ class SpamComplete(Force):
 
         t = time()
         # Call the force subroutine
+        # This is where the majority of time is spent
         sphforce3d.sphforce3d.calc_sphforce3d( 
             ilist,x,v,a,  
             p_rev,p_rev_lr,pi_irr,          
@@ -162,7 +163,7 @@ class SpamComplete(Force):
             c,eta,zeta,               
             dv,rij,drij,  
             sml,sml_lr,w,dwdx,dwdx_lr)
-        print time()-t,'force'
+        #print time()-t,'force'
         
         feos.eos.calc_vdw_temp(u,T,rho)
 
