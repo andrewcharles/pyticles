@@ -3,6 +3,10 @@ import unittest
 class ForceTest(unittest.TestCase):
     """ Test the sph force subroutine. """
 
+    def test_spam_complete_force():
+        """ """
+        pass
+
     def test_spam_force(self):
         import particles
         import neighbour_list
