@@ -1,6 +1,7 @@
 ========
 Pyticles
 ========
+
 Pyticles is a set of python modules for physical modelling using particles.
 
 The main conceptual objects are particles, neighbour lists, boxes and forces.
