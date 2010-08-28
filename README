@@ -18,6 +18,11 @@ Dependencies
 Numpy
 Scipy
 Cython
+
+For visualisation modules:
+Pyglet
+pygarrayimage (<BS>http://pypi.python.org/pypi/pygarrayimage)
+
 rsp-fsp-spac
 
 
@@ -114,8 +119,7 @@ ac1201@gmail.com
 3. Fast prototyping of new algoritms
 4. Integration with the fortran code
 
-Pyticles uses Pyglet by Alex Holkner, which is subject to its own license
-and so forth. I encourage you to check out the Pyglet web site.
+Pyticles uses Pyglet by Alex Holkner.
 
 
 

@@ -27,6 +27,12 @@
 
     Copyright Andrew Charles 2009
     All rights reserved.
+
+    You know, this script should define its own viewer...
+    That would stop the particle viewer becoming a cruft of
+    options.
+
+
 """
 
 SPAMCOMPLETE = True
@@ -40,7 +46,6 @@ import pyglet
 import box
 from pyglet.window import mouse
 import pview
-import profile
 import neighbour_list
 from pyglet.gl import *
 from properties import spam_properties
@@ -50,15 +55,15 @@ import spkernel, spdensity
 # Global variables
 MAX_STEPS = 100000
 
-XMAX = 4
-YMAX = 4
-ZMAX = 4 
+XMAX = 8
+YMAX = 8
+ZMAX = 8 
 NDIM = 3
 #SIDE = (10,10,10)
-SIDE = (4,4,4)
+SIDE = (5,5,5)
 VMAX = 0.0
 dt = 0.01
-SPACING = 1.0
+SPACING = 0.5
 NP = SIDE[0]*SIDE[1]*SIDE[2]
 TEMPERATURE = 0.2
 HLONG = 4.0
@@ -78,7 +83,7 @@ p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX
     ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX
     ,temperature=TEMPERATURE,hlong=HLONG,hshort=HSHORT,
     thermostat_temp=TEMPERATURE,thermostat=True,mass=pmass,simbox=box)
-nl = neighbour_list.VerletList(p,cutoff=5.0)
+nl = neighbour_list.VerletList(p,cutoff=4.0)
 s = pview.ZPRView(p)
 p.nlists.append(nl)
 p.nl_default = nl
@@ -104,10 +109,10 @@ def update(t):
         pyglet.app.exit()
     else:
         p.update(dt)
-        print 'update',time() - t
-        if np.any(nl.drij[:,:] > 2.0):
-            print 'wtf'
-            print (nl.drij > 2.0).size
+        #print 'update',time() - t
+        #if np.any(nl.drij[:,:] > 2.0):
+        #    print 'wtf'
+        #    print (nl.drij > 2.0).size
 
 def redraw(t):
     s.redraw(p)
@@ -117,7 +122,7 @@ def on_draw():
     t = time()
     s.clear()
     s.redraw(p)
-    print 'draw',time() - t
+    #print 'draw',time() - t
 
 
 def main():

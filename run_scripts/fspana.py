@@ -23,7 +23,6 @@ elif CFORCES:
 import pyglet
 from pyglet.window import mouse
 import pview
-import profile
 import neighbour_list
 from pyglet.gl import *
 from properties import spam_properties
@@ -37,9 +36,9 @@ ZMAX = 20
 VMAX = 0.0
 dt = 0.1
 SPACING = 1.0
-SIDE = (4,4,4)
+SIDE = (7,7,7)
 NP = SIDE[0]*SIDE[1]*SIDE[2]
-TEMPERATURE = 0.2
+TEMPERATURE = 0.5
 HLONG = 5.0
 HSHORT = 2.5
 RINIT = 'grid'
