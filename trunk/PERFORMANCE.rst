@@ -51,7 +51,7 @@ also major, at about half the time of force compute. Weighing up whether to writ
 a fortran front end (sp3d) to get the optimisation going, or work with python.
 
 One place to look at is the wraptest.py script (consider changing the name to
-something more descriptive... )
+something more descriptive... ) in fsp
 
 
 

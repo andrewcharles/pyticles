@@ -12,8 +12,7 @@ import sys
 import time
 import particles
 import pyglet
-import spview
-import profile
+import pview
 pyglet.options['debug_gl'] = False
 from pyglet.gl import *
 
@@ -23,7 +22,7 @@ NP1 = 25
 WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 480
 
-p = particles.Particles(NP1)
+p = particles.ParticleSystem(NP1)
 
 cnt = 0
 fps = 0

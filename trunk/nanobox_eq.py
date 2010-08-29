@@ -58,7 +58,7 @@ p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX
     ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX
     ,temperature=TEMPERATURE,hlong=HLONG,hshort=HSHORT,
     thermostat_temp=TEMPERATURE,thermostat=True,mass=pmass)
-nl = neighbour_list.VerletList(p,cutoff=5.0)
+nl = neighbour_list.VerletList(p,cutoff=HLONG)
 p.nlists.append(nl)
 p.nl_default = nl
 p.forces.append(spam_complete_force.SpamComplete(p,nl,adash=ascl,bdash=bscl

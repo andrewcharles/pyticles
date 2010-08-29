@@ -52,5 +52,7 @@ class NeighbourListTest(unittest.TestCase):
         nl.ponder_rebuild()
         self.assertEqual(nl.rebuild_list,True)
 
+ 
 if __name__=='__main__':
 	unittest.main()
+

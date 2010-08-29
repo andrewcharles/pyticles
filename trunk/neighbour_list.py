@@ -1,10 +1,11 @@
 """
     Neighbour list class that works with particle and force
-    Copyright Andrew Charles 2008
+    Copyright Andrew Charles
+    Written 2008
     All rights reserved.
 
     iap[] is always the list of particles for the purposes of interaction.
-    todo: add Pd's sophisticated minimum image for non-rectangular boxes?
+    todo: add PD's sophisticated minimum image for non-rectangular boxes?
 
 """
 import numpy as np

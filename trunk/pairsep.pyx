@@ -48,10 +48,14 @@ def pairsep(nl):
     _pairs = nl.iap.astype(np.int)
     _r = nl.particle.r.astype(DTYPE)
     _v = nl.particle.v.astype(DTYPE)
+    
     _dr = np.zeros((nk,dim))
     _ds = np.zeros(nk)
     _dv =  np.zeros((nk,dim))
     _rsq =  np.zeros(nk)
+
+    # Which is faster?
+    #_dr = nl.rij.astype(np.float)
     #_ds = nl.rij.astype(np.float)
     #_dv = nl.dv.astype(np.float)
     #_rsq = nl.rsq.astype(np.float)
