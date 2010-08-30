@@ -13,7 +13,7 @@ for j in range(1):
         fname = 'pairtime' + str(j) + '.dat'
         ofile = open(fname,'w')
 
-        for n in range(3,150):
+        for n in range(3,100):
                 p = particles.ParticleSystem(n,d=3,maxn=n)
                 for i in range(n):
                         p.r[i,:] = np.random.random(3) * 10

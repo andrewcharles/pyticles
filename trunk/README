@@ -16,8 +16,9 @@ f_properties.py -- calls wrapped Fortran modules
 Dependencies
 ------------
 Numpy
-Scipy
-Cython
+Scipy (ubuntu packages for scipy and numpy are just fine)
+Cython (sudo apt-get setuptools, easy_install cython)
+
 
 For visualisation modules:
 Pyglet
