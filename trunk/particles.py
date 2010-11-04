@@ -88,6 +88,9 @@ class ParticleSystem:
         forces -- internal forces associated with this system.
         configuration -- initial positions.
         side -- side lengths (only for grid positions)
+        rinit -- string code for initialisation strategy
+               grid
+               fcc
 
         """
         self.n = n
@@ -119,6 +122,10 @@ class ParticleSystem:
         elif rinit == 'fcc':
            self.r[0:n,:] = configuration.fcc3d(n,side,(xmax/2.,ymax/2.,zmax/2.)
                 ,spacing=spacing)
+        elif rinit == 'load':
+            # Load the configuration from a target.
+            # Today the target is hard-coded
+            source = 
     
         self.m = np.zeros(self.maxn,dtype=float)
         self.v = vmax * (np.random.random([self.maxn,self.dim]) - 0.5)
