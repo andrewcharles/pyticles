@@ -6,6 +6,14 @@
     todo - would be nice to have a dimension for every timestep, and a dimension
     just for the frames we've snapshotted. should read up on how to do this beofre
     making changes that might cause regression.
+
+    dimension time_fine
+    dimension time_coarse
+
+    position[time_coarse,spatial]
+    system_energy[time_fine]
+
+
 """
 
 import numpy
@@ -107,6 +115,7 @@ def create_sph_ncfile(filename,attribs,n,dim):
     #dti = nc_file.createVariable('dt','d',tot_dims)
     #sys_dt = nc_file.createVariable('systime','d',tot_dims)
      
+    nc_file.sync()
     nc_file.close()
 
 def write_step(filename,p):
@@ -115,7 +124,6 @@ def write_step(filename,p):
         p -- particle object
     
     """
-    
     ncfile = netCDF4.Dataset(filename,'r+')
     time = ncfile.dimensions['timestep']
     i = len(time)
@@ -136,6 +144,32 @@ def write_step(filename,p):
     ncfile.sync()
     ncfile.close()
 
+
+def read_step(filename,p,step='last'):
+    """ Read a step i from a file and make this the state of a particle object. """
+    ncfile = netCDF4.Dataset(filename,'r')
+    time = ncfile.dimensions['timestep']
+    timev = ncfile.variables['timestep']
+
+    r = ncfile.variables['position']
+    v = ncfile.variables['velocity']
+    #u = ncfile.variables['internal_energy']
+    m = ncfile.variables['mass']
+    n = p.n
+
+    if step == 'last':
+        i = len(time) - 1
+    else:
+        # test for integer
+        i = step
+        
+    p.r[0:n,:] = r[i,0:n,:]
+    p.v[0:n,:] = v[i,0:n,:]
+    #p.u[0:n] = u[i,0:n]
+    p.m[0:n] = m[i,0:n]
+    ncfile.close()
+
+
 if __name__ == "__main__":
     print 'Testing'
     import particles
@@ -144,13 +178,44 @@ if __name__ == "__main__":
     # 1. Create a netcdf file
     attribs = {'name':'Andrew', 'age':33}
     filename = 'test.nc'
-    create_sph_ncfile(filename,attribs,27,3)
+    filename2 = 'test2.nc'
+    filename3 = 'test3.nc'
 
     # 2. Create a particle
     SIDE = (3,3,3)
     p = particles.SmoothParticleSystem(27,maxn=30,d=3,rinit='grid',vmax=1.0
         ,side=SIDE,spacing=1.0,xmax=10,ymax=10,zmax=10)
-
+    
     # 3. Write the particle data out
+    create_sph_ncfile(filename,attribs,27,3)
     write_step(filename,p)
+
+    # This section is dependent on the VSP modules
+    from vsp.spview3d import spview3d
+
+    # Plot the positions
+    viewer = spview3d(filename,basedir='.')
+    viewer.scatterstep(0)
+
+    # 4. Create another particle structure with a different configuration
+    p2 = particles.SmoothParticleSystem(27,maxn=30,d=3,rinit='grid',vmax=1.0
+        ,side=SIDE,spacing=0.5,xmax=10,ymax=10,zmax=10)
+
+    # Plot the positions
+    create_sph_ncfile(filename2,attribs,27,3)
+    write_step(filename2,p2)
+    viewer2 = spview3d(filename2,basedir='.')
+    viewer2.scatterstep(0)
+    
+    # 5. Use the previously saved file as the template to inititialise this
+    read_step(filename2,p)
+    create_sph_ncfile(filename3,attribs,27,3)
+    write_step(filename3,p)
+
+    # Plot the positions
+    viewer3 = spview3d(filename3,basedir='.')
+    viewer3.scatterstep(0)
+
+
+
 

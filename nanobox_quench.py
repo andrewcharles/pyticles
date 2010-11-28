@@ -2,13 +2,11 @@
 
 """ 
     nanobox_quench
-
-    Optimised smooth particle implementation using Fortran
-
     Starting with one of the equilibrated states, run a quench.
-    
     Attempt to use the parameters of Bedaux et al
 
+    Uses pyticles Fortran modules
+    
     Scaling parameters:
     t_s = 562K
     rho_s = 3.12 x 10^4 molm^-3
@@ -63,8 +61,8 @@ XMAX = 8
 YMAX = 8
 ZMAX = 8 
 NDIM = 3
-#SIDE = (10,10,10)
-SIDE = (7,7,7)
+SIDE = (10,10,10)
+#SIDE = (7,7,7)
 VMAX = 0.0
 dt = 0.01
 SPACING = 0.5

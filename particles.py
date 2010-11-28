@@ -36,7 +36,8 @@ import sys
 #import pdb
 from integrator import rk4, euler, imp_euler
 from time import time
-
+from spam_nc import read_step
+import os
 #dt = 0.05
 
 # variables for the integrator - put these somewhere cleaver
@@ -57,6 +58,14 @@ SPLIT = False
 ADVECTIVE = False
 SPROPS = False
 
+class ParticleInputReader:
+    """ A module that reads data for the particle system. """
+    def __init__(self):
+        pass
+    def read_netcdf(self,filename):
+        """ Read position, velocity, internal energy, mass from a netcdf file. """
+
+
 class ParticleSystem:
     """ A group of similar particles with basic mechanical properties.
 
@@ -72,6 +81,7 @@ class ParticleSystem:
             simbox=None,
             mass=1.0,
             rinit=None,
+            source=None,
             side=(5,5,5),
             integrator='rk4',
             spacing=0.1):
@@ -112,9 +122,13 @@ class ParticleSystem:
 
         self.step = integrator_mapping[integrator]
 
-
         # Start with a random configuration
         self.r = self.box.xmax * np.random.random([self.maxn,self.dim])
+        self.m = np.zeros(self.maxn,dtype=float)
+        self.v = vmax * (np.random.random([self.maxn,self.dim]) - 0.5)
+        self.rdot = np.zeros(self.r.shape)
+        self.vdot = np.zeros(self.v.shape)
+        self.mdot = np.zeros(self.m.shape)
 
         if rinit == 'grid':
            self.r[0:n,:] = configuration.grid3d(n,side,(xmax/2.,ymax/2.,zmax/2.)
@@ -125,13 +139,9 @@ class ParticleSystem:
         elif rinit == 'load':
             # Load the configuration from a target.
             # Today the target is hard-coded
-            source = 
-    
-        self.m = np.zeros(self.maxn,dtype=float)
-        self.v = vmax * (np.random.random([self.maxn,self.dim]) - 0.5)
-        self.rdot = np.zeros(self.r.shape)
-        self.vdot = np.zeros(self.v.shape)
-        self.mdot = np.zeros(self.m.shape)
+            source = os.environ.get('SPDATA') + '/' + source #nanobox_eq_2.nc'
+            read_step(source,self,step='last')
+            # Make some assumptions about the source file.
 
         # Initialise values
         #self.r[0:self.n]=configuration.grid3d(self.n,5,5,(20,20,20),spacing=0.8)
@@ -275,6 +285,7 @@ class SmoothParticleSystem(ParticleSystem):
             thermostat=False,
             hshort=1.0,
             hlong=3.0,
+            source=None,
             integrator='ieuler',
             simbox=None):
         ParticleSystem.__init__(self,n=n,d=d,
@@ -284,6 +295,7 @@ class SmoothParticleSystem(ParticleSystem):
             rinit=rinit,
             side=side,
             mass=mass,
+            source=source,
             spacing=spacing,
             integrator=integrator,
             vmax=vmax,
