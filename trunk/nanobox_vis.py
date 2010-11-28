@@ -59,8 +59,8 @@ XMAX = 8
 YMAX = 8
 ZMAX = 8 
 NDIM = 3
-#SIDE = (10,10,10)
-SIDE = (7,7,7)
+SIDE = (10,10,10)
+#SIDE = (7,7,7)
 VMAX = 0.0
 dt = 0.01
 SPACING = 0.5
@@ -69,6 +69,7 @@ TEMPERATURE = 0.8
 HLONG = 3.0
 HSHORT = 1.5
 RINIT = 'grid'
+source = 'nanobox_eq_1a.nc'
 ascl = 7.45e+04
 bscl = 5.84e-01
 kbscl = 3.29e+04
@@ -80,7 +81,7 @@ fps = 0
 box = box.PeriodicBox(xmax=XMAX,ymax=YMAX,zmax=ZMAX)
 #box = box.MirrorBox(xmax=XMAX,ymax=YMAX,zmax=ZMAX)
 p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX
-    ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX
+    ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX,source=source
     ,temperature=TEMPERATURE,hlong=HLONG,hshort=HSHORT,
     thermostat_temp=TEMPERATURE,thermostat=True,mass=pmass,simbox=box)
 nl = neighbour_list.VerletList(p,cutoff=4.0)
@@ -89,9 +90,9 @@ p.nlists.append(nl)
 p.nl_default = nl
 p.forces.append(spam_complete_force.SpamComplete(p,nl,adash=ascl,bdash=bscl
     ,kbdash=kbscl,cgrad=0.0,eta=0.0,zeta=0.0))
-nl.build()
-nl.separations()
-spam_properties(p,nl)
+#nl.build()
+#nl.separations()
+#spam_properties(p,nl)
 
 print 'initial mean temperature',np.mean(p.t)
 print 'initial mean density',np.mean(p.rho)
@@ -126,7 +127,7 @@ def on_draw():
 
 
 def main():
-    pyglet.clock.schedule_interval(update,0.05)
+    #pyglet.clock.schedule_interval(update,0.05)
     pyglet.clock.schedule_interval(redraw,0.2)
     #pyglet.clock.schedule_interval(s.update_eye,1/2.0)
     pyglet.app.run()
