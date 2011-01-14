@@ -19,7 +19,6 @@
 
     What mass is each SPH particle?
 
-
     Box size is
 
     36 x 12 x 12 in scaling lengths x_s
@@ -64,7 +63,7 @@ RINIT = 'grid'
 cnt = 0
 fps = 0
 
-ofname = 'output.nc'
+ofname = 'bedaux_box_eq.nc'
 print "Initialising"
 p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX
 ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX
