@@ -33,67 +33,88 @@ from spam_nc import create_sph_ncfile, write_step
 import numpy as np
 import spkernel, spdensity
 
-# Global variables
-MAX_STEPS = 100
 
-XMAX = 10
-YMAX = 10
-ZMAX = 10 
-NDIM = 3
-SIDE = (6,6,6)
-VMAX = 0.0
-dt = 0.05
-SPACING = 1.0
-NP = SIDE[0]*SIDE[1]*SIDE[2]
-TEMPERATURE = 0.95
-HLONG = 4.0
-HSHORT = 2.0
-RINIT = 'grid'
-ascl = 7.45e+04
-bscl = 5.84e-01
-kbscl = 3.29e+04
-pmass = 1.386e-01
+def spawn_system(
+        max_steps = 25,
+        xmax = 10,
+        YMAX = 10,
+        ZMAX = 10 ,
+        NDIM = 3,
+        SIDE = (5,5,5),
+        VMAX = 0.0,
+        dt = 0.05,
+        SPACING = 1.0,
+        TEMPERATURE = 0.95,
+        HLONG = 4.0,
+        HSHORT = 2.0,
+        RINIT = 'grid',
+        ascl = 7.45e+04,
+        bscl = 5.84e-01,
+        kbscl = 3.29e+04,
+        pmass = 1.386e-01,
+        ofname = 'data/toybox.nc'
+        ):
+        """ Create a smooth particle system and integrate it forward in time.
 
-cnt = 0
-fps = 0
+            Returns the path of the netcdf file containing the results.
+        """
 
-ofname = '../data/toybox.nc'
-print "Initialising"
-p = particles.SmoothParticleSystem(NP,maxn=NP,d=3,rinit=RINIT,vmax=VMAX
-    ,side=SIDE,spacing=SPACING,xmax=XMAX,ymax=YMAX,zmax=ZMAX
-    ,temperature=TEMPERATURE,hlong=HLONG,hshort=HSHORT,
-    thermostat_temp=TEMPERATURE,thermostat=True,mass=pmass)
-nl = neighbour_list.VerletList(p,cutoff=HLONG)
-p.nlists.append(nl)
-p.nl_default = nl
-p.forces.append(spam_complete_force.SpamComplete(p,nl,adash=ascl,bdash=bscl
-    ,kbdash=kbscl))
-#p.forces.append(forces.FortranCollisionForce(p,nl,cutoff=0.5))
-tstart = time()
-nl.build()
-nl.separations()
-spam_properties(p,nl)
-print 'Built list and calc properties',time()-tstart
-cnt = 0
-attribs = {'creator':'Andrew', 'log':'functional test'}
-create_sph_ncfile(ofname,attribs,NP,NDIM)
-print "STEP   INT  DERIV =  PAIR + SPAM +  FORCE   "
-for i in range(MAX_STEPS):
-    tstart = time()
-    p.update(dt)
-    if np.isnan(p.r).any():
-        print 'stopping due to nan'
-        break
-    if i % 10 == 0:
-        write_step(ofname,p)
-    print 'Step',i,time()-tstart
-    g = p.timing.keys()
-    #g.sort()
-    for k in g:
-        print k,p.timing[k]
-print 'Completed',i,'steps'
+        NP = SIDE[0]*SIDE[1]*SIDE[2]
+        cnt = 0
+        fps = 0
 
+        print "Initialising"
+        p = particles.SmoothParticleSystem(
+                NP,maxn=NP,
+                d=3,
+                rinit=RINIT,
+                vmax=VMAX,
+                side=SIDE,
+                spacing=SPACING,
+                xmax=xmax,
+                ymax=YMAX,
+                zmax=ZMAX,
+                temperature=TEMPERATURE,
+                hlong=HLONG,
+                hshort=HSHORT,
+                thermostat_temp=TEMPERATURE,
+                thermostat=True,
+                mass=pmass
+            )
+        nl = neighbour_list.VerletList(p,cutoff=HLONG)
+        p.nlists.append(nl)
+        p.nl_default = nl
+        p.forces.append(
+            spam_complete_force.SpamComplete(
+                p,nl,adash=ascl,bdash=bscl,kbdash=kbscl))
+        #p.forces.append(forces.FortranCollisionForce(p,nl,cutoff=0.5))
+        tstart = time()
+        nl.build()
+        nl.separations()
+        spam_properties(p,nl)
+        print 'Built list and calc properties',time()-tstart
+        cnt = 0
+        attribs = {'creator':'Andrew', 'log':'functional test'}
+        create_sph_ncfile(ofname,attribs,NP,NDIM)
+        print "STEP   INT  DERIV =  PAIR + SPAM +  FORCE   "
+        tstartrun = time()
+        for i in range(max_steps):
+            tstart = time()
+            p.update(dt)
+            if np.isnan(p.r).any():
+                print 'stopping due to nan'
+                break
+            if i % 10 == 0:
+                write_step(ofname,p)
+            print 'Step',i,'took',time()-tstart
+            g = p.timing.keys()
+            g.sort()
+            for k in g:
+                print k,p.timing[k]
+        print 'Completed',i,'steps, in',time()-tstartrun
+        return ofname
 
-
+if __name__ == '__main__':
+    spawn_system()
 
 
